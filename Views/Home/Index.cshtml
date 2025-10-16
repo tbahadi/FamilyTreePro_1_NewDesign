@@ -1,0 +1,99 @@
+﻿@model List<FamilyTreePro.Models.FamilyTree>
+
+@{
+    ViewData["Title"] = "الشجرات العائلية";
+}
+
+<div class="container mt-4" dir="rtl">
+    <!-- عرض رسائل النجاح والخطأ -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>شجراتي العائلية</h2>
+        <div>
+            <a asp-action="CreateFamilyTree" class="btn btn-primary">
+                <i class="fas fa-plus"></i> إنشاء شجرة جديدة
+            </a>
+            <a asp-action="MasterTree" class="btn btn-info">
+                <i class="fas fa-sitemap"></i> عرض الشجرة الرئيسية
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var tree in Model)
+            {
+                <div class="col-md-4 mb-3">
+                    <div class="card" style="border-left: 4px solid @tree.Color;">
+                        <div class="card-body">
+                            <h5 class="card-title">@tree.Name</h5>
+                            <p class="card-text">@tree.Description</p>
+
+                            @if (tree.ParentTree != null)
+                            {
+                                <p class="text-success">
+                                    <small><i class="fas fa-link"></i> مرتبطة بـ: @tree.ParentTree.Name</small>
+                                </p>
+                            }
+
+                            @if (tree.ChildTrees?.Any() == true)
+                            {
+                                <p class="text-info">
+                                    <small><i class="fas fa-network-wired"></i> لها @tree.ChildTrees.Count شجرة فرعية</small>
+                                </p>
+                            }
+
+                            <p class="text-muted">
+                                <small>
+                                    <i class="fas fa-users"></i> @tree.Persons?.Count فرد
+                                    - <i class="fas fa-calendar"></i> @tree.CreatedDate.ToString("yyyy/MM/dd")
+                                </small>
+                            </p>
+
+                            <div class="btn-group w-100">
+                                <a asp-controller="Person" asp-action="Index" asp-route-familyTreeId="@tree.Id"
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye"></i> عرض
+                                </a>
+                                <a asp-action="ConnectTrees" asp-route-id="@tree.Id"
+                                   class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-link"></i> ربط
+                                </a>
+                                <a asp-action="DeleteTree" asp-route-id="@tree.Id"
+                                   class="btn btn-outline-danger btn-sm"
+                                   onclick="return confirm('هل أنت متأكد من حذف الشجرة؟')">
+                                    <i class="fas fa-trash"></i> حذف
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="alert alert-warning text-center">
+                    <h4><i class="fas fa-tree"></i> لا توجد شجرات عائلية</h4>
+                    <p><a asp-action="CreateFamilyTree" class="btn btn-primary">انقر هنا</a> لإنشاء أول شجرة عائلية لك</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>

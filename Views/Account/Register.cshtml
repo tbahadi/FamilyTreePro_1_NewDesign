@@ -1,0 +1,58 @@
+﻿@model FamilyTreePro.Models.User
+
+@{
+    ViewData["Title"] = "إنشاء حساب جديد";
+}
+
+<div class="container mt-5" dir="rtl">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="text-center">إنشاء حساب جديد</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Register">
+                        @Html.AntiForgeryToken()
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Username" class="form-label"></label>
+                            <input asp-for="Username" class="form-control" />
+                            <span asp-validation-for="Username" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Password" class="form-label"></label>
+                            <input asp-for="Password" type="password" class="form-control" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" type="email" class="form-control" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="FullName" class="form-label"></label>
+                            <input asp-for="FullName" class="form-control" />
+                            <span asp-validation-for="FullName" class="text-danger"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100">إنشاء الحساب</button>
+                    </form>
+                    <hr />
+                    <div class="text-center">
+                        <a asp-action="Login" class="btn btn-outline-secondary">لديك حساب؟ سجل الدخول</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

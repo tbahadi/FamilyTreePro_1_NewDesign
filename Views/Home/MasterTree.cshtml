@@ -1,0 +1,107 @@
+﻿@model List<FamilyTreePro.Models.FamilyTree>
+
+@{
+    ViewData["Title"] = "الشجرة العائلية الرئيسية";
+}
+
+<div class="container mt-4" dir="rtl">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>الشجرة العائلية الرئيسية</h2>
+        <a asp-action="Index" class="btn btn-secondary">عودة للقائمة</a>
+    </div>
+
+    <div class="master-tree">
+        @if (Model != null)
+        {
+            @foreach (var mainTree in Model)
+            {
+                <div class="main-tree mb-4">
+                    <div class="card bg-light">
+                        <div class="card-header" style="background-color: @mainTree.Color; color: white;">
+                            <h4 class="mb-0">@mainTree.Name</h4>
+                            <small>@mainTree.Description</small>
+                        </div>
+                        <div class="card-body">
+                            <!-- عرض الأشخاص في الشجرة الرئيسية -->
+                            <div class="row mb-3">
+                                @if (mainTree.Persons != null)
+                                {
+                                    @foreach (var person in mainTree.Persons.Take(6))
+                                    {
+                                        <div class="col-md-2 mb-2">
+                                            <div class="card @(person.Gender == "Male" ? "border-primary" : "border-danger")">
+                                                <div class="card-body text-center p-2">
+                                                    <h6 class="card-title mb-1">@person.FirstName</h6>
+                                                    <small class="text-muted">@person.FullName</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (mainTree.Persons.Count > 6)
+                                    {
+                                        <div class="col-md-2 mb-2">
+                                            <div class="card border-secondary">
+                                                <div class="card-body text-center p-2">
+                                                    <h6 class="card-title mb-1">+@(mainTree.Persons.Count - 6)</h6>
+                                                    <small class="text-muted">أفراد آخرين</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+
+                            <!-- عرض الشجرات الفرعية -->
+                            @if (mainTree.ChildTrees?.Any() == true)
+                            {
+                                <h5 class="mt-4">الشجرات المرتبطة:</h5>
+                                <div class="row">
+                                    @foreach (var childTree in mainTree.ChildTrees)
+                                    {
+                                        <div class="col-md-4 mb-3">
+                                            <div class="card">
+                                                <div class="card-header" style="background-color: @childTree.Color; color: white;">
+                                                    <h6 class="mb-0">@childTree.Name</h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <p class="card-text">@childTree.Description</p>
+                                                    <p class="text-muted">
+                                                        <small>@childTree.Persons?.Count فرد</small>
+                                                    </p>
+                                                    <a asp-controller="Person" asp-action="Index" asp-route-familyTreeId="@childTree.Id"
+                                                       class="btn btn-outline-primary btn-sm">عرض الأفراد</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="alert alert-warning text-center">
+                <h4>لا توجد شجرات عائلية</h4>
+                <p><a asp-action="CreateFamilyTree">انقر هنا</a> لإنشاء أول شجرة عائلية</p>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .master-tree .main-tree {
+        border-left: 3px solid #007bff;
+        padding-left: 15px;
+    }
+
+    .card {
+        transition: transform 0.2s;
+    }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+</style>

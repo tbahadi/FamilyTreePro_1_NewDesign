@@ -1,0 +1,66 @@
+﻿@model List<FamilyTreePro.Models.Person>
+
+@{
+    ViewData["Title"] = "أفراد الشجرة العائلية";
+    var familyTreeId = ViewBag.FamilyTreeId as int?;
+    var familyTreeName = ViewBag.FamilyTreeName as string;
+}
+
+<div class="container mt-4" dir="rtl">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>أفراد الشجرة: @familyTreeName</h2>
+        <div>
+            <a asp-action="Create" asp-route-familyTreeId="@familyTreeId" class="btn btn-primary">إضافة فرد جديد</a>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">عودة للشجرات</a>
+        </div>
+    </div>
+
+    <div class="row">
+        @foreach (var person in Model)
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card h-100 @(person.Gender == "Male" ? "border-primary" : "border-danger")">
+                    <div class="card-body">
+                        <h5 class="card-title">@person.FirstName @person.FatherName</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">@person.FullName</h6>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                <strong>الجنس:</strong> @(person.Gender == "Male" ? "ذكر" : "أنثى")<br>
+                                <strong>الميلاد:</strong> @(person.BirthDate?.ToString("yyyy/MM/dd") ?? "غير معروف")<br>
+                                @if (!string.IsNullOrEmpty(person.City))
+                                {
+                                    <strong>المدينة:</strong> 
+                                    @person.City
+                            
+                                    <br>
+                                }
+                                @if (person.Occupation != null)
+                                {
+                                    <strong>المهنة:</strong> 
+                                    @person.Occupation.Name
+                            
+                                    <br>
+                                }
+                            </small>
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        <div class="btn-group w-100">
+                            <a asp-action="Details" asp-route-id="@person.Id" class="btn btn-outline-info btn-sm">تفاصيل</a>
+                            <a asp-action="Edit" asp-route-id="@person.Id" class="btn btn-outline-warning btn-sm">تعديل</a>
+                            <a asp-action="MoveToTree" asp-route-id="@person.Id" class="btn btn-outline-success btn-sm">نقل</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-warning text-center">
+            <h4>لا توجد أفراد في هذه الشجرة</h4>
+            <p><a asp-action="Create" asp-route-familyTreeId="@familyTreeId">انقر هنا</a> لإضافة أول فرد</p>
+        </div>
+    }
+</div>

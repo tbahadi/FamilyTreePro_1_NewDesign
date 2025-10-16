@@ -1,0 +1,130 @@
+﻿@model FamilyTreePro.Models.Person
+
+@{
+    ViewData["Title"] = "إضافة فرد جديد";
+    var familyTreeId = ViewBag.FamilyTreeId as int?;
+}
+
+<div class="container mt-4" dir="rtl">
+    <h2 class="text-center mb-4">إضافة فرد جديد</h2>
+
+    <form asp-action="Create" class="row g-3">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="FamilyTreeId" value="@familyTreeId" />
+
+        <div class="col-md-6">
+            <label asp-for="FirstName" class="form-label"></label>
+            <input asp-for="FirstName" class="form-control" />
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="FatherName" class="form-label"></label>
+            <input asp-for="FatherName" class="form-control" />
+            <span asp-validation-for="FatherName" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="GrandFatherName" class="form-label"></label>
+            <input asp-for="GrandFatherName" class="form-control" />
+            <span asp-validation-for="GrandFatherName" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="LastName" class="form-label"></label>
+            <input asp-for="LastName" class="form-control" />
+            <span asp-validation-for="LastName" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Nickname" class="form-label"></label>
+            <input asp-for="Nickname" class="form-control" />
+            <span asp-validation-for="Nickname" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Gender" class="form-label"></label>
+            <select asp-for="Gender" class="form-select">
+                <option value="">اختر الجنس</option>
+                <option value="Male">ذكر</option>
+                <option value="Female">أنثى</option>
+            </select>
+            <span asp-validation-for="Gender" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="BirthDate" class="form-label"></label>
+            <input asp-for="BirthDate" type="date" class="form-control" />
+            <span asp-validation-for="BirthDate" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="OccupationId" class="form-label"></label>
+            <select asp-for="OccupationId" class="form-select">
+                <option value="">اختر المهنة</option>
+                @foreach (var occupation in ViewBag.Occupations)
+                {
+                    <option value="@occupation.Id">@occupation.Name</option>
+                }
+            </select>
+            <span asp-validation-for="OccupationId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="CountryId" class="form-label"></label>
+            <select asp-for="CountryId" class="form-select">
+                <option value="">اختر الدولة</option>
+                @foreach (var country in ViewBag.Countries)
+                {
+                    <option value="@country.Id">@country.Name</option>
+                }
+            </select>
+            <span asp-validation-for="CountryId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="City" class="form-label"></label>
+            <input asp-for="City" class="form-control" />
+            <span asp-validation-for="City" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">الأب (من أفراد هذه الشجرة)</label>
+            <select name="fatherId" class="form-select">
+                <option value="">-- اختر الأب --</option>
+                @foreach (var father in ViewBag.PotentialFathers)
+                {
+                    <option value="@father.Id">@father.FullName</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">الأم (من أفراد هذه الشجرة)</label>
+            <select name="motherId" class="form-select">
+                <option value="">-- اختر الأم --</option>
+                @foreach (var mother in ViewBag.PotentialMothers)
+                {
+                    <option value="@mother.Id">@mother.FullName</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-12">
+            <label asp-for="Notes" class="form-label"></label>
+            <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Notes" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-success">حفظ</button>
+            <a asp-action="Index" asp-route-familyTreeId="@familyTreeId" class="btn btn-secondary">رجوع</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

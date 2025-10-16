@@ -1,0 +1,76 @@
+﻿@{
+    ViewData["Title"] = "ربط الشجرات العائلية";
+    var currentTree = ViewBag.CurrentTree as FamilyTreePro.Models.FamilyTree;
+    var availableTrees = ViewBag.AvailableTrees as List<FamilyTreePro.Models.FamilyTree>;
+}
+
+<div class="container mt-4" dir="rtl">
+    <h2>ربط الشجرة: @currentTree?.Name</h2>
+
+    <form asp-action="ConnectTrees" method="post">
+        <input type="hidden" name="treeId" value="@currentTree?.Id" />
+
+        <div class="card">
+            <div class="card-header">
+                <h5>اختر الشجرة الأم</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group mb-3">
+                    <label>الشجرة الأم:</label>
+                    <select name="parentTreeId" class="form-control" onchange="updatePersons(this.value)">
+                        <option value="">-- اختر الشجرة الأم --</option>
+                        @if (availableTrees != null)
+                        {
+                            @foreach (var tree in availableTrees)
+                            {
+                                <option value="@tree.Id">@tree.Name</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="form-group mb-3" id="personsSection" style="display: none;">
+                    <label>اختر شخص الربط (الجد الأول):</label>
+                    <select name="connectionPersonId" class="form-control" id="personsSelect">
+                        <option value="">-- اختر شخص الربط --</option>
+                    </select>
+                    <small class="text-muted">سيتم ربط هذه الشجرة من خلال هذا الشخص</small>
+                </div>
+
+                <button type="submit" class="btn btn-success">ربط الشجرات</button>
+                <a asp-action="Index" class="btn btn-secondary">إلغاء</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function updatePersons(treeId) {
+            const personsSection = document.getElementById('personsSection');
+            const personsSelect = document.getElementById('personsSelect');
+
+            if (!treeId) {
+                personsSection.style.display = 'none';
+                return;
+            }
+
+            // جلب الأشخاص من الشجرة المحددة
+            fetch(`/Home/GetTreePersons?treeId=${treeId}`)
+                .then(response => response.json())
+                .then(persons => {
+                    personsSelect.innerHTML = '<option value="">-- اختر شخص الربط --</option>';
+                    persons.forEach(person => {
+                        const option = document.createElement('option');
+                        option.value = person.id;
+                        option.textContent = person.fullName;
+                        personsSelect.appendChild(option);
+                    });
+                    personsSection.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error fetching persons:', error);
+                });
+        }
+    </script>
+}
