@@ -25,9 +25,12 @@ namespace FamilyTreePro.Models
         [RegularExpression("^#[0-9A-Fa-f]{6}$", ErrorMessage = "اللون يجب أن يكون بصيغة HEX (مثل: #007bff)")]
         public string Color { get; set; } = "#007bff";
 
-        // العلاقة مع المستخدم
+        // إزالة السمة Required من UserId
+        [Display(Name = "المستخدم")]
         public int UserId { get; set; }
-        public User User { get; set; }
+
+        // جعل الخصائص الملاحية قابلة للقيمة الفارغة
+        public virtual User? User { get; set; }
 
         // العلاقة مع الأشخاص في هذه الشجرة
         public virtual ICollection<Person> Persons { get; set; }
@@ -37,7 +40,7 @@ namespace FamilyTreePro.Models
         public int? ParentTreeId { get; set; }
 
         [ForeignKey("ParentTreeId")]
-        public virtual FamilyTree ParentTree { get; set; }
+        public virtual FamilyTree? ParentTree { get; set; }
 
         public virtual ICollection<FamilyTree> ChildTrees { get; set; }
 
@@ -46,14 +49,14 @@ namespace FamilyTreePro.Models
         public int? ConnectionPersonId { get; set; }
 
         [ForeignKey("ConnectionPersonId")]
-        public virtual Person ConnectionPerson { get; set; }
+        public virtual Person? ConnectionPerson { get; set; }
 
         public FamilyTree()
         {
             Persons = new HashSet<Person>();
             ChildTrees = new HashSet<FamilyTree>();
             CreatedDate = DateTime.Now;
-            Description = string.Empty; // قيمة افتراضية
+            Description = string.Empty;
         }
     }
 }

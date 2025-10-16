@@ -1,4 +1,4 @@
-﻿@model FamilyTreePro.Models.FamilyTree
+﻿@model FamilyTreePro.Models.CreateFamilyTreeViewModel
 
 @{
     ViewData["Title"] = "إنشاء شجرة عائلية جديدة";
@@ -24,15 +24,12 @@
         </div>
     }
 
-    <!-- عرض أخطاء النموذج -->
-    <div asp-validation-summary="ModelOnly" class="alert alert-warning"></div>
-
-    <form asp-action="CreateFamilyTree" method="post" class="row g-3" id="familyTreeForm">
+    <form asp-action="CreateFamilyTree" method="post" class="row g-3">
         @Html.AntiForgeryToken()
 
         <div class="col-md-12">
             <div class="form-group mb-3">
-                <label asp-for="Name" class="form-label">اسم الشجرة العائلية *</label>
+                <label asp-for="Name" class="form-label"></label>
                 <input asp-for="Name" class="form-control" placeholder="أدخل اسم الشجرة العائلية" />
                 <span asp-validation-for="Name" class="text-danger small"></span>
             </div>
@@ -40,7 +37,7 @@
 
         <div class="col-md-12">
             <div class="form-group mb-3">
-                <label asp-for="Description" class="form-label">الوصف</label>
+                <label asp-for="Description" class="form-label"></label>
                 <textarea asp-for="Description" class="form-control" rows="3" placeholder="أدخل وصفاً للشجرة العائلية (اختياري)"></textarea>
                 <span asp-validation-for="Description" class="text-danger small"></span>
             </div>
@@ -48,7 +45,7 @@
 
         <div class="col-md-6">
             <div class="form-group mb-3">
-                <label asp-for="Color" class="form-label">لون الشجرة *</label>
+                <label asp-for="Color" class="form-label"></label>
                 <input type="color" asp-for="Color" class="form-control form-control-color" value="#007bff" title="اختر لوناً للشجرة" />
                 <span asp-validation-for="Color" class="text-danger small"></span>
             </div>
@@ -69,141 +66,4 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('familyTreeForm');
-            const nameInput = document.getElementById('Name');
-            const colorInput = document.getElementById('Color');
-
-            // تحقق فوري من الاسم
-            if (nameInput) {
-                nameInput.addEventListener('blur', function() {
-                    validateName(this);
-                });
-
-                nameInput.addEventListener('input', function() {
-                    clearValidation(this);
-                });
-            }
-
-            // تحقق فوري من اللون
-            if (colorInput) {
-                colorInput.addEventListener('change', function() {
-                    validateColor(this);
-                });
-            }
-
-            // منع إرسال النموذج إذا كان هناك أخطاء
-            form.addEventListener('submit', function(e) {
-                if (!validateForm()) {
-                    e.preventDefault();
-                    showAllErrors();
-                }
-            });
-
-            function validateName(input) {
-                const value = input.value.trim();
-                const errorElement = input.nextElementSibling;
-
-                if (value.length === 0) {
-                    showError(input, 'اسم الشجرة مطلوب');
-                    return false;
-                }
-
-                if (value.length > 100) {
-                    showError(input, 'اسم الشجرة يجب ألا يتجاوز 100 حرف');
-                    return false;
-                }
-
-                clearError(input);
-                return true;
-            }
-
-            function validateColor(input) {
-                const value = input.value;
-                const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
-
-                if (!hexColorRegex.test(value)) {
-                    showError(input, 'اللون يجب أن يكون بصيغة HEX (مثل: #007bff)');
-                    return false;
-                }
-
-                clearError(input);
-                return true;
-            }
-
-            function validateForm() {
-                let isValid = true;
-
-                if (!validateName(nameInput)) {
-                    isValid = false;
-                }
-
-                if (!validateColor(colorInput)) {
-                    isValid = false;
-                }
-
-                return isValid;
-            }
-
-            function showError(input, message) {
-                clearError(input);
-                input.classList.add('is-invalid');
-
-                let errorElement = input.nextElementSibling;
-                if (!errorElement || !errorElement.classList.contains('text-danger')) {
-                    errorElement = document.createElement('div');
-                    errorElement.className = 'text-danger small mt-1';
-                    input.parentNode.insertBefore(errorElement, input.nextSibling);
-                }
-
-                errorElement.textContent = message;
-            }
-
-            function clearError(input) {
-                input.classList.remove('is-invalid');
-                input.classList.add('is-valid');
-
-                const errorElement = input.nextElementSibling;
-                if (errorElement && errorElement.classList.contains('text-danger')) {
-                    errorElement.remove();
-                }
-            }
-
-            function clearValidation(input) {
-                input.classList.remove('is-invalid', 'is-valid');
-                const errorElement = input.nextElementSibling;
-                if (errorElement && errorElement.classList.contains('text-danger')) {
-                    errorElement.remove();
-                }
-            }
-
-            function showAllErrors() {
-                validateName(nameInput);
-                validateColor(colorInput);
-
-                // تمرير إلى أعلى الصفحة لعرض الأخطاء
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        });
-    </script>
-
-    <style>
-        .is-invalid {
-            border-color: #dc3545;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6.4.4.4-.4'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right calc(0.375em + 0.1875rem) center;
-            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-        }
-
-        .is-valid {
-            border-color: #198754;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right calc(0.375em + 0.1875rem) center;
-            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-        }
-    </style>
 }

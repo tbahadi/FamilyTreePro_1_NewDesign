@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using FamilyTreePro.Models;
 
+
 namespace FamilyTreePro.Controllers
 {
     public class HomeController : Controller
@@ -47,13 +48,13 @@ namespace FamilyTreePro.Controllers
             {
                 return RedirectToAction("Login", "Account");
             }
-            return View();
+            return View(new CreateFamilyTreeViewModel());
         }
 
         // إنشاء شجرة عائلية جديدة - POST
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateFamilyTree(FamilyTree familyTree)
+        public async Task<IActionResult> CreateFamilyTree(CreateFamilyTreeViewModel viewModel)
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -67,16 +68,15 @@ namespace FamilyTreePro.Controllers
             {
                 try
                 {
-                    // تعيين المستخدم الحالي
-                    familyTree.UserId = userId.Value;
-
-                    // تعيين قيم افتراضية إذا كانت فارغة
-                    if (string.IsNullOrEmpty(familyTree.Color))
+                    // تحويل ViewModel إلى Model
+                    var familyTree = new FamilyTree
                     {
-                        familyTree.Color = "#007bff";
-                    }
-
-                    familyTree.CreatedDate = DateTime.Now;
+                        Name = viewModel.Name,
+                        Description = viewModel.Description ?? string.Empty,
+                        Color = viewModel.Color,
+                        UserId = userId.Value,
+                        CreatedDate = DateTime.Now
+                    };
 
                     _logger.LogInformation("إضافة الشجرة: {Name} للمستخدم: {UserId}", familyTree.Name, userId);
 
@@ -103,7 +103,7 @@ namespace FamilyTreePro.Controllers
                 TempData["ErrorMessage"] = "البيانات غير صالحة. يرجى تصحيح الأخطاء أدناه.";
             }
 
-            return View(familyTree);
+            return View(viewModel);
         }
 
         // ربط شجرة بأخرى - GET
