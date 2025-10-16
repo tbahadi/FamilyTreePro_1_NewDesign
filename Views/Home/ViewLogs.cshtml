@@ -1,0 +1,42 @@
+﻿@{
+    ViewData["Title"] = "سجلات النظام";
+}
+
+<div class="container mt-4" dir="rtl">
+    <h2 class="text-center mb-4">سجلات النظام</h2>
+
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h5><i class="fas fa-list-alt"></i> آخر الأحداث</h5>
+        </div>
+        <div class="card-body">
+            <div style="max-height: 500px; overflow-y: auto;">
+                @if (ViewBag.Logs != null)
+                {
+                    foreach (var log in ViewBag.Logs)
+                    {
+                        <div class="border-bottom pb-2 mb-2">
+                            <code>@log</code>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted">لا توجد سجلات</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">
+            <i class="fas fa-arrow-right"></i> العودة للرئيسية
+        </a>
+        <a href="@Url.Action("CheckDatabase", "Home")" class="btn btn-info">
+            <i class="fas fa-database"></i> فحص قاعدة البيانات
+        </a>
+        <button onclick="location.reload()" class="btn btn-primary">
+            <i class="fas fa-sync-alt"></i> تحديث
+        </button>
+    </div>
+</div>

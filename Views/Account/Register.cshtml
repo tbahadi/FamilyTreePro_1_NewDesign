@@ -1,49 +1,51 @@
 ﻿@model FamilyTreePro.Models.User
 
 @{
-    ViewData["Title"] = "إنشاء حساب جديد";
+    ViewData["Title"] = "تسجيل جديد";
 }
 
 <div class="container mt-5" dir="rtl">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">
-                    <h4 class="text-center">إنشاء حساب جديد</h4>
+                <div class="card-header bg-success text-white text-center">
+                    <h4><i class="fas fa-user-plus"></i> تسجيل جديد</h4>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Register">
-                        @Html.AntiForgeryToken()
-
-                        <div class="form-group mb-3">
+                    <form asp-action="Register" method="post">
+                        <div class="mb-3">
                             <label asp-for="Username" class="form-label"></label>
-                            <input asp-for="Username" class="form-control" />
+                            <input asp-for="Username" class="form-control" placeholder="أدخل اسم المستخدم">
                             <span asp-validation-for="Username" class="text-danger"></span>
                         </div>
 
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label asp-for="Password" class="form-label"></label>
-                            <input asp-for="Password" type="password" class="form-control" />
+                            <input asp-for="Password" type="password" class="form-control" placeholder="أدخل كلمة المرور">
                             <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
 
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label asp-for="Email" class="form-label"></label>
-                            <input asp-for="Email" type="email" class="form-control" />
+                            <input asp-for="Email" type="email" class="form-control" placeholder="أدخل البريد الإلكتروني">
                             <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
-                        <div class="form-group mb-3">
+                        <div class="mb-3">
                             <label asp-for="FullName" class="form-label"></label>
-                            <input asp-for="FullName" class="form-control" />
+                            <input asp-for="FullName" class="form-control" placeholder="أدخل الاسم الكامل">
                             <span asp-validation-for="FullName" class="text-danger"></span>
                         </div>
 
-                        <button type="submit" class="btn btn-success w-100">إنشاء الحساب</button>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-user-plus"></i> تسجيل جديد
+                            </button>
+                        </div>
                     </form>
-                    <hr />
-                    <div class="text-center">
-                        <a asp-action="Login" class="btn btn-outline-secondary">لديك حساب؟ سجل الدخول</a>
+
+                    <div class="text-center mt-3">
+                        <p>لديك حساب بالفعل؟ <a href="@Url.Action("Login", "Account")">سجل الدخول</a></p>
                     </div>
                 </div>
             </div>

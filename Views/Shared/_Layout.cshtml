@@ -40,6 +40,16 @@
                         @if (Context.Session.GetInt32("UserId") != null)
                         {
                             <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("ViewLogs", "Home")">
+                                    <i class="fas fa-clipboard-list"></i> السجلات
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("CreateDefaultTree", "Home")">
+                                    <i class="fas fa-tree"></i> شجرة افتراضية
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <span class="nav-link text-dark">
                                     <i class="fas fa-user"></i> @Context.Session.GetString("Username")
                                 </span>

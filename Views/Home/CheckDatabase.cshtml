@@ -1,0 +1,50 @@
+﻿@{
+    ViewData["Title"] = "فحص قاعدة البيانات";
+}
+
+<div class="container mt-4" dir="rtl">
+    <h2 class="text-center mb-4">فحص قاعدة البيانات</h2>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h4>الشجرات (@ViewBag.Trees.Count)</h4>
+            @foreach (var tree in ViewBag.Trees)
+            {
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <h5>@tree.Name</h5>
+                        <p>الرقم: @tree.Id</p>
+                        <p>الوصف: @tree.Description</p>
+                        <p>المستخدم: @tree.UserId</p>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="col-md-6">
+            <h4>الأفراد (@ViewBag.Persons.Count)</h4>
+            @if (ViewBag.Persons.Count == 0)
+            {
+                <div class="alert alert-warning">
+                    لا يوجد أفراد في قاعدة البيانات!
+                </div>
+            }
+            @foreach (var person in ViewBag.Persons)
+            {
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <h5>@person.FullName</h5>
+                        <p>الرقم: @person.Id</p>
+                        <p>الشجرة: @person.FamilyTreeId</p>
+                        <p>الجنس: @person.Gender</p>
+                        <p>تاريخ الإضافة: @person.CreatedDate</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">العودة</a>
+        <a href="@Url.Action("Create", "Person", new { familyTreeId = 1 })" class="btn btn-primary">إضافة فرد تجريبي</a>
+    </div>
+</div>

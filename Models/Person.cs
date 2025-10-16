@@ -89,6 +89,7 @@ namespace FamilyTreePro.Models
         {
             Children = new HashSet<Person>();
             CreatedDate = DateTime.Now;
+            IsConnectionPoint = false; // قيمة افتراضية
         }
     }
 }

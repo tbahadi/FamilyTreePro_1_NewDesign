@@ -5,34 +5,65 @@
 }
 
 <div class="container mt-4" dir="rtl">
-    <!-- عرض رسائل النجاح والخطأ -->
+    <h2 class="text-center mb-4">شجراتي العائلية</h2>
+
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
 
-    @if (TempData["ErrorMessage"] != null)
+    @if (ViewBag.NoTrees == true)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        <div class="alert alert-info text-center">
+            <h4>مرحباً بك!</h4>
+            <p>ليس لديك أي شجرة عائلية بعد. هل تريد إنشاء شجرة افتراضية؟</p>
+            <a href="@Url.Action("CreateDefaultTree", "Home")" class="btn btn-primary btn-lg">
+                <i class="fas fa-tree"></i> إنشاء شجرة عائلية افتراضية
+            </a>
         </div>
     }
+    else
+    {
+        <div class="row">
+            @foreach (var tree in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header" style="background-color: @tree.Color;">
+                            <h5 class="card-title text-white">@tree.Name</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">@tree.Description</p>
+                            <p class="text-muted"><small>تم الإنشاء: @tree.CreatedDate.ToString("yyyy/MM/dd")</small></p>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>شجراتي العائلية</h2>
-        <div>
-            <a asp-action="CreateFamilyTree" class="btn btn-primary">
-                <i class="fas fa-plus"></i> إنشاء شجرة جديدة
-            </a>
-            <a asp-action="MasterTree" class="btn btn-info">
-                <i class="fas fa-sitemap"></i> عرض الشجرة الرئيسية
+                            @{
+                                var personCount = ViewBag.PersonCounts?[tree.Id] ?? 0;
+                            }
+                            <p class="text-info"><strong>عدد الأفراد: @personCount</strong></p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="@Url.Action("Index", "Person", new { familyTreeId = tree.Id })" class="btn btn-success btn-sm">
+                                <i class="fas fa-users"></i> عرض الأفراد
+                            </a>
+                            <a href="@Url.Action("Create", "Person", new { familyTreeId = tree.Id })" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> إضافة فرد
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="@Url.Action("CreateFamilyTree", "Home")" class="btn btn-outline-primary">
+                <i class="fas fa-plus-circle"></i> إنشاء شجرة جديدة
             </a>
         </div>
-    </div>
+    }
+</div>
 
     <div class="row">
         @if (Model != null && Model.Any())

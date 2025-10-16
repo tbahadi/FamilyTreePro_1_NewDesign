@@ -30,14 +30,109 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            var familyTrees = await _context.FamilyTrees
-                .Include(ft => ft.ChildTrees)
-                .Include(ft => ft.ConnectionPerson)
-                .Where(ft => ft.UserId == userId)
-                .OrderByDescending(ft => ft.CreatedDate)
-                .ToListAsync();
+            try
+            {
+                var familyTrees = await _context.FamilyTrees
+                    .Where(ft => ft.UserId == userId)
+                    .OrderByDescending(ft => ft.CreatedDate)
+                    .ToListAsync();
 
-            return View(familyTrees);
+                _logger.LogInformation($"عرض {familyTrees.Count} شجرة للمستخدم {userId}");
+
+                // إذا لم يكن للمستخدم أي شجرات، نقترح إنشاء واحدة
+                if (!familyTrees.Any())
+                {
+                    ViewBag.NoTrees = true;
+                    _logger.LogInformation($"المستخدم {userId} لا يملك أي شجرات");
+                }
+
+                return View(familyTrees);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطأ في تحميل الشجرات");
+                TempData["ErrorMessage"] = "حدث خطأ في تحميل الشجرات";
+                return View(new List<FamilyTree>());
+            }
+        }
+
+        // أكشن لفحص جميع البيانات (للتجربة فقط)
+        public async Task<IActionResult> DebugData()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                var trees = await _context.FamilyTrees
+                    .Where(ft => ft.UserId == userId)
+                    .ToListAsync();
+
+                var persons = await _context.Persons
+                    .Where(p => p.FamilyTree.UserId == userId)
+                    .ToListAsync();
+
+                ViewBag.Trees = trees;
+                ViewBag.Persons = persons;
+                ViewBag.UserId = userId;
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"خطأ في فحص البيانات: {ex.Message}";
+                return RedirectToAction("Index");
+            }
+        }
+
+        // أكشن لإنشاء شجرة افتراضية للمستخدم الجديد
+        public async Task<IActionResult> CreateDefaultTree()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                // التحقق إذا كان للمستخدم شجرة بالفعل
+                var existingTree = await _context.FamilyTrees
+                    .FirstOrDefaultAsync(ft => ft.UserId == userId);
+
+                if (existingTree == null)
+                {
+                    // إنشاء شجرة افتراضية
+                    var defaultTree = new FamilyTree
+                    {
+                        Name = "شجرتي العائلية",
+                        Description = "الشجرة العائلية الرئيسية",
+                        Color = "#007bff",
+                        UserId = userId.Value,
+                        CreatedDate = DateTime.Now
+                    };
+
+                    _context.FamilyTrees.Add(defaultTree);
+                    await _context.SaveChangesAsync();
+
+                    TempData["SuccessMessage"] = "تم إنشاء شجرة عائلية افتراضية لك!";
+                }
+                else
+                {
+                    TempData["InfoMessage"] = "لديك شجرة عائلية بالفعل";
+                }
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطأ في إنشاء الشجرة الافتراضية");
+                TempData["ErrorMessage"] = "حدث خطأ في إنشاء الشجرة الافتراضية";
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         // إنشاء شجرة عائلية جديدة - GET
@@ -137,6 +232,7 @@ namespace FamilyTreePro.Controllers
         }
 
         // ربط شجرة بأخرى - POST
+        // ربط شجرة بأخرى - POST (بدون IsConnectionPoint)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConnectTrees(int treeId, int? parentTreeId, int? connectionPersonId)
@@ -163,16 +259,6 @@ namespace FamilyTreePro.Controllers
                     tree.ParentTreeId = parentTreeId;
                     tree.ConnectionPersonId = connectionPersonId;
 
-                    // تحديث الشخص ليكون نقطة ربط
-                    if (connectionPersonId.HasValue)
-                    {
-                        var person = await _context.Persons.FindAsync(connectionPersonId);
-                        if (person != null)
-                        {
-                            person.IsConnectionPoint = true;
-                        }
-                    }
-
                     await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = "تم ربط الشجرات بنجاح!";
                 }
@@ -182,12 +268,90 @@ namespace FamilyTreePro.Controllers
                     TempData["ErrorMessage"] = $"حدث خطأ أثناء الربط: {ex.Message}";
                 }
             }
-            else
-            {
-                TempData["ErrorMessage"] = "يجب اختيار شجرة أم للربط";
-            }
 
             return RedirectToAction(nameof(Index));
+        }
+         
+        // عرض الـ Logs مباشرة في المتصفح
+        public IActionResult ViewLogs()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                // الحصول على آخر 50 سطر من الـ Logs
+                var logEntries = new List<string>();
+
+                // إضافة بعض المعلومات عن الحالة الحالية
+                logEntries.Add($"=== سجلات النظام - {DateTime.Now} ===");
+                logEntries.Add($"المستخدم: {userId}");
+
+                var trees = _context.FamilyTrees.Where(ft => ft.UserId == userId).ToList();
+                logEntries.Add($"عدد الشجرات: {trees.Count}");
+
+                var persons = _context.Persons.Where(p => p.FamilyTree.UserId == userId).ToList();
+                logEntries.Add($"عدد الأفراد: {persons.Count}");
+
+                // إضافة معلومات عن كل شجرة
+                foreach (var tree in trees)
+                {
+                    var personCount = _context.Persons.Count(p => p.FamilyTreeId == tree.Id);
+                    logEntries.Add($"الشجرة '{tree.Name}' (ID: {tree.Id}): {personCount} فرد");
+                }
+
+                ViewBag.Logs = logEntries;
+                return View();
+            }
+            catch (Exception ex)
+            {
+                var errorLogs = new List<string>
+        {
+            "خطأ في تحميل السجلات:",
+            ex.Message,
+            ex.StackTrace ?? "لا يوجد Stack Trace"
+        };
+                ViewBag.Logs = errorLogs;
+                return View();
+            }
+        }
+        // فحص قاعدة البيانات مباشرة
+        public async Task<IActionResult> CheckDatabase()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                var trees = await _context.FamilyTrees
+                    .Where(ft => ft.UserId == userId)
+                    .ToListAsync();
+
+                var persons = await _context.Persons
+                    .Include(p => p.FamilyTree)
+                    .Where(p => p.FamilyTree.UserId == userId)
+                    .ToListAsync();
+
+                ViewBag.Trees = trees;
+                ViewBag.Persons = persons;
+                ViewBag.UserId = userId;
+
+                _logger.LogInformation($"🔍 فحص قاعدة البيانات: {trees.Count} شجرة، {persons.Count} فرد");
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ خطأ في فحص قاعدة البيانات");
+                TempData["ErrorMessage"] = $"خطأ في فحص البيانات: {ex.Message}";
+                return RedirectToAction("Index");
+            }
         }
 
         // API للحصول على أشخاص شجرة معينة

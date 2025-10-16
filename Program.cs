@@ -26,6 +26,9 @@ builder.Services.AddLogging(logging =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=familytree.db"));
 
+// لا حاجة لتسجيل الـ Controllers يدوياً - احذف هذا السطر
+// builder.Services.AddScoped<PersonController>();
+
 var app = builder.Build();
 
 // إنشاء قاعدة البيانات تلقائياً
@@ -36,20 +39,27 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        // حذف قاعدة البيانات القديمة وإنشاء جديدة
+        logger.LogInformation("🔄 إعادة إنشاء قاعدة البيانات...");
+
+        // احذف قاعدة البيانات إذا كانت موجودة
         await db.Database.EnsureDeletedAsync();
-        db.Database.EnsureCreated();
+        logger.LogInformation("✅ تم حذف قاعدة البيانات القديمة");
+
+        // أنشئ قاعدة البيانات جديدة
+        await db.Database.EnsureCreatedAsync();
+        logger.LogInformation("✅ تم إنشاء قاعدة البيانات جديدة");
 
         // إضافة بيانات أولية
         await SeedData(db);
-        logger.LogInformation("✅ تم إنشاء قاعدة البيانات بنجاح!");
+        logger.LogInformation("✅ تم إضافة البيانات الأولية");
+
+        logger.LogInformation("🎉 اكتملت إعادة إنشاء قاعدة البيانات بنجاح!");
     }
     catch (Exception ex)
     {
         logger.LogError(ex, "❌ خطأ في إنشاء قاعدة البيانات");
     }
 }
-
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -68,8 +78,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
-
-
 
 // دالة لإضافة بيانات أولية (محدثة)
 async Task SeedData(AppDbContext context)
