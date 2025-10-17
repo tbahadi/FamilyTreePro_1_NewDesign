@@ -1,0 +1,774 @@
+﻿/* هيلال ثيم - تصميم موحد للمشروع */
+:root {
+    --hilal-blue: #0057A6;
+    --hilal-dark-blue: #003B7A;
+    --hilal-gold: #D4AF37;
+    --hilal-light-gold: #F0E68C;
+    --hilal-cream: #FFF8F0;
+    --hilal-white: #FFFFFF;
+}
+
+/* Reset وأنماط الأساس */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Tahoma', 'Geneva', 'Verdana', sans-serif;
+    background: linear-gradient(135deg, var(--hilal-dark-blue) 0%, var(--hilal-blue) 50%, #001F3F 100%);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* الخلفيات والتأثيرات */
+.gold-waves {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 20% 20%, rgba(212, 175, 55, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(240, 230, 140, 0.25) 0%, transparent 50%), radial-gradient(circle at 40% 70%, rgba(255, 215, 0, 0.2) 0%, transparent 60%);
+    z-index: 0;
+}
+
+.star {
+    position: fixed;
+    background: var(--hilal-gold);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    opacity: 0.3;
+    z-index: 0;
+}
+
+.star-1 {
+    width: 25px;
+    height: 25px;
+    top: 15%;
+    right: 20%;
+}
+
+.star-2 {
+    width: 15px;
+    height: 15px;
+    top: 30%;
+    left: 15%;
+}
+
+.star-3 {
+    width: 20px;
+    height: 20px;
+    bottom: 20%;
+    right: 25%;
+}
+
+.star-4 {
+    width: 10px;
+    height: 10px;
+    bottom: 35%;
+    left: 20%;
+}
+
+/* الهيكل الرئيسي */
+.container {
+    position: relative;
+    z-index: 1;
+}
+
+.content-container {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: calc(100vh - 200px);
+}
+
+main {
+    position: relative;
+    z-index: 1;
+}
+
+/* الكروت */
+.hilal-card {
+    background: var(--hilal-cream);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(0, 55, 122, 0.4), 0 0 0 1px rgba(212, 175, 55, 0.3);
+    overflow: hidden;
+    border: 2px solid var(--hilal-gold);
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.hilal-header {
+    background: linear-gradient(135deg, var(--hilal-blue), var(--hilal-dark-blue));
+    padding: 30px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hilal-body {
+    padding: 30px;
+    background: var(--hilal-cream);
+    min-height: 400px;
+}
+
+/* الهلال */
+.crescent-design {
+    position: absolute;
+    top: 20px;
+    left: 30px;
+    width: 60px;
+    height: 60px;
+    background: transparent;
+    border: 3px solid var(--hilal-gold);
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+}
+
+    .crescent-design::before {
+        content: '';
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        width: 50px;
+        height: 50px;
+        background: var(--hilal-blue);
+        border-radius: 50%;
+        box-shadow: inset 0 0 10px rgba(212, 175, 55, 0.3);
+    }
+
+    .crescent-design::after {
+        content: '🌙';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 20px;
+        color: var(--hilal-gold);
+    }
+
+/* النصوص */
+.hilal-title {
+    color: var(--hilal-cream);
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.hilal-subtitle {
+    color: var(--hilal-light-gold);
+    font-size: 18px;
+}
+
+.hilal-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.logo-icon {
+    width: 70px;
+    height: 70px;
+    background: var(--hilal-gold);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--hilal-blue);
+    font-size: 28px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    border: 3px solid var(--hilal-cream);
+}
+
+.logo-text {
+    color: var(--hilal-cream);
+    font-size: 28px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* الأزرار - نسخة محسنة */
+.hilal-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid;
+    cursor: pointer;
+    color: white !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    font-size: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+    .hilal-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .hilal-btn:hover::before {
+        left: 100%;
+    }
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--hilal-blue), var(--hilal-dark-blue));
+    border-bottom-color: var(--hilal-gold);
+    box-shadow: 0 4px 15px rgba(0, 87, 166, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border-bottom-color: #1e7e34;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    border-bottom-color: #117a8b;
+    box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    border-bottom-color: #d39e00;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+    color: #212529 !important;
+    text-shadow: 0 2px 4px rgba(255,255,255,0.8);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    border-bottom-color: #bd2130;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    border-bottom-color: #545b62;
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    color: white !important;
+}
+
+.btn-outline {
+    background: transparent !important;
+    color: var(--hilal-blue) !important;
+    border: 2px solid var(--hilal-blue) !important;
+    text-shadow: none !important;
+}
+
+    .btn-outline:hover {
+        background: var(--hilal-blue) !important;
+        color: white !important;
+    }
+
+.hilal-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    text-decoration: none;
+    color: white !important;
+    filter: brightness(1.15);
+}
+
+.btn-warning:hover,
+.btn-outline:hover {
+    color: #212529 !important;
+}
+
+/* مجموعة الأزرار */
+.btn-group-custom {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+    .btn-group-custom .hilal-btn {
+        padding: 8px 12px;
+        font-size: 14px;
+        min-width: 60px;
+    }
+
+/* التخطيط */
+.main-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    align-items: center;
+}
+
+.responsive-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+}
+
+/* الجداول */
+.table-responsive {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.hilal-table {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--hilal-gold);
+    margin-bottom: 0;
+}
+
+    .hilal-table thead {
+        background: linear-gradient(135deg, var(--hilal-blue), var(--hilal-dark-blue));
+        color: var(--hilal-cream);
+    }
+
+    .hilal-table th {
+        border: none;
+        padding: 15px;
+        font-weight: 600;
+        text-align: center;
+        color: white;
+    }
+
+    .hilal-table td {
+        padding: 12px 15px;
+        text-align: center;
+        vertical-align: middle;
+        border-color: #e9ecef;
+    }
+
+    .hilal-table tbody tr:hover {
+        background-color: rgba(0, 87, 166, 0.05);
+    }
+
+/* التنبيهات */
+.alert-message {
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid;
+    border-right: 4px solid;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: #155724;
+    border-color: #28a745;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #f8d7da, #f1b0b7);
+    color: #721c24;
+    border-color: #dc3545;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #d1ecf1, #b8e2e8);
+    color: #0c5460;
+    border-color: #17a2b8;
+}
+
+/* النماذج */
+.hilal-input {
+    width: 100%;
+    padding: 14px 50px 14px 15px;
+    border: 2px solid #E0E0E0;
+    border-radius: 10px;
+    font-size: 16px;
+    background: var(--hilal-white);
+    color: #333;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid var(--hilal-blue);
+}
+
+    .hilal-input:focus {
+        outline: none;
+        border-color: var(--hilal-gold);
+        background: var(--hilal-white);
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+        transform: translateY(-2px);
+    }
+
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--hilal-blue);
+    font-size: 18px;
+    z-index: 2;
+}
+
+.password-toggle {
+    position: absolute;
+    left: 15px;
+    background: none;
+    border: none;
+    color: var(--hilal-blue);
+    cursor: pointer;
+    font-size: 16px;
+    z-index: 2;
+    transition: all 0.3s ease;
+    padding: 5px;
+}
+
+    .password-toggle:hover {
+        color: var(--hilal-gold);
+        transform: scale(1.1);
+    }
+
+/* النافبار */
+.hilal-navbar {
+    background: linear-gradient(135deg, var(--hilal-cream), #f8f9fa) !important;
+    border-bottom: 3px solid var(--hilal-gold) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+    position: relative;
+    z-index: 1000;
+}
+
+.hilal-nav-brand {
+    color: var(--hilal-blue) !important;
+    font-weight: bold;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+    .hilal-nav-brand:hover {
+        color: var(--hilal-dark-blue) !important;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+.hilal-nav-link {
+    color: var(--hilal-dark-blue) !important;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    padding: 8px 16px !important;
+    border-radius: 8px;
+    margin: 0 2px;
+    background: transparent !important;
+}
+
+    .hilal-nav-link:hover {
+        color: white !important;
+        background: linear-gradient(135deg, var(--hilal-blue), var(--hilal-dark-blue)) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 87, 166, 0.3);
+    }
+
+.hilal-nav-user {
+    color: var(--hilal-dark-blue) !important;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--hilal-light-gold), #f0e68c) !important;
+    border-radius: 8px;
+    margin: 0 2px;
+    border: 1px solid var(--hilal-gold);
+    padding: 8px 16px !important;
+}
+
+/* الفوتر */
+.hilal-footer {
+    background: linear-gradient(135deg, var(--hilal-blue), var(--hilal-dark-blue)) !important;
+    color: var(--hilal-cream) !important;
+    border-top: 3px solid var(--hilal-gold) !important;
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 20px 0;
+}
+
+/* صفحات محددة */
+.login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    padding: 20px;
+}
+
+    .login-page .hilal-container {
+        max-width: 440px;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .login-page .hilal-card {
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .login-page .hilal-body {
+        padding: 30px;
+        min-height: auto;
+    }
+
+    .login-page .form-options {
+        margin: 25px 0;
+        text-align: center;
+    }
+
+    .login-page .remember-me {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--hilal-blue);
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+        .login-page .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--hilal-gold);
+        }
+
+    .login-page .login-btn {
+        width: 100%;
+        padding: 15px;
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+
+    .login-page .links-section {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .login-page .register-link,
+    .login-page .forgot-password-link {
+        text-align: center;
+        padding: 12px;
+        font-size: 14px;
+    }
+
+.person-list-page .hilal-card {
+    margin-top: 20px;
+}
+
+.home-page .hilal-card {
+    margin-top: 40px;
+}
+
+/* تحسينات إضافية */
+.badge {
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid transparent;
+}
+
+    .badge.bg-pink {
+        background: linear-gradient(135deg, #e83e8c, #d91a72) !important;
+        color: white;
+    }
+
+    .badge.bg-primary {
+        background: linear-gradient(135deg, var(--hilal-blue), var(--hilal-dark-blue)) !important;
+        color: white;
+    }
+
+.empty-state {
+    padding: 40px 20px;
+    text-align: center;
+}
+
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--hilal-gold);
+        margin-bottom: 1rem;
+    }
+
+.btn-sm {
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+    min-width: auto;
+}
+
+.btn-lg {
+    padding: 15px 30px !important;
+    font-size: 18px !important;
+}
+
+.table-container {
+    background: white;
+    border-radius: 15px;
+    padding: 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid var(--hilal-gold);
+    overflow: hidden;
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.links-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 25px;
+    padding-top: 25px;
+    border-top: 2px solid var(--hilal-gold);
+}
+
+/* الاستجابة للشاشات الصغيرة */
+@media (max-width: 768px) {
+    .content-container {
+        padding: 10px;
+    }
+
+    .main-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .responsive-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+        .responsive-actions .hilal-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+    .hilal-body {
+        padding: 20px;
+    }
+
+    .hilal-header {
+        padding: 20px;
+    }
+
+    .star {
+        display: none !important;
+    }
+
+    .crescent-design {
+        width: 50px !important;
+        height: 50px !important;
+        left: 20px !important;
+        top: 15px !important;
+    }
+
+    .table-responsive {
+        font-size: 14px;
+    }
+
+    .hilal-table th,
+    .hilal-table td {
+        padding: 8px 6px;
+    }
+
+    .btn-group-custom {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+        .btn-group-custom .hilal-btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+    .hilal-navbar .navbar-collapse {
+        background: var(--hilal-cream);
+        border-radius: 10px;
+        margin-top: 10px;
+        padding: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .form-options {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .links-section {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hilal-title {
+        font-size: 24px;
+    }
+
+    .hilal-subtitle {
+        font-size: 16px;
+    }
+
+    .logo-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+
+    .logo-text {
+        font-size: 20px;
+    }
+
+    .login-page {
+        padding: 10px;
+    }
+
+        .login-page .hilal-body {
+            padding: 20px;
+        }
+
+        .login-page .hilal-header {
+            padding: 25px 20px;
+        }
+}

@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FamilyTreePro.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using FamilyTreePro.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+
 
 namespace FamilyTreePro.Controllers  // تأكد من وجود namespace
 {
@@ -155,6 +158,86 @@ namespace FamilyTreePro.Controllers  // تأكد من وجود namespace
             }
 
             return View(viewModel);
+        }
+
+        // الشجرة الهرمية المتقدمة
+        // الشجرة الهرمية المتقدمة
+        // الشجرة الهرمية المتقدمة
+        public async Task<IActionResult> ProfessionalTree(int familyTreeId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                // التحقق من أن الشجرة تتبع للمستخدم
+                var tree = await _context.FamilyTrees
+                    .FirstOrDefaultAsync(ft => ft.Id == familyTreeId && ft.UserId == userId);
+
+                if (tree == null)
+                {
+                    TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
+                    return RedirectToAction("Index", "Home");
+                }
+
+                // جلب البيانات بدون العلاقات الدائرية
+                var persons = await _context.Persons
+                    .Where(p => p.FamilyTreeId == familyTreeId)
+                    .Select(p => new
+                    {
+                        Id = p.Id,
+                        FirstName = p.FirstName,
+                        FatherName = p.FatherName,
+                        GrandFatherName = p.GrandFatherName,
+                        LastName = p.LastName,
+                        Nickname = p.Nickname,
+                        FullName = p.FullName,
+                        Gender = p.Gender,
+                        BirthDate = p.BirthDate,
+                        City = p.City,
+                        FatherId = p.FatherId,
+                        IsConnectionPoint = p.IsConnectionPoint,
+                        // بيانات المهنة بدون العلاقات الدائرية
+                        OccupationName = p.Occupation != null ? p.Occupation.Name : null,
+                        OccupationId = p.OccupationId,
+                        // بيانات الدولة بدون العلاقات الدائرية
+                        CountryName = p.Country != null ? p.Country.Name : null,
+                        CountryId = p.CountryId
+                    })
+                    .ToListAsync();
+
+                // تسجيل البيانات للتصحيح
+                _logger.LogInformation($"🔍 بيانات الشجرة المتقدمة: {persons.Count} فرد");
+                foreach (var person in persons)
+                {
+                    _logger.LogInformation($"   - {person.FullName} (الأب: {person.FatherId})");
+                }
+
+                ViewBag.FamilyTreeId = familyTreeId;
+                ViewBag.FamilyTreeName = tree.Name;
+                ViewBag.PersonsCount = persons.Count;
+
+                // تحويل البيانات إلى JSON مع التعامل مع القيم الفارغة
+                var jsonOptions = new JsonSerializerOptions
+                {
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                };
+
+                ViewBag.PersonsJson = JsonSerializer.Serialize(persons, jsonOptions);
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطأ في تحميل الشجرة المتقدمة");
+                TempData["ErrorMessage"] = "حدث خطأ في تحميل الشجرة المتقدمة";
+                return RedirectToAction("Index", "Home");
+            }
         }
 
         // GET: تعديل فرد

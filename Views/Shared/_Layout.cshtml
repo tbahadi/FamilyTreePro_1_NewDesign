@@ -3,64 +3,68 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - FamilyTreePro</title>
+    <title>@ViewData["Title"] - الشجرة العائلية</title>
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Bootstrap RTL -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-rtl@0.4.0/dist/css/bootstrap-rtl.min.css" rel="stylesheet">
+    <!-- المكتبات الأساسية -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/hilal-theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 
     <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Head", required: false)
 </head>
 <body>
+    <!-- التموجات الذهبية -->
+    <div class="gold-waves"></div>
+
+    <!-- النجوم -->
+    <div class="star star-1"></div>
+    <div class="star star-2"></div>
+    <div class="star star-3"></div>
+    <div class="star star-4"></div>
+
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3 hilal-navbar">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <i class="fas fa-tree"></i> FamilyTreePro
+                <a class="navbar-brand hilal-nav-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-tree"></i> الشجرة العائلية
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">
+                            <a class="nav-link hilal-nav-link" asp-controller="Home" asp-action="Index">
                                 <i class="fas fa-home"></i> الرئيسية
                             </a>
                         </li>
+                        @if (Context.Session.GetInt32("UserId") != null)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link hilal-nav-link" asp-controller="Person" asp-action="Index" asp-route-familyTreeId="1">
+                                    <i class="fas fa-users"></i> الأفراد
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link hilal-nav-link" asp-controller="Home" asp-action="DatabaseManagement">
+                                    <i class="fas fa-database"></i> إدارة البيانات
+                                </a>
+                            </li>
+                        }
                     </ul>
                     <ul class="navbar-nav">
                         @if (Context.Session.GetInt32("UserId") != null)
                         {
                             <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("ViewLogs", "Home")">
-                                    <i class="fas fa-clipboard-list"></i> السجلات
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("CreateDefaultTree", "Home")">
-                                    <i class="fas fa-tree"></i> شجرة افتراضية
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("Index", "CombinedTree")">
-                                    <i class="fas fa-network-wired"></i> الشجرات المدمجة
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <span class="nav-link text-dark">
+                                <span class="nav-link hilal-nav-user">
                                     <i class="fas fa-user"></i> @Context.Session.GetString("Username")
                                 </span>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Logout">
+                                <a class="nav-link hilal-nav-link" asp-controller="Account" asp-action="Logout">
                                     <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
                                 </a>
                             </li>
@@ -68,7 +72,7 @@
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">
+                                <a class="nav-link hilal-nav-link" asp-controller="Account" asp-action="Login">
                                     <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
                                 </a>
                             </li>
@@ -79,24 +83,23 @@
         </nav>
     </header>
 
-    <div class="container">
+    <div class="container content-container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <!-- الفوتر المعدل - تم إزالة "بروح الهلال" -->
+    <footer class="border-top footer text-muted hilal-footer">
         <div class="container">
-            &copy; 2024 - FamilyTreePro - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2024 - الشجرة العائلية
         </div>
     </footer>
 
-    <!-- Bootstrap & jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- JavaScript محلي -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Custom JS -->
+    <script src="~/js/hilal-theme.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)

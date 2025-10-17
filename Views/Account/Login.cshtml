@@ -1,62 +1,104 @@
 ﻿@{
-    ViewData["Title"] = "تسجيل الدخول";
+    ViewData["Title"] = "تسجيل الدخول - شجرة العائلة";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container mt-5" dir="rtl">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-primary text-white text-center">
-                    <h4><i class="fas fa-sign-in-alt"></i> تسجيل الدخول</h4>
+<div class="login-page">
+    <div class="hilal-container">
+        <div class="hilal-card">
+            <div class="hilal-header">
+                <!-- هلال جميل -->
+                <div class="crescent-design"></div>
+
+                <div class="hilal-logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-tree"></i>
+                    </div>
+                    <div class="logo-text">شجرة العائلة</div>
                 </div>
-                <div class="card-body">
-                    @if (ViewBag.Error != null)
-                    {
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-circle"></i> @ViewBag.Error
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    }
+                <div class="hilal-subtitle">ارتباط • أصالة • استمرار</div>
+                <div class="hilal-title">تسجيل الدخول</div>
+            </div>
 
-                    <form asp-action="Login" method="post">
-                        <div class="mb-3">
-                            <label for="username" class="form-label">اسم المستخدم</label>
-                            <input type="text" class="form-control" id="username" name="username" required>
-                        </div>
+            <div class="hilal-body">
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert-message alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span>@ViewBag.Error</span>
+                    </div>
+                }
 
-                        <div class="mb-3">
-                            <label for="password" class="form-label">كلمة المرور</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
+                <form asp-action="Login" method="post">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <i class="fas fa-user input-icon"></i>
+                            <input type="text" id="username" name="username" class="hilal-input" required
+                                   placeholder="اسم المستخدم">
                         </div>
+                    </div>
 
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+                    <div class="form-group">
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="password" name="password" class="hilal-input" required
+                                   placeholder="كلمة المرور">
+                            <button type="button" class="password-toggle" id="togglePassword">
+                                <i class="fas fa-eye"></i>
                             </button>
                         </div>
-                    </form>
-
-                    <div class="text-center mt-3">
-                        <p>ليس لديك حساب؟ <a href="@Url.Action("Register", "Account")">سجل الآن</a></p>
                     </div>
 
-                    <!-- بيانات اختبار -->
-                    <div class="mt-4 p-3 bg-light rounded">
-                        <h6>بيانات الاختبار:</h6>
-                        <p class="mb-1"><strong>اسم المستخدم:</strong> admin</p>
-                        <p class="mb-0"><strong>كلمة المرور:</strong> 123456</p>
+                    <div class="form-options">
+                        <label class="remember-me">
+                            <input type="checkbox" id="rememberMe">
+                            تذكر دخولي
+                        </label>
                     </div>
+
+                    <button type="submit" class="hilal-btn btn-primary login-btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        دخول إلى الشجرة
+                    </button>
+                </form>
+
+                <div class="links-section">
+                    <a asp-action="Register" asp-controller="Account" class="hilal-btn btn-secondary register-link">
+                        <i class="fas fa-user-plus"></i>
+                        إنشاء حساب جديد
+                    </a>
+                    <a href="#" class="hilal-btn btn-outline forgot-password-link">
+                        <i class="fas fa-key"></i>
+                        نسيت كلمة المرور؟
+                    </a>
                 </div>
             </div>
         </div>
+
+        <!-- تم إزالة الفوتر من هنا -->
     </div>
 </div>
 
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // إظهار/إخفاء كلمة المرور
+            const togglePassword = document.getElementById('togglePassword');
+            const password = document.getElementById('password');
+
+            if (togglePassword && password) {
+                togglePassword.addEventListener('click', function() {
+                    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                    password.setAttribute('type', type);
+                    this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+                });
+            }
+
             // تركيز على حقل اسم المستخدم
-            document.getElementById('username').focus();
+            const usernameInput = document.getElementById('username');
+            if (usernameInput) {
+                usernameInput.focus();
+            }
         });
     </script>
 }

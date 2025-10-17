@@ -7,7 +7,35 @@
 <div class="container mt-4" dir="rtl">
     <h2 class="text-center mb-4">حذف شجرة عائلية</h2>
 
-    @if (ViewBag.CanDelete == false)
+    <!-- رسائل المعلومات الخاصة بالنظام الجديد -->
+    @if (ViewBag.IsLinkedTree == true)
+    {
+        <div class="alert alert-info">
+            <h4><i class="fas fa-info-circle"></i> شجرة مرتبطة</h4>
+            <p>هذه الشجرة مربوطة بشجرة أم. عند الحذف:</p>
+            <ul>
+                <li>✅ سيتم حذف الشجرة فقط</li>
+                <li>✅ البيانات ستظل محفوظة في الشجرة الأم</li>
+                <li>🔗 الشجرة الأم: <a href="@Url.Action("Index", "Person", new { familyTreeId = ViewBag.ParentTreeId })">عرض البيانات في الشجرة الأم</a></li>
+            </ul>
+        </div>
+    }
+    else if (ViewBag.HasChildTrees == true)
+    {
+        <div class="alert alert-warning">
+            <h4><i class="fas fa-exclamation-triangle"></i> شجرة أم</h4>
+            <p>هذه الشجرة تحتوي على @ViewBag.ChildTreeCount شجرة فرعية مرتبطة بها.</p>
+            <p>عند الحذف:</p>
+            <ul>
+                <li>❌ سيتم حذف الشجرة وجميع بياناتها</li>
+                <li>❌ ستفقد الشجرات الفرعية ارتباطها</li>
+                <li>⚠️ هذا الإجراء لا يمكن التراجع عنه</li>
+            </ul>
+        </div>
+    }
+
+    <!-- التحقق من إمكانية الحذف -->
+    @if (ViewBag.CanDelete == false && ViewBag.IsLinkedTree != true)
     {
         <div class="alert alert-danger">
             <h4><i class="fas fa-exclamation-triangle"></i> لا يمكن حذف هذه الشجرة</h4>
@@ -39,6 +67,15 @@
         <div class="alert alert-warning">
             <h4><i class="fas fa-exclamation-triangle"></i> تأكيد الحذف</h4>
             <p>هل أنت متأكد من أنك تريد حذف الشجرة العائلية التالية؟</p>
+
+            @if (ViewBag.IsLinkedTree == true)
+            {
+                <p class="text-success">✅ <strong>البيانات محفوظة في الشجرة الأم</strong></p>
+            }
+            else if (ViewBag.HasChildTrees == true)
+            {
+                <p class="text-danger">❌ <strong>سيتم حذف جميع البيانات</strong></p>
+            }
         </div>
 
         <div class="card">
@@ -48,7 +85,26 @@
             <div class="card-body">
                 <p><strong>الوصف:</strong> @Model.Description</p>
                 <p><strong>تاريخ الإنشاء:</strong> @Model.CreatedDate.ToString("yyyy/MM/dd")</p>
-                <p class="text-danger"><strong>⚠️ سيتم حذف هذه الشجرة بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.</strong></p>
+                <p><strong>عدد الأفراد:</strong> @(ViewBag.PersonCount ?? 0)</p>
+
+                @if (ViewBag.IsLinkedTree == true)
+                {
+                    <p class="text-success">
+                        <i class="fas fa-link"></i> <strong>مرتبطة بشجرة أم</strong> - البيانات محفوظة
+                    </p>
+                }
+                else if (ViewBag.HasChildTrees == true)
+                {
+                    <p class="text-warning">
+                        <i class="fas fa-sitemap"></i> <strong>شجرة أم</strong> - تحتوي على @ViewBag.ChildTreeCount شجرة فرعية
+                    </p>
+                }
+                else
+                {
+                    <p class="text-danger">
+                        <strong>⚠️ سيتم حذف هذه الشجرة بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.</strong>
+                    </p>
+                }
             </div>
         </div>
 
@@ -57,8 +113,16 @@
             <input type="hidden" asp-for="Id" />
 
             <div class="d-flex justify-content-center gap-2">
-                <button type="submit" class="btn btn-danger">
-                    <i class="fas fa-trash"></i> نعم، احذف الشجرة
+                <button type="submit" class="btn @(ViewBag.IsLinkedTree == true ? "btn-warning" : "btn-danger")">
+                    <i class="fas fa-trash"></i>
+                    @if (ViewBag.IsLinkedTree == true)
+                    {
+                        <span>نعم، احذف الشجرة (البيانات محفوظة)</span>
+                    }
+                    else
+                    {
+                        <span>نعم، احذف الشجرة والبيانات</span>
+                    }
                 </button>
                 <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">
                     <i class="fas fa-times"></i> إلغاء

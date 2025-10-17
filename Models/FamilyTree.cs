@@ -25,31 +25,32 @@ namespace FamilyTreePro.Models
         [RegularExpression("^#[0-9A-Fa-f]{6}$", ErrorMessage = "اللون يجب أن يكون بصيغة HEX (مثل: #007bff)")]
         public string Color { get; set; } = "#007bff";
 
-        // إزالة السمة Required من UserId
         [Display(Name = "المستخدم")]
         public int UserId { get; set; }
-
-        // جعل الخصائص الملاحية قابلة للقيمة الفارغة
-        public virtual User? User { get; set; }
+        public User User { get; set; }
 
         // العلاقة مع الأشخاص في هذه الشجرة
         public virtual ICollection<Person> Persons { get; set; }
 
-        // العلاقات مع الشجرات الأخرى (لربط الشجرات)
+        // العلاقات مع الشجرات الأخرى
         [Display(Name = "الشجرة الأم")]
         public int? ParentTreeId { get; set; }
 
         [ForeignKey("ParentTreeId")]
-        public virtual FamilyTree? ParentTree { get; set; }
+        public virtual FamilyTree ParentTree { get; set; }
 
         public virtual ICollection<FamilyTree> ChildTrees { get; set; }
 
-        // الشخص الذي يمثل نقطة الربط مع الشجرة الأم
+        // شخص الربط مع الشجرة الأم
         [Display(Name = "شخص الربط مع الشجرة الأم")]
         public int? ConnectionPersonId { get; set; }
 
         [ForeignKey("ConnectionPersonId")]
-        public virtual Person? ConnectionPerson { get; set; }
+        public virtual Person ConnectionPerson { get; set; }
+
+        // خاصية جديدة: هل البيانات مستقلة؟
+        [Display(Name = "البيانات مستقلة")]
+        public bool IsDataIndependent { get; set; }
 
         public FamilyTree()
         {
@@ -57,6 +58,7 @@ namespace FamilyTreePro.Models
             ChildTrees = new HashSet<FamilyTree>();
             CreatedDate = DateTime.Now;
             Description = string.Empty;
+            IsDataIndependent = true;
         }
     }
 }

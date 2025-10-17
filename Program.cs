@@ -1,17 +1,42 @@
 ﻿using FamilyTreePro.Models;
-using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Http.Json; // أضف هذا
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.WriteIndented = true;
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
+
+// إعدادات JSON لمنع دورات الكائنات
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    options.JsonSerializerOptions.WriteIndented = true;
+});
+
+builder.Services.Configure<JsonOptions>(options =>
+{
+    options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    options.SerializerOptions.WriteIndented = true;
+});
+
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true; options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax; // أو SameSiteMode.None
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // للتطوير
 });
 
 // إضافة خدمات التسجيل
@@ -26,9 +51,6 @@ builder.Services.AddLogging(logging =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=familytree.db"));
 
-// لا حاجة لتسجيل الـ Controllers يدوياً - احذف هذا السطر
-// builder.Services.AddScoped<PersonController>();
-
 var app = builder.Build();
 
 // إنشاء قاعدة البيانات تلقائياً
@@ -39,27 +61,38 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        logger.LogInformation("🔄 إعادة إنشاء قاعدة البيانات...");
-
-        // احذف قاعدة البيانات إذا كانت موجودة
-        await db.Database.EnsureDeletedAsync();
-        logger.LogInformation("✅ تم حذف قاعدة البيانات القديمة");
-
-        // أنشئ قاعدة البيانات جديدة
+        // فقط تأكد من وجود قاعدة البيانات، لا تحذفها
         db.Database.EnsureCreated();
-        logger.LogInformation("✅ تم إنشاء قاعدة بيانات جديدة");
 
-        // إضافة بيانات أولية
-        await SeedData(db);
-        logger.LogInformation("✅ تم إضافة البيانات الأولية");
+        // التحقق إذا كانت قاعدة البيانات فارغة، فقط тогда نضيف بيانات أولية
+        if (!db.Users.Any())
+        {
+            await SeedData(db);
+            logger.LogInformation("✅ تم إضافة البيانات الأولية لأن القاعدة كانت فارغة");
+        }
+        else
+        {
+            logger.LogInformation("✅ قاعدة البيانات موجودة بالفعل، تم الحفاظ على البيانات");
 
-        logger.LogInformation("🎉 اكتملت إعادة إنشاء قاعدة البيانات بنجاح!");
+            // طباعة إحصاءات البيانات الحالية للمساعدة في التجربة
+            var userCount = await db.Users.CountAsync();
+            var treeCount = await db.FamilyTrees.CountAsync();
+            var personCount = await db.Persons.CountAsync();
+
+            logger.LogInformation($"📊 إحصاءات البيانات الحالية:");
+            logger.LogInformation($"   - عدد المستخدمين: {userCount}");
+            logger.LogInformation($"   - عدد الشجرات: {treeCount}");
+            logger.LogInformation($"   - عدد الأفراد: {personCount}");
+        }
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "❌ خطأ في إنشاء قاعدة البيانات");
+        logger.LogError(ex, "❌ خطأ في التحقق من قاعدة البيانات");
     }
 }
+
+
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {

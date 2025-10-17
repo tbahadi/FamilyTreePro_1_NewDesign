@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FamilyTreePro.Models;
+using FamilyTreePro.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using FamilyTreePro.Models;
+using System.Text.Json;
 
 
 namespace FamilyTreePro.Controllers
@@ -69,6 +71,216 @@ namespace FamilyTreePro.Controllers
                 TempData["ErrorMessage"] = "حدث خطأ في تحميل الشجرات";
                 return View(new List<FamilyTree>());
             }
+        }
+
+        // ربط شجرة بأخرى - GET (محدث)
+        public async Task<IActionResult> ConnectTrees(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Account");
+
+            var currentTree = await _context.FamilyTrees
+                .FirstOrDefaultAsync(ft => ft.Id == id && ft.UserId == userId);
+
+            if (currentTree == null)
+            {
+                TempData["ErrorMessage"] = "الشجرة غير موجودة";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // الحصول على الشجرات الأخرى للمستخدم التي يمكن ربطها
+            var availableTrees = await _context.FamilyTrees
+                .Include(ft => ft.Persons)
+                .Where(ft => ft.UserId == userId && ft.Id != id && ft.ParentTreeId == null)
+                .ToListAsync();
+
+            ViewBag.CurrentTree = currentTree;
+            ViewBag.AvailableTrees = availableTrees;
+
+            return View();
+        }
+
+        public async Task<IActionResult> AdvancedFamilyTreeView(int familyTreeId)
+        {
+            var persons = await _context.Persons
+                .Where(p => p.FamilyTreeId == familyTreeId)
+                .Include(p => p.Occupation)
+                .ToListAsync();
+
+            var familyTree = await _context.FamilyTrees.FindAsync(familyTreeId);
+
+            ViewBag.FamilyTreeId = familyTreeId;
+            ViewBag.FamilyTreeName = familyTree?.Name ?? "شجرة عائلية";
+            ViewBag.PersonsCount = persons.Count;
+
+            // تحويل آمن للبيانات إلى JSON
+            try
+            {
+                var personsData = persons.Select(p => new
+                {
+                    id = p.Id,
+                    fullName = p.FullName,
+                    gender = p.Gender,
+                    birthDate = p.BirthDate?.ToString("yyyy-MM-dd"),
+                    city = p.City,
+                    occupationName = p.Occupation?.Name,
+                    fatherId = p.FatherId,
+                    isConnectionPoint = p.IsConnectionPoint
+                }).ToList();
+
+                ViewBag.PersonsJson = JsonSerializer.Serialize(personsData,
+                    new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            }
+            catch (Exception ex)
+            {
+                ViewBag.PersonsJson = "[]";
+                _logger.LogError(ex, "Error serializing persons data");
+            }
+
+            return View();
+        }
+
+        // ربط شجرة بأخرى - POST (محدث)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConnectTrees(int treeId, int? parentTreeId, int? connectionPersonId,
+            [FromServices] DataSyncService dataSyncService)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Account");
+
+            var tree = await _context.FamilyTrees
+                .FirstOrDefaultAsync(ft => ft.Id == treeId && ft.UserId == userId);
+
+            if (tree == null)
+            {
+                TempData["ErrorMessage"] = "الشجرة غير موجودة";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (parentTreeId.HasValue)
+            {
+                try
+                {
+                    // نسخ البيانات إلى الشجرة الأم
+                    bool copySuccess = await dataSyncService.CopyTreeData(treeId, parentTreeId.Value, connectionPersonId);
+
+                    if (copySuccess)
+                    {
+                        TempData["SuccessMessage"] = "تم ربط الشجرات ونسخ البيانات بنجاح!";
+                    }
+                    else
+                    {
+                        TempData["ErrorMessage"] = "تم الربط ولكن حدث خطأ في نسخ البيانات";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "خطأ أثناء ربط الشجرات");
+                    TempData["ErrorMessage"] = $"حدث خطأ أثناء الربط: {ex.Message}";
+                }
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "يجب اختيار شجرة أم للربط";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+        // حذف شجرة عائلية - محدث
+        // حذف شجرة عائلية - GET
+        public async Task<IActionResult> DeleteTree(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var tree = await _context.FamilyTrees
+                .Include(ft => ft.Persons)
+                .Include(ft => ft.ChildTrees)
+                .FirstOrDefaultAsync(ft => ft.Id == id && ft.UserId == userId);
+
+            if (tree == null)
+            {
+                TempData["ErrorMessage"] = "الشجرة غير موجودة";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // النظام الجديد: التحقق من أنواع الشجرات
+            if (tree.ParentTreeId.HasValue)
+            {
+                // شجرة فرعية مرتبطة - يمكن حذفها (البيانات في الشجرة الأم)
+                ViewBag.IsLinkedTree = true;
+                ViewBag.ParentTreeId = tree.ParentTreeId;
+                ViewBag.CanDelete = true;
+            }
+            else if (tree.ChildTrees.Any())
+            {
+                // شجرة أم تحتوي على شجرات فرعية
+                ViewBag.HasChildTrees = true;
+                ViewBag.ChildTreeCount = tree.ChildTrees.Count;
+                ViewBag.CanDelete = false; // لا يمكن حذفها مباشرة
+            }
+            else if (tree.Persons.Any())
+            {
+                // شجرة مستقلة تحتوي على أفراد
+                ViewBag.HasPersons = true;
+                ViewBag.PersonCount = tree.Persons.Count;
+                ViewBag.CanDelete = false; // لا يمكن حذفها مباشرة
+            }
+            else
+            {
+                // شجرة فارغة - يمكن حذفها
+                ViewBag.CanDelete = true;
+            }
+
+            ViewBag.PersonCount = tree.Persons.Count;
+            ViewBag.ChildTreeCount = tree.ChildTrees.Count;
+
+            return View(tree);
+        }
+
+        [HttpPost, ActionName("DeleteTree")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteTreeConfirmed(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return RedirectToAction("Login", "Account");
+
+            var tree = await _context.FamilyTrees
+                .Include(ft => ft.Persons)
+                .FirstOrDefaultAsync(ft => ft.Id == id && ft.UserId == userId);
+
+            if (tree != null)
+            {
+                try
+                {
+                    // إذا كانت الشجرة مربوطة بشجرة أم، نحذفها فقط دون حذف الأشخاص
+                    // لأن الأشخاص موجودين في الشجرة الأم
+                    if (tree.ParentTreeId.HasValue)
+                    {
+                        _context.FamilyTrees.Remove(tree);
+                        await _context.SaveChangesAsync();
+                        TempData["SuccessMessage"] = "تم حذف الشجرة بنجاح! البيانات محفوظة في الشجرة الأم.";
+                    }
+                    else
+                    {
+                        // إذا كانت شجرة مستقلة، نحذفها مع أشخاصها
+                        _context.FamilyTrees.Remove(tree);
+                        await _context.SaveChangesAsync();
+                        TempData["SuccessMessage"] = "تم حذف الشجرة وجميع بياناتها بنجاح!";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "خطأ أثناء حذف الشجرة");
+                    TempData["ErrorMessage"] = $"حدث خطأ أثناء الحذف: {ex.Message}";
+                }
+            }
+
+            return RedirectToAction(nameof(Index));
         }
 
         // أكشن لفحص جميع البيانات (للتجربة فقط)
@@ -216,76 +428,7 @@ namespace FamilyTreePro.Controllers
             return View(viewModel);
         }
 
-        // ربط شجرة بأخرى - GET
-        public async Task<IActionResult> ConnectTrees(int id)
-        {
-            var userId = GetCurrentUserId();
-            if (userId == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            var currentTree = await _context.FamilyTrees
-                .FirstOrDefaultAsync(ft => ft.Id == id && ft.UserId == userId);
-
-            if (currentTree == null)
-            {
-                TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
-                return RedirectToAction(nameof(Index));
-            }
-
-            // الحصول على الشجرات الأخرى للمستخدم التي يمكن ربطها
-            var availableTrees = await _context.FamilyTrees
-                .Include(ft => ft.Persons)
-                .Where(ft => ft.UserId == userId && ft.Id != id && ft.ParentTreeId == null)
-                .ToListAsync();
-
-            ViewBag.CurrentTree = currentTree;
-            ViewBag.AvailableTrees = availableTrees;
-
-            return View();
-        }
-
-        // ربط شجرة بأخرى - POST
-        // ربط شجرة بأخرى - POST (بدون IsConnectionPoint)
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ConnectTrees(int treeId, int? parentTreeId, int? connectionPersonId)
-        {
-            var userId = GetCurrentUserId();
-            if (userId == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            var tree = await _context.FamilyTrees
-                .FirstOrDefaultAsync(ft => ft.Id == treeId && ft.UserId == userId);
-
-            if (tree == null)
-            {
-                TempData["ErrorMessage"] = "الشجرة غير موجودة";
-                return RedirectToAction(nameof(Index));
-            }
-
-            if (parentTreeId.HasValue)
-            {
-                try
-                {
-                    tree.ParentTreeId = parentTreeId;
-                    tree.ConnectionPersonId = connectionPersonId;
-
-                    await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = "تم ربط الشجرات بنجاح!";
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "خطأ أثناء ربط الشجرات");
-                    TempData["ErrorMessage"] = $"حدث خطأ أثناء الربط: {ex.Message}";
-                }
-            }
-
-            return RedirectToAction(nameof(Index));
-        }
+         
 
         // عرض الـ Logs مباشرة في المتصفح
         public IActionResult ViewLogs()
@@ -563,109 +706,6 @@ namespace FamilyTreePro.Controllers
             }
         }
 
-        // حذف شجرة عائلية
-        // عرض تأكيد حذف شجرة - GET
-        public async Task<IActionResult> DeleteTree(int id)
-        {
-            var userId = GetCurrentUserId();
-            if (userId == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            var tree = await _context.FamilyTrees
-                .Include(ft => ft.Persons)
-                .Include(ft => ft.ChildTrees)
-                .FirstOrDefaultAsync(ft => ft.Id == id && ft.UserId == userId);
-
-            if (tree == null)
-            {
-                TempData["ErrorMessage"] = "الشجرة غير موجودة";
-                return RedirectToAction(nameof(Index));
-            }
-
-            // التحقق من إمكانية الحذف
-            if (tree.Persons.Any() || tree.ChildTrees.Any())
-            {
-                ViewBag.CanDelete = false;
-                ViewBag.PersonCount = tree.Persons.Count;
-                ViewBag.ChildTreeCount = tree.ChildTrees.Count;
-            }
-            else
-            {
-                ViewBag.CanDelete = true;
-            }
-
-            return View(tree);
-        }
-
-        [HttpPost, ActionName("DeleteTree")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteTreeConfirmed(int id)
-        {
-            var userId = GetCurrentUserId();
-            if (userId == null)
-            {
-                _logger.LogWarning("❌ محاولة حذف شجرة بدون تسجيل دخول");
-                return RedirectToAction("Login", "Account");
-            }
-
-            _logger.LogInformation($"🔍 بدء محاولة حذف الشجرة {id} للمستخدم {userId}");
-
-            try
-            {
-                var tree = await _context.FamilyTrees
-                    .Include(ft => ft.Persons)
-                    .Include(ft => ft.ChildTrees)
-                    .FirstOrDefaultAsync(ft => ft.Id == id && ft.UserId == userId);
-
-                if (tree == null)
-                {
-                    _logger.LogWarning($"❌ الشجرة {id} غير موجودة أو لا تتبع للمستخدم {userId}");
-                    TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                _logger.LogInformation($"📊 معلومات الشجرة المراد حذفها:");
-                _logger.LogInformation($"   - الاسم: {tree.Name}");
-                _logger.LogInformation($"   - عدد الأفراد: {tree.Persons?.Count ?? 0}");
-                _logger.LogInformation($"   - عدد الشجرات الفرعية: {tree.ChildTrees?.Count ?? 0}");
-
-                // التحقق من وجود أفراد أو شجرات فرعية
-                if (tree.Persons?.Any() == true || tree.ChildTrees?.Any() == true)
-                {
-                    _logger.LogWarning($"❌ لا يمكن حذف الشجرة {id} لأنها تحتوي على:");
-                    _logger.LogWarning($"   - أفراد: {tree.Persons?.Count ?? 0}");
-                    _logger.LogWarning($"   - شجرات فرعية: {tree.ChildTrees?.Count ?? 0}");
-
-                    TempData["ErrorMessage"] = "لا يمكن حذف الشجرة لأنها تحتوي على أفراد أو شجرات فرعية";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                _logger.LogInformation($"🗑️ بدء حذف الشجرة {id}");
-
-                // الحذف
-                _context.FamilyTrees.Remove(tree);
-                int recordsAffected = await _context.SaveChangesAsync();
-
-                _logger.LogInformation($"✅ تم حذف الشجرة بنجاح! السجلات المتأثرة: {recordsAffected}");
-
-                TempData["SuccessMessage"] = "تم حذف الشجرة بنجاح!";
-            }
-            catch (DbUpdateException dbEx)
-            {
-                _logger.LogError(dbEx, $"❌ خطأ في قاعدة البيانات أثناء حذف الشجرة {id}");
-                _logger.LogError($"تفاصيل الخطأ الداخلية: {dbEx.InnerException?.Message}");
-
-                TempData["ErrorMessage"] = $"حدث خطأ في قاعدة البيانات أثناء الحذف: {dbEx.InnerException?.Message ?? dbEx.Message}";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"❌ خطأ غير متوقع أثناء حذف الشجرة {id}");
-                TempData["ErrorMessage"] = $"حدث خطأ غير متوقع أثناء الحذف: {ex.Message}";
-            }
-
-            return RedirectToAction(nameof(Index));
-        }
+         
     }
     }

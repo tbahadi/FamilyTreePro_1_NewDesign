@@ -85,15 +85,27 @@ namespace FamilyTreePro.Models
         [Display(Name = "يمثل نقطة ربط بين الشجرات")]
         public bool IsConnectionPoint { get; set; }
 
+        // خاصية جديدة: معرف الشجرة الأصلية (إذا كانت البيانات منسوخة)
+        [Display(Name = "الشجرة الأصلية")]
+        public int? OriginalTreeId { get; set; }
+
+        [ForeignKey("OriginalTreeId")]
+        public virtual FamilyTree OriginalTree { get; set; }
+
+        // خاصية جديدة: هل السجل أصلي أم منسوخ؟
+        [Display(Name = "سجل أصلي")]
+        public bool IsOriginalRecord { get; set; }
+
         public Person()
         {
             Children = new HashSet<Person>();
             CreatedDate = DateTime.Now;
             IsConnectionPoint = false;
-            Photo = string.Empty; // تأكيد القيمة الافتراضية
+            Photo = string.Empty;
             City = string.Empty;
             Notes = string.Empty;
             Nickname = string.Empty;
+            IsOriginalRecord = true; // القيمة الافتراضية
         }
     }
 }

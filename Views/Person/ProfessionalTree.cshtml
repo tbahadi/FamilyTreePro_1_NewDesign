@@ -1,0 +1,1288 @@
+﻿@{
+    ViewData["Title"] = "الشجرة العائلية المتقدمة";
+    var familyTreeId = ViewBag.FamilyTreeId;
+    var familyTreeName = ViewBag.FamilyTreeName ?? "شجرة عائلية";
+    var personsCount = ViewBag.PersonsCount ?? 0;
+}
+
+@if (personsCount == 0)
+{
+    <div class="container-fluid mt-4" dir="rtl">
+        <div class="alert alert-info text-center">
+            <h4>ℹ️ لا توجد بيانات</h4>
+            <p>لم يتم إضافة أي أفراد إلى هذه الشجرة العائلية بعد.</p>
+            <a href="@Url.Action("Create", "Person", new { familyTreeId = familyTreeId })" class="btn btn-primary">
+                <i class="fas fa-plus"></i> إضافة أول فرد
+            </a>
+        </div>
+    </div>
+    return;
+}
+
+<div class="container-fluid mt-4" dir="rtl">
+    <h2 class="text-center mb-4">@familyTreeName - الشجرة العائلية المتقدمة</h2>
+
+    <div class="d-flex justify-content-between mb-3">
+        <div>
+            <a href="@Url.Action("Index", "Person", new { familyTreeId = familyTreeId })" class="btn btn-secondary no-print">
+                <i class="fas fa-list"></i> العرض العادي
+            </a>
+            <a href="@Url.Action("FamilyTreeView", "Person", new { familyTreeId = familyTreeId })" class="btn btn-info no-print">
+                <i class="fas fa-project-diagram"></i> الشجرة البسيطة
+            </a>
+            <button id="printPdf" class="btn btn-success no-print">
+                <i class="fas fa-file-pdf"></i> طباعة PDF
+            </button>
+        </div>
+        <div class="no-print">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-palette"></i> شكل البطاقة
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item card-style" data-style="default" href="#">🔵 شكل افتراضي</a></li>
+                    <li><a class="dropdown-item card-style" data-style="modern" href="#">🎨 شكل حديث</a></li>
+                    <li><a class="dropdown-item card-style" data-style="elegant" href="#">✨ شكل أنيق</a></li>
+                    <li><a class="dropdown-item card-style" data-style="minimal" href="#">⚪ شكل بسيط</a></li>
+                    <li><a class="dropdown-item card-style" data-style="colorful" href="#">🌈 شكل ملون</a></li>
+                </ul>
+            </div>
+
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-project-diagram"></i> شكل العرض
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item layout-style" data-layout="hierarchical" href="#">🌳 شكل هرمي</a></li>
+                    <li><a class="dropdown-item layout-style" data-layout="leaf" href="#">🍃 شكل ورقة شجرة</a></li>
+                    <li><a class="dropdown-item layout-style" data-layout="simple" href="#">📊 شكل مبسط</a></li>
+                </ul>
+            </div>
+
+            <button id="zoomIn" class="btn btn-outline-primary">
+                <i class="fas fa-search-plus"></i> تكبير
+            </button>
+            <button id="zoomOut" class="btn btn-outline-primary">
+                <i class="fas fa-search-minus"></i> تصغير
+            </button>
+            <button id="resetView" class="btn btn-outline-secondary">
+                <i class="fas fa-sync"></i> إعادة تعيين
+            </button>
+        </div>
+    </div>
+
+    <div id="tree-container" style="width: 100%; height: 700px; border: 1px solid #ddd; border-radius: 10px; background: #f8f9fa; overflow: auto; position: relative;">
+        <div id="family-tree" style="position: relative;">
+            <!-- سيتم رسم الشجرة هنا بالJavaScript -->
+        </div>
+    </div>
+
+    <!-- معلومات عند التمرير -->
+    <div id="node-info" class="card mt-3 no-print" style="display: none;">
+        <div class="card-body">
+            <h5 id="info-name"></h5>
+            <p id="info-details" class="mb-0"></p>
+        </div>
+    </div>
+</div>
+
+<!-- ستايل متقدم للشجرة -->
+<style>
+    /* الأنيميشن المفقود - إصلاح مشكلة keyframes */
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    @@keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @@keyframes bounceIn {
+        0% {
+            opacity: 0;
+            transform: scale(0.3);
+        }
+
+        50% {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        70% {
+            transform: scale(0.9);
+        }
+
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    /* الأشكال الافتراضية - هرمي */
+    .tree-node {
+        position: absolute;
+        min-width: 180px;
+        max-width: 250px;
+        padding: 12px;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10;
+        background: white;
+        word-wrap: break-word;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+        .tree-node.male {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border: 2px solid #1976d2;
+        }
+
+        .tree-node.female {
+            background: linear-gradient(135deg, #fce4ec, #f8bbd9);
+            border: 2px solid #c2185b;
+        }
+
+        .tree-node.connected {
+            background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+            border: 2px solid #388e3c;
+        }
+
+        /* أشكال البطاقات الإضافية */
+        .tree-node.modern {
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: none;
+            background: white;
+            animation: slideInRight 0.5s ease-out;
+        }
+
+            .tree-node.modern.male {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+
+            .tree-node.modern.female {
+                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                color: white;
+            }
+
+            .tree-node.modern .node-details {
+                color: rgba(255,255,255,0.9);
+            }
+
+        .tree-node.elegant {
+            border-radius: 8px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            border: 1px solid #e0e0e0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+            .tree-node.elegant.male {
+                background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                color: white;
+                border: none;
+            }
+
+            .tree-node.elegant.female {
+                background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+                color: white;
+                border: none;
+            }
+
+        .tree-node.minimal {
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+            background: white;
+            animation: fadeInUp 0.4s ease-out;
+        }
+
+            .tree-node.minimal.male {
+                border-left: 4px solid #1976d2;
+                background: #f8fbff;
+            }
+
+            .tree-node.minimal.female {
+                border-left: 4px solid #c2185b;
+                background: #fff8fb;
+            }
+
+        .tree-node.colorful {
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            border: none;
+            color: white;
+            animation: bounceIn 0.6s ease-out;
+        }
+
+            .tree-node.colorful.male {
+                background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            }
+
+            .tree-node.colorful.female {
+                background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+                color: #333;
+            }
+
+        /* تأثيرات مشتركة */
+        .tree-node:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            z-index: 100;
+            animation: pulse 1s infinite;
+        }
+
+    .node-name {
+        font-weight: bold;
+        font-size: 14px;
+        margin-bottom: 5px;
+        line-height: 1.3;
+    }
+
+    .node-details {
+        font-size: 11px;
+        line-height: 1.3;
+    }
+
+    /* خطوط الوصل للشكل الهرمي */
+    .tree-connector {
+        position: absolute;
+        background: #666;
+        z-index: 1;
+        pointer-events: none;
+        animation: fadeInUp 0.8s ease-out;
+    }
+
+    .connector-horizontal {
+        height: 2px;
+    }
+
+    .connector-vertical {
+        width: 2px;
+    }
+
+    .connector-arrow {
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    /* شكل ورقة الشجرة - معدل */
+    .leaf-layout {
+        background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+        border-radius: 20px;
+        padding: 30px;
+        min-height: 600px;
+        border: 3px solid #4CAF50;
+        text-align: center;
+        width: 100%;
+        display: block;
+    }
+
+    .leaf-node {
+        background: white;
+        border-radius: 15px;
+        padding: 15px;
+        margin: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: 2px solid #4CAF50;
+        text-align: center;
+        display: inline-block;
+        min-width: 180px;
+        max-width: 220px;
+        transition: all 0.3s ease;
+        position: relative;
+        animation: fadeInUp 0.5s ease-out;
+        vertical-align: top;
+    }
+
+        .leaf-node.male {
+            border-color: #1976d2;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        }
+
+        .leaf-node.female {
+            border-color: #c2185b;
+            background: linear-gradient(135deg, #fce4ec, #f8bbd9);
+        }
+
+        .leaf-node:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            animation: pulse 0.8s infinite;
+        }
+
+    .leaf-generation {
+        text-align: center;
+        margin: 20px 0;
+        position: relative;
+        padding: 15px 0;
+        animation: slideInRight 0.6s ease-out;
+        border-bottom: 2px dashed #4CAF50;
+    }
+
+        .leaf-generation:last-child {
+            border-bottom: none;
+        }
+
+    .generation-title {
+        background: #4CAF50;
+        color: white;
+        padding: 8px 20px;
+        border-radius: 25px;
+        display: inline-block;
+        margin-bottom: 15px;
+        font-weight: bold;
+        box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
+        animation: bounceIn 0.5s ease-out;
+    }
+
+    /* شكل مبسط */
+    .simple-layout {
+        background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+        padding: 20px;
+        text-align: center;
+        min-height: 600px;
+    }
+
+    .simple-node {
+        background: white;
+        border-radius: 8px;
+        padding: 12px 15px;
+        margin: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid #ddd;
+        display: inline-block;
+        text-align: center;
+        min-width: 160px;
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.4s ease-out;
+    }
+
+        .simple-node.male {
+            border-left: 4px solid #1976d2;
+            background: #f8fbff;
+        }
+
+        .simple-node.female {
+            border-left: 4px solid #c2185b;
+            background: #fff8fb;
+        }
+
+        .simple-node:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+    /* عناصر مشتركة */
+    .children-container {
+        position: relative;
+        margin-top: 60px;
+    }
+
+    .generation-line {
+        position: absolute;
+        height: 2px;
+        background: #999;
+        top: -30px;
+        z-index: 1;
+    }
+
+    #tree-container {
+        cursor: grab;
+    }
+
+        #tree-container:active {
+            cursor: grabbing;
+        }
+
+    .loading-spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+
+    /* إضافة كلاس للإخفاء أثناء الطباعة */
+    .no-print {
+        display: block;
+    }
+
+    .pdf-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        z-index: 9999;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 18px;
+    }
+
+    /* ستايلات خاصة للطباعة */
+    .print-version {
+        background: white !important;
+        padding: 20px !important;
+    }
+
+    .print-hierarchical {
+        min-width: 2000px !important;
+        min-height: 1000px !important;
+        padding: 50px !important;
+    }
+
+    .print-leaf {
+        background: linear-gradient(135deg, #e8f5e8, #c8e6c9) !important;
+        border-radius: 20px !important;
+        padding: 30px !important;
+    }
+
+    .print-simple {
+        background: linear-gradient(135deg, #f5f5f5, #e0e0e0) !important;
+        padding: 20px !important;
+    }
+
+    /* إشعارات */
+    .alert-notification {
+        position: fixed !important;
+        top: 20px !important;
+        right: 20px !important;
+        z-index: 9999 !important;
+        min-width: 300px !important;
+        animation: slideInRight 0.5s ease-out !important;
+    }
+
+    /* تأثيرات إضافية */
+    .fade-in {
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    .bounce-in {
+        animation: bounceIn 0.6s ease-out;
+    }
+
+    .slide-in {
+        animation: slideInRight 0.5s ease-out;
+    }
+
+    .pulse-effect {
+        animation: pulse 2s infinite;
+    }
+
+    /* تحسينات للطباعة عالية الجودة */
+    .high-quality-print {
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .print-optimized {
+        image-rendering: -webkit-optimize-contrast !important;
+        image-rendering: crisp-edges !important;
+    }
+</style>
+
+<!-- مكتبات إضافية للPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+@section Scripts {
+    <script>
+        // بيانات الشجرة من ViewBag
+        const personsJson = '@Html.Raw(ViewBag.PersonsJson)' || '[]';
+        const familyTreeId = @ViewBag.FamilyTreeId;
+        const familyTreeName = '@familyTreeName';
+        const personsCount = @personsCount;
+
+        console.log('عدد الأفراد:', personsCount);
+        console.log('بيانات JSON:', personsJson);
+        console.log('اسم الشجرة:', familyTreeName);
+
+        let treeData = [];
+        let zoomLevel = 1.0;
+        let panning = false;
+        let startX, startY, scrollLeft, scrollTop;
+        let allConnectors = [];
+        let currentCardStyle = 'default';
+        let currentLayout = 'hierarchical';
+
+        // وظائف مساعدة
+        function formatDate(dateString) {
+            try {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                return isNaN(date.getTime()) ? dateString : date.toLocaleDateString('ar-EG');
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // تحميل البيانات
+        function loadTreeData() {
+            try {
+                if (personsJson && personsJson !== '[]') {
+                    treeData = JSON.parse(personsJson);
+                    console.log('تم تحليل البيانات بنجاح:', treeData.length, 'فرد');
+                    return true;
+                }
+                return false;
+            } catch (e) {
+                console.error('خطأ في تحليل JSON:', e);
+                return false;
+            }
+        }
+
+        // ========== إدارة الأشكال ==========
+
+        function changeCardStyle(style) {
+            currentCardStyle = style;
+            console.log('تغيير شكل البطاقة إلى:', style);
+            redrawCurrentLayout();
+            showNotification(`تم تغيير الشكل إلى: ${getStyleName(style)}`, 'success');
+        }
+
+        function changeLayout(layout) {
+            currentLayout = layout;
+            console.log('تغيير شكل العرض إلى:', layout);
+            redrawCurrentLayout();
+            showNotification(`تم تغيير العرض إلى: ${getLayoutName(layout)}`, 'success');
+        }
+
+        function redrawCurrentLayout() {
+            const container = $('#family-tree');
+            container.empty();
+            clearAllConnectors();
+
+            container.removeClass('leaf-layout simple-layout');
+
+            if (currentLayout === 'leaf') {
+                container.addClass('leaf-layout');
+                drawLeafLayout();
+            } else if (currentLayout === 'simple') {
+                container.addClass('simple-layout');
+                drawSimpleLayout();
+            } else {
+                drawHierarchicalTree();
+            }
+        }
+
+        function getStyleName(style) {
+            const styles = {
+                'default': 'الشكل الافتراضي',
+                'modern': 'الشكل الحديث',
+                'elegant': 'الشكل الأنيق',
+                'minimal': 'الشكل البسيط',
+                'colorful': 'الشكل الملون'
+            };
+            return styles[style] || 'غير معروف';
+        }
+
+        function getLayoutName(layout) {
+            const layouts = {
+                'hierarchical': 'الشكل الهرمي',
+                'leaf': 'شكل ورقة الشجرة',
+                'simple': 'الشكل المبسط'
+            };
+            return layouts[layout] || 'غير معروف';
+        }
+
+        // ========== أشكال العرض ==========
+
+        function drawHierarchicalTree() {
+            const container = $('#family-tree');
+            console.log('رسم الشكل الهرمي');
+
+            container.css({
+                'min-width': '2000px',
+                'min-height': '1000px',
+                'padding': '50px'
+            });
+
+            const rootPersons = treeData.filter(p => !p.fatherId);
+
+            if (rootPersons.length === 0) {
+                drawAllPersonsHierarchical();
+                return;
+            }
+
+            let xPosition = 200;
+            rootPersons.forEach((root, index) => {
+                const rootNode = createTreeNode(root, xPosition, 100, 0);
+                container.append(rootNode.element);
+                drawChildrenHierarchical(root, rootNode, 1);
+                xPosition += 400;
+            });
+        }
+
+        function drawChildrenHierarchical(parent, parentNode, level) {
+            const children = treeData.filter(p => p.fatherId === parent.id);
+            if (children.length === 0) return;
+
+            const container = $('#family-tree');
+            const childrenCount = children.length;
+            const spacing = 300;
+            const childrenWidth = childrenCount * spacing;
+            const startX = parentNode.x + parentNode.width / 2 - childrenWidth / 2 + spacing / 2;
+            const startY = parentNode.y + parentNode.height + 100;
+
+            children.forEach((child, index) => {
+                const childX = startX + (index * spacing);
+                const childNode = createTreeNode(child, childX, startY, level);
+                container.append(childNode.element);
+
+                drawConnector(parentNode, childNode);
+                drawChildrenHierarchical(child, childNode, level + 1);
+            });
+        }
+
+        function drawAllPersonsHierarchical() {
+            const container = $('#family-tree');
+            console.log('رسم جميع الأفراد بشكل هرمي');
+
+            let xPosition = 100;
+            let yPosition = 100;
+            let maxX = 100;
+
+            treeData.forEach((person, index) => {
+                const node = createTreeNode(person, xPosition, yPosition, 0);
+                container.append(node.element);
+
+                xPosition += 250;
+                maxX = Math.max(maxX, xPosition);
+
+                if ((index + 1) % 5 === 0) {
+                    xPosition = 100;
+                    yPosition += 150;
+                }
+            });
+
+            container.css({
+                'min-width': maxX + 100 + 'px',
+                'min-height': yPosition + 200 + 'px'
+            });
+        }
+
+        function drawLeafLayout() {
+            const container = $('#family-tree');
+            console.log('رسم شكل ورقة الشجرة');
+
+            // تنظيف الحاوية أولاً
+            container.empty();
+
+            const generations = organizeByGeneration();
+            console.log('عدد الأجيال:', generations.length);
+
+            if (generations.length === 0) {
+                container.html('<div class="alert alert-warning text-center">لا توجد بيانات لعرضها</div>');
+                return;
+            }
+
+            generations.forEach((generation, genIndex) => {
+                const generationDiv = $(`<div class="leaf-generation"></div>`);
+                const title = $(`<div class="generation-title">الجيل ${genIndex + 1}</div>`);
+                generationDiv.append(title);
+
+                console.log(`الجيل ${genIndex + 1}:`, generation.length, 'فرد');
+
+                generation.forEach((person) => {
+                    const node = createLeafNode(person);
+                    generationDiv.append(node);
+                });
+
+                container.append(generationDiv);
+            });
+
+            // إضافة بعض المساحة في الأسفل
+            container.append('<div style="height: 50px;"></div>');
+        }
+
+        function drawSimpleLayout() {
+            const container = $('#family-tree');
+            console.log('رسم الشكل المبسط');
+
+            treeData.forEach((person) => {
+                const node = createSimpleNode(person);
+                container.append(node);
+            });
+        }
+
+        // ========== إنشاء العقد ==========
+
+        function createTreeNode(person, x, y, level) {
+            const birthDate = formatDate(person.birthDate);
+            const city = person.city || '';
+            const occupationName = person.occupationName || '';
+            const gender = person.gender || 'Male';
+
+            const styleClass = currentCardStyle !== 'default' ? ` ${currentCardStyle}` : '';
+
+            const nodeContent = `
+                <div class="tree-node ${gender === 'Male' ? 'male' : 'female'}${styleClass}"
+                     data-person-id="${person.id}"
+                     style="left: ${x}px; top: ${y}px;">
+                    <div class="node-name">${escapeHtml(person.fullName || 'غير معروف')}</div>
+                    <div class="node-details">
+                        ${birthDate ? '📅 ' + birthDate + '<br>' : ''}
+                        ${city ? '🏠 ' + escapeHtml(city) + '<br>' : ''}
+                        ${occupationName ? '💼 ' + escapeHtml(occupationName) : ''}
+                    </div>
+                </div>
+            `;
+
+            const node = $(nodeContent);
+
+            node.on('click', function(e) {
+                e.stopPropagation();
+                showPersonDetails(person);
+            });
+
+            return {
+                element: node,
+                x: x,
+                y: y,
+                width: 180,
+                height: 80,
+                person: person
+            };
+        }
+
+        function createLeafNode(person) {
+            const birthDate = formatDate(person.birthDate);
+            const city = person.city || '';
+            const occupationName = person.occupationName || '';
+            const gender = person.gender || 'Male';
+
+            const nodeContent = `
+                <div class="leaf-node ${gender === 'Male' ? 'male' : 'female'}"
+                     data-person-id="${person.id}">
+                    <div class="node-name">${escapeHtml(person.fullName || 'غير معروف')}</div>
+                    <div class="node-details">
+                        ${birthDate ? '📅 ' + birthDate + '<br>' : ''}
+                        ${city ? '🏠 ' + escapeHtml(city) + '<br>' : ''}
+                        ${occupationName ? '💼 ' + escapeHtml(occupationName) : ''}
+                    </div>
+                </div>
+            `;
+
+            const node = $(nodeContent);
+
+            node.on('click', function(e) {
+                e.stopPropagation();
+                showPersonDetails(person);
+            });
+
+            return node;
+        }
+
+        function createSimpleNode(person) {
+            const birthDate = formatDate(person.birthDate);
+            const gender = person.gender || 'Male';
+
+            const nodeContent = `
+                <div class="simple-node ${gender === 'Male' ? 'male' : 'female'}"
+                     data-person-id="${person.id}">
+                    <div class="node-name">${escapeHtml(person.fullName || 'غير معروف')}</div>
+                    <div class="node-details">
+                        ${birthDate ? '📅 ' + birthDate : ''}
+                    </div>
+                </div>
+            `;
+
+            const node = $(nodeContent);
+
+            node.on('click', function(e) {
+                e.stopPropagation();
+                showPersonDetails(person);
+            });
+
+            return node;
+        }
+
+        // ========== وظائف مساعدة ==========
+
+        function organizeByGeneration() {
+            const generations = [];
+            const processed = new Set();
+
+            // البدء بالأجداد (الأشخاص بدون أب)
+            const roots = treeData.filter(p => !p.fatherId);
+            console.log('عدد الأجداد:', roots.length);
+
+            if (roots.length > 0) {
+                generations.push(roots);
+                roots.forEach(root => processed.add(root.id));
+
+                let currentGen = roots;
+                let generationNumber = 1;
+
+                while (currentGen.length > 0) {
+                    const nextGen = [];
+                    currentGen.forEach(parent => {
+                        const children = treeData.filter(p => p.fatherId === parent.id && !processed.has(p.id));
+                        children.forEach(child => {
+                            nextGen.push(child);
+                            processed.add(child.id);
+                        });
+                    });
+
+                    if (nextGen.length > 0) {
+                        generations.push(nextGen);
+                        console.log(`الجيل ${generationNumber + 1}:`, nextGen.length, 'فرد');
+                    }
+                    currentGen = nextGen;
+                    generationNumber++;
+                }
+            } else {
+                // إذا لم يكن هناك أجداد، نعرض جميع الأشخاص في جيل واحد
+                console.log('لا توجد أجداد، عرض جميع الأشخاص في جيل واحد');
+                generations.push(treeData);
+            }
+
+            // التأكد من معالجة جميع الأشخاص
+            const unprocessed = treeData.filter(p => !processed.has(p.id));
+            if (unprocessed.length > 0) {
+                console.log('أشخاص غير معالجين:', unprocessed.length);
+                generations.push(unprocessed);
+            }
+
+            return generations;
+        }
+
+        function drawConnector(parentNode, childNode) {
+            const container = $('#family-tree');
+
+            const parentCenterX = parentNode.x + parentNode.width / 2;
+            const parentBottom = parentNode.y + parentNode.height;
+            const childCenterX = childNode.x + childNode.width / 2;
+            const childTop = childNode.y;
+
+            const distance = childTop - parentBottom;
+            const midPoint = parentBottom + distance / 2;
+
+            const verticalLine1 = $(`<div class="tree-connector connector-vertical" style="left: ${parentCenterX}px; top: ${parentBottom}px; height: ${distance / 2}px;"></div>`);
+            container.append(verticalLine1);
+            allConnectors.push(verticalLine1);
+
+            const horizontalLine = $(`<div class="tree-connector connector-horizontal" style="left: ${Math.min(parentCenterX, childCenterX)}px; top: ${midPoint}px; width: ${Math.abs(childCenterX - parentCenterX)}px;"></div>`);
+            container.append(horizontalLine);
+            allConnectors.push(horizontalLine);
+
+            const verticalLine2 = $(`<div class="tree-connector connector-vertical" style="left: ${childCenterX}px; top: ${midPoint}px; height: ${distance / 2}px;"></div>`);
+            container.append(verticalLine2);
+            allConnectors.push(verticalLine2);
+        }
+
+        function clearAllConnectors() {
+            allConnectors.forEach(connector => {
+                connector.remove();
+            });
+            allConnectors = [];
+        }
+
+        function showPersonDetails(person) {
+            const birthDate = formatDate(person.birthDate);
+            const city = person.city || '';
+            const occupationName = person.occupationName || '';
+
+            let details = '';
+            if (birthDate) details += `الميلاد: ${birthDate}<br>`;
+            if (city) details += `المدينة: ${escapeHtml(city)}<br>`;
+            if (occupationName) details += `المهنة: ${escapeHtml(occupationName)}<br>`;
+            if (!details) details = 'لا توجد معلومات إضافية';
+
+            const infoContent = `
+                <div class="card-body">
+                    <h5>${escapeHtml(person.fullName || 'غير معروف')}</h5>
+                    <p>${details}</p>
+                    <div class="mt-2">
+                        <a href="/Person/Details/${person.id}" class="btn btn-info btn-sm">
+                            <i class="fas fa-eye"></i> تفاصيل
+                        </a>
+                        <a href="/Person/Edit/${person.id}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i> تعديل
+                        </a>
+                        <a href="/Person/Create?familyTreeId=${familyTreeId}&fatherId=${person.id}" class="btn btn-success btn-sm">
+                            <i class="fas fa-plus"></i> إضافة ابن
+                        </a>
+                    </div>
+                </div>
+            `;
+
+            $('#node-info').html(infoContent).show();
+        }
+
+        // ========== الطباعة المحسنة عالية الجودة ==========
+
+        function printToPdf() {
+            showPdfLoading(true);
+            showNotification('جاري إنشاء PDF عالي الجودة...', 'info');
+
+            setTimeout(() => {
+                try {
+                    // إنشاء نسخة مطابقة تماماً للعرض الحالي
+                    const originalTree = $('#family-tree').clone();
+
+                    // إضافة كلاسات الطباعة مع الحفاظ على الشكل الحالي
+                    originalTree.addClass('print-version high-quality-print print-optimized');
+                    if (currentLayout === 'hierarchical') {
+                        originalTree.addClass('print-hierarchical');
+                    } else if (currentLayout === 'leaf') {
+                        originalTree.addClass('print-leaf');
+                    } else if (currentLayout === 'simple') {
+                        originalTree.addClass('print-simple');
+                    }
+
+                    // تحسين الجودة للطباعة
+                    originalTree.find('*').css({
+                        'transform': 'none',
+                        'transition': 'none',
+                        'animation': 'none',
+                        'box-shadow': '0 2px 8px rgba(0,0,0,0.2)',
+                        'border': '1px solid #ccc'
+                    });
+
+                    // إنشاء حاوية الطباعة عالية الجودة
+                    const printContainer = $('<div style="background: white; position: absolute; left: 0; top: 0; z-index: 99999; width: 100%;"></div>');
+
+                    // إضافة عنوان محسن
+                    const title = $(`
+                        <div style="text-align: center; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 20px;">
+                            <h1 style="margin: 0; font-size: 32px; font-weight: bold;">الشجرة العائلية</h1>
+                            <h2 style="margin: 10px 0; font-size: 24px;">${familyTreeName}</h2>
+                            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 15px; font-size: 14px;">
+                                <span>📅 تم الإنشاء في: ${new Date().toLocaleDateString('ar-EG')}</span>
+                                <span>👥 عدد الأفراد: ${personsCount}</span>
+                                <span>🎨 شكل العرض: ${getLayoutName(currentLayout)}</span>
+                                <span>💎 شكل البطاقة: ${getStyleName(currentCardStyle)}</span>
+                            </div>
+                        </div>
+                    `);
+                    printContainer.append(title);
+                    printContainer.append(originalTree);
+
+                    const tempContainer = $('<div style="position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: white; z-index: 99998; overflow: auto;"></div>');
+                    tempContainer.append(printContainer);
+                    $('body').append(tempContainer);
+
+                    // إعدادات عالية الجودة لـ html2canvas
+                    const options = {
+                        scale: 3, // زيادة كبيرة في الجودة
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                        width: printContainer[0].scrollWidth,
+                        height: printContainer[0].scrollHeight,
+                        scrollX: 0,
+                        scrollY: 0,
+                        onclone: function(clonedDoc) {
+                            // تحسين العناصر المستنسخة
+                            const clonedContainer = clonedDoc.querySelector('.print-version');
+                            if (clonedContainer) {
+                                clonedContainer.style.transform = 'none';
+                                clonedContainer.style.overflow = 'visible';
+                            }
+                        }
+                    };
+
+                    html2canvas(printContainer[0], options).then(canvas => {
+                        tempContainer.remove();
+
+                        // تحسين جودة الصورة
+                        const highQualityCanvas = document.createElement('canvas');
+                        highQualityCanvas.width = canvas.width;
+                        highQualityCanvas.height = canvas.height;
+                        const ctx = highQualityCanvas.getContext('2d');
+
+                        // تطبيق تصفية لتحسين الجودة
+                        ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(canvas, 0, 0);
+
+                        const imgData = highQualityCanvas.toDataURL('image/png', 1.0); // استخدام PNG لأفضل جودة
+
+                        // إنشاء PDF محسن
+                        const pdf = new jspdf.jsPDF({
+                            orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+                            unit: 'mm',
+                            format: 'a4',
+                            compress: true
+                        });
+
+                        const pdfWidth = pdf.internal.pageSize.getWidth();
+                        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+                        const imgWidth = canvas.width;
+                        const imgHeight = canvas.height;
+
+                        // حساب الأبعاد مع الحفاظ على التناسب
+                        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight) * 0.95;
+                        const finalWidth = imgWidth * ratio;
+                        const finalHeight = imgHeight * ratio;
+
+                        // إضافة الصورة في مركز الصفحة
+                        pdf.addImage(imgData, 'PNG',
+                            (pdfWidth - finalWidth) / 2,
+                            (pdfHeight - finalHeight) / 2,
+                            finalWidth,
+                            finalHeight,
+                            undefined,
+                            'FAST'
+                        );
+
+                        // إضافة معلومات إضافية في الـ PDF
+                        pdf.setFontSize(10);
+                        pdf.setTextColor(100);
+                        pdf.text(`تم الإنشاء في: ${new Date().toLocaleDateString('ar-EG')}`, 10, pdfHeight - 15);
+                        pdf.text(`عدد الأفراد: ${personsCount} | الشكل: ${getLayoutName(currentLayout)}`, 10, pdfHeight - 10);
+
+                        // إنشاء اسم ملف عربي صحيح
+                        const fileName = `شجرة_عائلية_${familyTreeName.replace(/\s+/g, '_')}.pdf`;
+
+                        // حفظ الملف باسم عربي صحيح
+                        pdf.save(fileName);
+
+                        showPdfLoading(false);
+                        showNotification('تم إنشاء PDF عالي الجودة بنجاح', 'success');
+
+                    }).catch(error => {
+                        console.error('خطأ في إنشاء PDF:', error);
+                        tempContainer.remove();
+                        showPdfLoading(false);
+                        showNotification('حدث خطأ في إنشاء PDF', 'danger');
+                    });
+
+                } catch (error) {
+                    console.error('خطأ عام:', error);
+                    showPdfLoading(false);
+                    showNotification('حدث خطأ غير متوقع', 'danger');
+                }
+            }, 1000);
+        }
+
+        // إظهار/إخفاء تحميل PDF
+        function showPdfLoading(show) {
+            let loadingDiv = $('#pdf-loading');
+
+            if (show) {
+                if (loadingDiv.length === 0) {
+                    loadingDiv = $(`
+                        <div id="pdf-loading" class="pdf-loading">
+                            <div class="text-center">
+                                <div class="spinner-border text-light mb-3" role="status">
+                                    <span class="sr-only">جاري التحميل...</span>
+                                </div>
+                                <div>جاري إنشاء PDF عالي الجودة...</div>
+                                <small>قد يستغرق هذا بضع ثوانٍ</small>
+                            </div>
+                        </div>
+                    `);
+                    $('body').append(loadingDiv);
+                }
+                loadingDiv.show();
+            } else {
+                loadingDiv.hide();
+            }
+        }
+
+        // وظيفة إشعار
+        function showNotification(message, type = 'info') {
+            $('.alert-notification').remove();
+
+            const alertClass = {
+                'info': 'alert-info',
+                'success': 'alert-success',
+                'danger': 'alert-danger',
+                'warning': 'alert-warning'
+            }[type] || 'alert-info';
+
+            const icon = {
+                'info': 'fa-info-circle',
+                'success': 'fa-check-circle',
+                'danger': 'fa-exclamation-circle',
+                'warning': 'fa-exclamation-triangle'
+            }[type];
+
+            const notification = $(`
+                <div class="alert ${alertClass} alert-dismissible fade show position-fixed alert-notification"
+                     style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                    <div class="d-flex align-items-center">
+                        <i class="fas ${icon} me-2"></i>
+                        <div>${message}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `);
+
+            $('body').append(notification);
+
+            setTimeout(() => {
+                notification.alert('close');
+            }, 5000);
+        }
+
+        // ========== التهيئة ==========
+
+        function initializeTree() {
+            const container = $('#family-tree');
+            container.empty().html(`
+                <div class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">جاري التحميل...</span>
+                    </div>
+                    <p class="mt-2">جاري تحميل الشجرة العائلية...</p>
+                </div>
+            `);
+
+            setTimeout(() => {
+                if (treeData.length > 0) {
+                    redrawCurrentLayout();
+                    $('.loading-spinner').remove();
+                }
+            }, 100);
+        }
+
+        function setupZoomAndPan() {
+            const container = $('#tree-container');
+            const tree = $('#family-tree');
+
+            $('#zoomIn').on('click', function() {
+                zoomLevel = Math.min(zoomLevel + 0.1, 2.0);
+                tree.css('transform', `scale(${zoomLevel})`);
+            });
+
+            $('#zoomOut').on('click', function() {
+                zoomLevel = Math.max(zoomLevel - 0.1, 0.3);
+                tree.css('transform', `scale(${zoomLevel})`);
+            });
+
+            $('#resetView').on('click', function() {
+                zoomLevel = 1.0;
+                tree.css('transform', 'scale(1)');
+                container.scrollLeft(0);
+                container.scrollTop(0);
+            });
+
+            // التحريك بالسحب
+            container.on('mousedown', function(e) {
+                if ($(e.target).closest('.tree-node, .leaf-node, .simple-node').length === 0) {
+                    panning = true;
+                    startX = e.pageX - container.offset().left;
+                    startY = e.pageY - container.offset().top;
+                    scrollLeft = container.scrollLeft();
+                    scrollTop = container.scrollTop();
+                    container.css('cursor', 'grabbing');
+                }
+            });
+
+            $(document).on('mouseup', function() {
+                panning = false;
+                container.css('cursor', 'grab');
+            });
+
+            container.on('mousemove', function(e) {
+                if (!panning) return;
+                e.preventDefault();
+                const x = e.pageX - container.offset().left;
+                const y = e.pageY - container.offset().top;
+                const walkX = (x - startX) * 2;
+                const walkY = (y - startY) * 2;
+                container.scrollLeft(scrollLeft - walkX);
+                container.scrollTop(scrollTop - walkY);
+            });
+
+            // الأحداث
+            $('#printPdf').on('click', printToPdf);
+
+            $('.card-style').on('click', function(e) {
+                e.preventDefault();
+                changeCardStyle($(this).data('style'));
+            });
+
+            $('.layout-style').on('click', function(e) {
+                e.preventDefault();
+                changeLayout($(this).data('layout'));
+            });
+        }
+
+        // تهيئة الصفحة
+        $(document).ready(function () {
+            console.log('بدء التهيئة...');
+
+            if (loadTreeData()) {
+                initializeTree();
+                setupZoomAndPan();
+            } else {
+                $('#family-tree').html(`
+                    <div class="alert alert-danger text-center" style="margin: 50px;">
+                        <h4>❌ خطأ في تحميل البيانات</h4>
+                        <p>حدث خطأ أثناء تحميل بيانات الشجرة العائلية.</p>
+                        <button onclick="location.reload()" class="btn btn-primary">
+                            <i class="fas fa-redo"></i> إعادة تحميل
+                        </button>
+                    </div>
+                `);
+            }
+
+            // إغلاق معلومات العقدة عند النقر خارجها
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#node-info, .tree-node, .leaf-node, .simple-node').length) {
+                    $('#node-info').hide();
+                }
+            });
+        });
+    </script>
+}
