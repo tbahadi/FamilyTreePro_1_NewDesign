@@ -7,10 +7,19 @@
 <div class="container mt-4" dir="rtl">
     <h2 class="text-center mb-4">شجراتي العائلية</h2>
 
+    <!-- رسائل التنبيه -->
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
@@ -30,6 +39,10 @@
         <div class="row">
             @foreach (var tree in Model)
             {
+                var personCount = ViewBag.PersonCounts != null && ViewBag.PersonCounts.ContainsKey(tree.Id)
+                ? ViewBag.PersonCounts[tree.Id]
+                : 0;
+
                 <div class="col-md-4 mb-4">
                     <div class="card h-100">
                         <div class="card-header" style="background-color: @tree.Color;">
@@ -39,18 +52,25 @@
                             <p class="card-text">@tree.Description</p>
                             <p class="text-muted"><small>تم الإنشاء: @tree.CreatedDate.ToString("yyyy/MM/dd")</small></p>
 
-                            @{
-                                var personCount = ViewBag.PersonCounts?[tree.Id] ?? 0;
-                            }
-                            <p class="text-info"><strong>عدد الأفراد: @personCount</strong></p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-info"><strong>عدد الأفراد: @personCount</strong></span>
+                                <a href="@Url.Action("CheckDatabaseDirectly", "Home")" class="btn btn-outline-info btn-sm">
+                                    <i class="fas fa-database"></i> فحص
+                                </a>
+                            </div>
                         </div>
                         <div class="card-footer">
-                            <a href="@Url.Action("Index", "Person", new { familyTreeId = tree.Id })" class="btn btn-success btn-sm">
-                                <i class="fas fa-users"></i> عرض الأفراد
-                            </a>
-                            <a href="@Url.Action("Create", "Person", new { familyTreeId = tree.Id })" class="btn btn-primary btn-sm">
-                                <i class="fas fa-plus"></i> إضافة فرد
-                            </a>
+                            <div class="btn-group w-100" role="group">
+                                <a href="@Url.Action("Index", "Person", new { familyTreeId = tree.Id })" class="btn btn-success btn-sm">
+                                    <i class="fas fa-users"></i> قائمة
+                                </a>
+                                <a href="@Url.Action("FamilyTreeView", "Person", new { familyTreeId = tree.Id })" class="btn btn-info btn-sm">
+                                    <i class="fas fa-project-diagram"></i> هرمي
+                                </a>
+                                <a href="@Url.Action("Create", "Person", new { familyTreeId = tree.Id })" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus"></i> إضافة
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -60,6 +80,9 @@
         <div class="text-center mt-4">
             <a href="@Url.Action("CreateFamilyTree", "Home")" class="btn btn-outline-primary">
                 <i class="fas fa-plus-circle"></i> إنشاء شجرة جديدة
+            </a>
+            <a href="@Url.Action("CheckDatabaseDirectly", "Home")" class="btn btn-outline-info">
+                <i class="fas fa-database"></i> فحص قاعدة البيانات
             </a>
         </div>
     }

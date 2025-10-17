@@ -1,0 +1,63 @@
+﻿@{
+    ViewData["Title"] = "الشجرة المتقدمة";
+}
+
+<div class="container mt-4" dir="rtl">
+    <h2 class="text-center mb-4">@ViewBag.FamilyTreeName - الشجرة المتقدمة</h2>
+
+    <div id="family-tree-container"></div>
+</div>
+
+@section Scripts {
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        // بيانات الشجرة (سيتم استبدالها ببيانات حقيقية من الخادم)
+        const treeData = {
+            name: "@ViewBag.RootPersons?[0]?.FullName",
+            children: [
+                // سيتم ملء البيانات ديناميكياً
+            ]
+        };
+
+        // أبعاد الشجرة
+        const width = 1200;
+        const height = 800;
+
+        // إنشاء الشجرة
+        const svg = d3.select("#family-tree-container")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        // تنفيذ الشجرة هنا...
+    </script>
+
+    <style>
+        #family-tree-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        .node {
+            cursor: pointer;
+        }
+
+            .node circle {
+                fill: #fff;
+                stroke: steelblue;
+                stroke-width: 3px;
+            }
+
+            .node text {
+                font: 12px sans-serif;
+            }
+
+        .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 2px;
+        }
+    </style>
+}

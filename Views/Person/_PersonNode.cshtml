@@ -1,0 +1,47 @@
+﻿@model dynamic
+@{
+    var person = Model.Person as FamilyTreePro.Models.Person;
+    var allPersons = Model.AllPersons as List<FamilyTreePro.Models.Person>;
+    var level = (int)Model.Level;
+    var children = allPersons?.Where(p => p.FatherId == person.Id).ToList() ?? new List<FamilyTreePro.Models.Person>();
+}
+
+<div class="person-node level-@level">
+    <div class="person-card @(person.Gender == "Male" ? "male" : "female")">
+        <div class="person-name">@person.FullName</div>
+        <div class="person-details">
+            @if (person.BirthDate.HasValue)
+            {
+                <div>📅 @person.BirthDate.Value.ToString("yyyy/MM/dd")</div>
+            }
+            @if (!string.IsNullOrEmpty(person.City))
+            {
+                <div>🏠 @person.City</div>
+            }
+        </div>
+        <div class="person-actions">
+            <a href="@Url.Action("Details", "Person", new { id = person.Id })" class="btn btn-info btn-sm">
+                <i class="fas fa-eye"></i>
+            </a>
+            <a href="@Url.Action("Edit", "Person", new { id = person.Id })" class="btn btn-warning btn-sm">
+                <i class="fas fa-edit"></i>
+            </a>
+            <a href="@Url.Action("Create", "Person", new { familyTreeId = person.FamilyTreeId, fatherId = person.Id })"
+               class="btn btn-success btn-sm" title="إضافة ابن">
+                <i class="fas fa-plus"></i>
+            </a>
+        </div>
+    </div>
+
+    @if (children.Any())
+    {
+        <div class="children-container">
+            @foreach (var child in children)
+            {
+                <div class="connector">
+                    @await Html.PartialAsync("_PersonNode", new { Person = child, AllPersons = allPersons, Level = level + 1 })
+                </div>
+            }
+        </div>
+    }
+</div>

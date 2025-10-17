@@ -1,0 +1,53 @@
+﻿@{
+    ViewData["Title"] = "فحص بيانات الأفراد";
+}
+
+<div class="container mt-4" dir="rtl">
+    <h2 class="text-center mb-4">فحص بيانات الأفراد</h2>
+
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h5>بيانات الأفراد في الشجرة @ViewBag.FamilyTreeId</h5>
+        </div>
+        <div class="card-body">
+            @if (ViewBag.Persons != null && ViewBag.Persons.Count > 0)
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>الاسم</th>
+                                <th>الجنس</th>
+                                <th>الشجرة</th>
+                                <th>تم الإنشاء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var person in ViewBag.Persons)
+                            {
+                                <tr>
+                                    <td>@person.Id</td>
+                                    <td>@person.FullName</td>
+                                    <td>@person.Gender</td>
+                                    <td>@person.FamilyTreeId</td>
+                                    <td>@person.CreatedDate.ToString("yyyy/MM/dd HH:mm")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    لا توجد أفراد في هذه الشجرة
+                </div>
+            }
+        </div>
+        <div class="card-footer">
+            <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">العودة</a>
+            <a href="@Url.Action("Index", "Person", new { familyTreeId = ViewBag.FamilyTreeId })" class="btn btn-primary">عرض في النظام</a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,57 @@
+﻿@model FamilyTreePro.Models.Person
+
+@{
+    ViewData["Title"] = "حذف فرد";
+}
+
+<div class="container mt-4" dir="rtl">
+    <h2 class="text-center mb-4">حذف فرد</h2>
+
+    @if (ViewBag.CanDelete == false)
+    {
+        <div class="alert alert-danger">
+            <h4><i class="fas fa-exclamation-triangle"></i> لا يمكن حذف هذا الفرد</h4>
+            <p>لا يمكن حذف الفرد لأنه لديه @ViewBag.ChildrenCount ابن/أبناء.</p>
+            <p class="mb-0">يرجى حذف جميع الأبناء أولاً.</p>
+        </div>
+
+        <div class="text-center">
+            <a href="@Url.Action("Index", "Person", new { familyTreeId = Model.FamilyTreeId })" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> العودة للقائمة
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <h4><i class="fas fa-exclamation-triangle"></i> تأكيد الحذف</h4>
+            <p>هل أنت متأكد من أنك تريد حذف الفرد التالي؟</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5>@Model.FullName</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>الاسم الكامل:</strong> @Model.FullName</p>
+                <p><strong>الجنس:</strong> @(Model.Gender == "Male" ? "ذكر" : "أنثى")</p>
+                <p><strong>تاريخ الميلاد:</strong> @(Model.BirthDate?.ToString("yyyy/MM/dd") ?? "غير معروف")</p>
+                <p class="text-danger"><strong>⚠️ سيتم حذف هذا الفرد بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.</strong></p>
+            </div>
+        </div>
+
+        <form asp-action="Delete" method="post" class="mt-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div class="d-flex justify-content-center gap-2">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> نعم، احذف الفرد
+                </button>
+                <a href="@Url.Action("Index", "Person", new { familyTreeId = Model.FamilyTreeId })" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+            </div>
+        </form>
+    }
+</div>

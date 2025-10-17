@@ -47,7 +47,7 @@ namespace FamilyTreePro.Models
         public string City { get; set; }
 
         [Display(Name = "صورة")]
-        public string Photo { get; set; }
+        public string Photo { get; set; } = string.Empty; // قيمة افتراضية
 
         [Display(Name = "ملاحظات")]
         public string Notes { get; set; }
@@ -89,7 +89,11 @@ namespace FamilyTreePro.Models
         {
             Children = new HashSet<Person>();
             CreatedDate = DateTime.Now;
-            IsConnectionPoint = false; // قيمة افتراضية
+            IsConnectionPoint = false;
+            Photo = string.Empty; // تأكيد القيمة الافتراضية
+            City = string.Empty;
+            Notes = string.Empty;
+            Nickname = string.Empty;
         }
     }
 }

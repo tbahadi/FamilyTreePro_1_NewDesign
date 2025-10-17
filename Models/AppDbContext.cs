@@ -14,9 +14,12 @@ namespace FamilyTreePro.Models
         public DbSet<Occupation> Occupations { get; set; }
         public DbSet<Country> Countries { get; set; }
 
+        public DbSet<CombinedTree> CombinedTrees { get; set; }
+        public DbSet<CombinedTreeItem> CombinedTreeItems { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // تكوين العلاقات
+            // تكوين العلاقات فقط، لا تجعل الحقول مطلوبة هنا
             modelBuilder.Entity<FamilyTree>()
                 .HasOne(ft => ft.User)
                 .WithMany(u => u.FamilyTrees)
@@ -61,6 +64,17 @@ namespace FamilyTreePro.Models
                 .WithMany()
                 .HasForeignKey(p => p.MotherId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+
+            modelBuilder.Entity<CombinedTreeItem>()
+                .HasOne(cti => cti.FamilyTree)
+                .WithMany()
+                .HasForeignKey(cti => cti.FamilyTreeId);
+
+            modelBuilder.Entity<CombinedTreeItem>()
+                .HasOne(cti => cti.ConnectionPerson)
+                .WithMany()
+                .HasForeignKey(cti => cti.ConnectionPersonId);
 
             base.OnModelCreating(modelBuilder);
         }

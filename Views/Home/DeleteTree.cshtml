@@ -7,67 +7,63 @@
 <div class="container mt-4" dir="rtl">
     <h2 class="text-center mb-4">حذف شجرة عائلية</h2>
 
-    <div class="alert alert-danger">
-        <h4><i class="fas fa-exclamation-triangle"></i> تحذير!</h4>
-        <p>هل أنت متأكد من أنك تريد حذف الشجرة العائلية التالية؟</p>
-    </div>
-
-    <div class="card">
-        <div class="card-header bg-danger text-white">
-            <h4>@Model.Name</h4>
-        </div>
-        <div class="card-body">
-            <dl class="row">
-                <dt class="col-sm-3">الوصف:</dt>
-                <dd class="col-sm-9">@Model.Description</dd>
-
-                <dt class="col-sm-3">تاريخ الإنشاء:</dt>
-                <dd class="col-sm-9">@Model.CreatedDate.ToString("yyyy/MM/dd")</dd>
-
-                <dt class="col-sm-3">عدد الأفراد:</dt>
-                <dd class="col-sm-9">@Model.Persons?.Count</dd>
-
-                @if (Model.ChildTrees?.Any() == true)
+    @if (ViewBag.CanDelete == false)
+    {
+        <div class="alert alert-danger">
+            <h4><i class="fas fa-exclamation-triangle"></i> لا يمكن حذف هذه الشجرة</h4>
+            <p>لا يمكن حذف الشجرة لأنها تحتوي على:</p>
+            <ul>
+                @if (ViewBag.PersonCount > 0)
                 {
-                    <dt class="col-sm-3">الشجرات الفرعية:</dt>
-                    <dd class="col-sm-9">@Model.ChildTrees.Count شجرة فرعية</dd>
+                    <li>@ViewBag.PersonCount فرد</li>
                 }
-            </dl>
+                @if (ViewBag.ChildTreeCount > 0)
+                {
+                    <li>@ViewBag.ChildTreeCount شجرة فرعية</li>
+                }
+            </ul>
+            <p class="mb-0">يرجى حذف جميع الأفراد والشجرات الفرعية أولاً.</p>
+        </div>
 
-            @if (Model.Persons?.Any() == true || Model.ChildTrees?.Any() == true)
-            {
-                <div class="alert alert-warning">
-                    <p><strong>ملاحظة:</strong> لا يمكن حذف الشجرة لأنها تحتوي على:</p>
-                    <ul>
-                        @if (Model.Persons?.Any() == true)
-                        {
-                            <li>@Model.Persons.Count فرد</li>
-                        }
-                        @if (Model.ChildTrees?.Any() == true)
-                        {
-                            <li>@Model.ChildTrees.Count شجرة فرعية</li>
-                        }
-                    </ul>
-                    <p>يرجى حذف جميع الأفراد والشجرات الفرعية أولاً.</p>
-                </div>
-            }
+        <div class="text-center">
+            <a href="@Url.Action("Index", "Person", new { familyTreeId = Model.Id })" class="btn btn-info">
+                <i class="fas fa-users"></i> عرض الأفراد
+            </a>
+            <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> العودة للقائمة
+            </a>
         </div>
-        <div class="card-footer">
-            @if (!Model.Persons?.Any() == true && !Model.ChildTrees?.Any() == true)
-            {
-                <form asp-action="DeleteTreeConfirmed" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" asp-for="Id" />
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-trash"></i> نعم، احذف الشجرة
-                    </button>
-                    <a asp-action="Index" class="btn btn-secondary">إلغاء</a>
-                </form>
-            }
-            else
-            {
-                <a asp-action="Index" class="btn btn-secondary">عودة للقائمة</a>
-            }
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <h4><i class="fas fa-exclamation-triangle"></i> تأكيد الحذف</h4>
+            <p>هل أنت متأكد من أنك تريد حذف الشجرة العائلية التالية؟</p>
         </div>
-    </div>
+
+        <div class="card">
+            <div class="card-header" style="background-color: @Model.Color;">
+                <h5 class="card-title text-white">@Model.Name</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>الوصف:</strong> @Model.Description</p>
+                <p><strong>تاريخ الإنشاء:</strong> @Model.CreatedDate.ToString("yyyy/MM/dd")</p>
+                <p class="text-danger"><strong>⚠️ سيتم حذف هذه الشجرة بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.</strong></p>
+            </div>
+        </div>
+
+        <form asp-action="DeleteTree" method="post" class="mt-4">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div class="d-flex justify-content-center gap-2">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> نعم، احذف الشجرة
+                </button>
+                <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+            </div>
+        </form>
+    }
 </div>

@@ -1,0 +1,182 @@
+﻿@model FamilyTreePro.Models.EditPersonViewModel
+
+@{
+    ViewData["Title"] = "تعديل فرد";
+}
+
+<div class="container mt-4" dir="rtl">
+    <h2 class="text-center mb-4">تعديل فرد</h2>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <form asp-action="Edit" method="post" class="row g-3" id="editForm">
+        @Html.AntiForgeryToken()
+
+        <!-- حقول مخفية -->
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="FamilyTreeId" />
+
+        <div class="col-md-6">
+            <label asp-for="FirstName" class="form-label">الاسم الأول *</label>
+            <input asp-for="FirstName" class="form-control" required />
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="FatherName" class="form-label">اسم الأب *</label>
+            <input asp-for="FatherName" class="form-control" required />
+            <span asp-validation-for="FatherName" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="GrandFatherName" class="form-label">اسم الجد *</label>
+            <input asp-for="GrandFatherName" class="form-control" required />
+            <span asp-validation-for="GrandFatherName" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="LastName" class="form-label">اسم العائلة *</label>
+            <input asp-for="LastName" class="form-control" required />
+            <span asp-validation-for="LastName" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Nickname" class="form-label">اللقب</label>
+            <input asp-for="Nickname" class="form-control" />
+            <span asp-validation-for="Nickname" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="Gender" class="form-label">الجنس *</label>
+            <select asp-for="Gender" class="form-select" required>
+                <option value="">اختر الجنس</option>
+                <option value="Male">ذكر</option>
+                <option value="Female">أنثى</option>
+            </select>
+            <span asp-validation-for="Gender" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="BirthDate" class="form-label">تاريخ الميلاد</label>
+            <input asp-for="BirthDate" type="date" class="form-control" />
+            <span asp-validation-for="BirthDate" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="OccupationId" class="form-label">المهنة</label>
+            <select asp-for="OccupationId" class="form-select">
+                <option value="">اختر المهنة</option>
+                @foreach (var occupation in ViewBag.Occupations)
+                {
+                    <option value="@occupation.Id">@occupation.Name</option>
+                }
+            </select>
+            <span asp-validation-for="OccupationId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="CountryId" class="form-label">الدولة</label>
+            <select asp-for="CountryId" class="form-select">
+                <option value="">اختر الدولة</option>
+                @foreach (var country in ViewBag.Countries)
+                {
+                    <option value="@country.Id">@country.Name</option>
+                }
+            </select>
+            <span asp-validation-for="CountryId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label asp-for="City" class="form-label">المدينة</label>
+            <input asp-for="City" class="form-control" />
+            <span asp-validation-for="City" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <label asp-for="FatherId" class="form-label">الأب (من أفراد هذه الشجرة)</label>
+            <select asp-for="FatherId" class="form-select">
+                <option value="">-- اختر الأب --</option>
+                @foreach (var father in ViewBag.PotentialFathers)
+                {
+                    <option value="@father.Id">@father.FullName</option>
+                }
+            </select>
+            <span asp-validation-for="FatherId" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <label asp-for="Notes" class="form-label">ملاحظات</label>
+            <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Notes" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-warning">
+                <i class="fas fa-edit"></i> حفظ التعديلات
+            </button>
+            <a asp-action="Index" asp-route-familyTreeId="@Model.FamilyTreeId" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> رجوع
+            </a>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-info">
+                <i class="fas fa-eye"></i> عرض التفاصيل
+            </a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // تحديد القيم في القوائم المنسدلة
+            const genderSelect = document.querySelector('#Gender');
+            const occupationSelect = document.querySelector('#OccupationId');
+            const countrySelect = document.querySelector('#CountryId');
+            const fatherSelect = document.querySelector('#FatherId');
+
+            // تعيين القيم المختارة حالياً
+            if (genderSelect) {
+                genderSelect.value = '@Model.Gender';
+            }
+
+            if (occupationSelect && '@Model.OccupationId' !== '0') {
+                occupationSelect.value = '@Model.OccupationId';
+            }
+
+            if (countrySelect && '@Model.CountryId' !== '0') {
+                countrySelect.value = '@Model.CountryId';
+            }
+
+            if (fatherSelect && '@Model.FatherId' !== '0') {
+                fatherSelect.value = '@Model.FatherId';
+            }
+
+            // التحقق من الحقول الإلزامية
+            const form = document.getElementById('editForm');
+            form.addEventListener('submit', function(e) {
+                const firstName = document.querySelector('#FirstName').value;
+                const fatherName = document.querySelector('#FatherName').value;
+                const grandFatherName = document.querySelector('#GrandFatherName').value;
+                const lastName = document.querySelector('#LastName').value;
+                const gender = document.querySelector('#Gender').value;
+
+                if (!firstName || !fatherName || !grandFatherName || !lastName || !gender) {
+                    e.preventDefault();
+                    alert('يرجى ملء جميع الحقول الإلزامية (*)');
+                    return false;
+                }
+
+                return true;
+            });
+        });
+    </script>
+}

@@ -22,6 +22,7 @@ namespace FamilyTreePro.Controllers
         }
 
         // الصفحة الرئيسية - عرض جميع الشجرات للمستخدم
+        // الصفحة الرئيسية - عرض جميع الشجرات للمستخدم
         public async Task<IActionResult> Index()
         {
             var userId = GetCurrentUserId();
@@ -37,7 +38,21 @@ namespace FamilyTreePro.Controllers
                     .OrderByDescending(ft => ft.CreatedDate)
                     .ToListAsync();
 
-                _logger.LogInformation($"عرض {familyTrees.Count} شجرة للمستخدم {userId}");
+                _logger.LogInformation($"🔍 تحميل الشجرات للمستخدم {userId}: {familyTrees.Count} شجرة");
+
+                // حساب عدد الأفراد في كل شجرة - طريقة محسنة
+                var personCounts = new Dictionary<int, int>();
+                foreach (var tree in familyTrees)
+                {
+                    var count = await _context.Persons
+                        .Where(p => p.FamilyTreeId == tree.Id)
+                        .CountAsync();
+
+                    personCounts[tree.Id] = count;
+                    _logger.LogInformation($"   - الشجرة {tree.Id}: {tree.Name} - {count} فرد");
+                }
+
+                ViewBag.PersonCounts = personCounts;
 
                 // إذا لم يكن للمستخدم أي شجرات، نقترح إنشاء واحدة
                 if (!familyTrees.Any())
@@ -50,7 +65,7 @@ namespace FamilyTreePro.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "خطأ في تحميل الشجرات");
+                _logger.LogError(ex, "❌ خطأ في تحميل الشجرات");
                 TempData["ErrorMessage"] = "حدث خطأ في تحميل الشجرات";
                 return View(new List<FamilyTree>());
             }
@@ -271,7 +286,7 @@ namespace FamilyTreePro.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-         
+
         // عرض الـ Logs مباشرة في المتصفح
         public IActionResult ViewLogs()
         {
@@ -374,7 +389,8 @@ namespace FamilyTreePro.Controllers
 
             var persons = await _context.Persons
                 .Where(p => p.FamilyTreeId == treeId)
-                .Select(p => new {
+                .Select(p => new
+                {
                     id = p.Id,
                     fullName = p.FullName
                 })
@@ -401,8 +417,154 @@ namespace FamilyTreePro.Controllers
 
             return View(mainTrees);
         }
+        // فحص قاعدة البيانات مباشرة
+        public async Task<IActionResult> CheckDatabaseDirectly()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                // الحصول على جميع الشجرات للمستخدم
+                var trees = await _context.FamilyTrees
+                    .Where(ft => ft.UserId == userId)
+                    .ToListAsync();
+
+                // الحصول على جميع الأشخاص للمستخدم
+                var persons = await _context.Persons
+                    .Include(p => p.FamilyTree)
+                    .Where(p => p.FamilyTree.UserId == userId)
+                    .ToListAsync();
+
+                ViewBag.Trees = trees;
+                ViewBag.Persons = persons;
+                ViewBag.UserId = userId;
+
+                _logger.LogInformation($"🔍 فحص قاعدة البيانات مباشرة:");
+                _logger.LogInformation($"   - عدد الشجرات: {trees.Count}");
+                _logger.LogInformation($"   - عدد الأفراد: {persons.Count}");
+
+                foreach (var tree in trees)
+                {
+                    _logger.LogInformation($"   - الشجرة: {tree.Id} - {tree.Name}");
+                }
+
+                foreach (var person in persons)
+                {
+                    _logger.LogInformation($"   - الفرد: {person.Id} - {person.FullName} - الشجرة: {person.FamilyTreeId}");
+                }
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ خطأ في فحص قاعدة البيانات مباشرة");
+                TempData["ErrorMessage"] = $"خطأ في فحص البيانات: {ex.Message}";
+                return RedirectToAction("Index", "Home");
+            }
+        }
+        // فحص جميع البيانات
+        public async Task<IActionResult> DebugPersons(int familyTreeId = 1)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                var persons = await _context.Persons
+                    .Include(p => p.FamilyTree)
+                    .Where(p => p.FamilyTreeId == familyTreeId && p.FamilyTree.UserId == userId)
+                    .ToListAsync();
+
+                ViewBag.Persons = persons;
+                ViewBag.FamilyTreeId = familyTreeId;
+
+                _logger.LogInformation($"فحص البيانات: {persons.Count} فرد في الشجرة {familyTreeId}");
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطأ في فحص البيانات");
+                TempData["ErrorMessage"] = $"خطأ في فحص البيانات: {ex.Message}";
+                return RedirectToAction("Index", "Home");
+            }
+        }
+        // أكشن لحذف جميع أفراد الشجرة
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAllPersons(int familyTreeId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                var persons = await _context.Persons
+                    .Where(p => p.FamilyTreeId == familyTreeId && p.FamilyTree.UserId == userId)
+                    .ToListAsync();
+
+                _context.Persons.RemoveRange(persons);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = $"تم حذف {persons.Count} فرد من الشجرة";
+                return RedirectToAction("DeleteTree", new { id = familyTreeId });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"خطأ في حذف أفراد الشجرة {familyTreeId}");
+                TempData["ErrorMessage"] = "حدث خطأ في حذف الأفراد";
+                return RedirectToAction("DeleteTree", new { id = familyTreeId });
+            }
+        }
+        // فحص حالة شجرة معينة
+        public async Task<IActionResult> CheckTreeStatus(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                var tree = await _context.FamilyTrees
+                    .Include(ft => ft.Persons)
+                    .Include(ft => ft.ChildTrees)
+                    .FirstOrDefaultAsync(ft => ft.Id == id && ft.UserId == userId);
+
+                if (tree == null)
+                {
+                    TempData["ErrorMessage"] = "الشجرة غير موجودة";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                ViewBag.Tree = tree;
+                ViewBag.PersonCount = tree.Persons.Count;
+                ViewBag.ChildTreeCount = tree.ChildTrees.Count;
+                ViewBag.CanDelete = !tree.Persons.Any() && !tree.ChildTrees.Any();
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"خطأ في فحص حالة الشجرة {id}");
+                TempData["ErrorMessage"] = "حدث خطأ في فحص حالة الشجرة";
+                return RedirectToAction(nameof(Index));
+            }
+        }
 
         // حذف شجرة عائلية
+        // عرض تأكيد حذف شجرة - GET
         public async Task<IActionResult> DeleteTree(int id)
         {
             var userId = GetCurrentUserId();
@@ -422,10 +584,16 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            // التحقق من إمكانية الحذف
             if (tree.Persons.Any() || tree.ChildTrees.Any())
             {
-                TempData["ErrorMessage"] = "لا يمكن حذف الشجرة لأنها تحتوي على أفراد أو شجرات فرعية";
-                return RedirectToAction(nameof(Index));
+                ViewBag.CanDelete = false;
+                ViewBag.PersonCount = tree.Persons.Count;
+                ViewBag.ChildTreeCount = tree.ChildTrees.Count;
+            }
+            else
+            {
+                ViewBag.CanDelete = true;
             }
 
             return View(tree);
@@ -438,28 +606,66 @@ namespace FamilyTreePro.Controllers
             var userId = GetCurrentUserId();
             if (userId == null)
             {
+                _logger.LogWarning("❌ محاولة حذف شجرة بدون تسجيل دخول");
                 return RedirectToAction("Login", "Account");
             }
 
-            var tree = await _context.FamilyTrees
-                .FirstOrDefaultAsync(ft => ft.Id == id && ft.UserId == userId);
+            _logger.LogInformation($"🔍 بدء محاولة حذف الشجرة {id} للمستخدم {userId}");
 
-            if (tree != null)
+            try
             {
-                try
+                var tree = await _context.FamilyTrees
+                    .Include(ft => ft.Persons)
+                    .Include(ft => ft.ChildTrees)
+                    .FirstOrDefaultAsync(ft => ft.Id == id && ft.UserId == userId);
+
+                if (tree == null)
                 {
-                    _context.FamilyTrees.Remove(tree);
-                    await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = "تم حذف الشجرة بنجاح!";
+                    _logger.LogWarning($"❌ الشجرة {id} غير موجودة أو لا تتبع للمستخدم {userId}");
+                    TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (Exception ex)
+
+                _logger.LogInformation($"📊 معلومات الشجرة المراد حذفها:");
+                _logger.LogInformation($"   - الاسم: {tree.Name}");
+                _logger.LogInformation($"   - عدد الأفراد: {tree.Persons?.Count ?? 0}");
+                _logger.LogInformation($"   - عدد الشجرات الفرعية: {tree.ChildTrees?.Count ?? 0}");
+
+                // التحقق من وجود أفراد أو شجرات فرعية
+                if (tree.Persons?.Any() == true || tree.ChildTrees?.Any() == true)
                 {
-                    _logger.LogError(ex, "خطأ أثناء حذف الشجرة");
-                    TempData["ErrorMessage"] = $"حدث خطأ أثناء الحذف: {ex.Message}";
+                    _logger.LogWarning($"❌ لا يمكن حذف الشجرة {id} لأنها تحتوي على:");
+                    _logger.LogWarning($"   - أفراد: {tree.Persons?.Count ?? 0}");
+                    _logger.LogWarning($"   - شجرات فرعية: {tree.ChildTrees?.Count ?? 0}");
+
+                    TempData["ErrorMessage"] = "لا يمكن حذف الشجرة لأنها تحتوي على أفراد أو شجرات فرعية";
+                    return RedirectToAction(nameof(Index));
                 }
+
+                _logger.LogInformation($"🗑️ بدء حذف الشجرة {id}");
+
+                // الحذف
+                _context.FamilyTrees.Remove(tree);
+                int recordsAffected = await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"✅ تم حذف الشجرة بنجاح! السجلات المتأثرة: {recordsAffected}");
+
+                TempData["SuccessMessage"] = "تم حذف الشجرة بنجاح!";
+            }
+            catch (DbUpdateException dbEx)
+            {
+                _logger.LogError(dbEx, $"❌ خطأ في قاعدة البيانات أثناء حذف الشجرة {id}");
+                _logger.LogError($"تفاصيل الخطأ الداخلية: {dbEx.InnerException?.Message}");
+
+                TempData["ErrorMessage"] = $"حدث خطأ في قاعدة البيانات أثناء الحذف: {dbEx.InnerException?.Message ?? dbEx.Message}";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"❌ خطأ غير متوقع أثناء حذف الشجرة {id}");
+                TempData["ErrorMessage"] = $"حدث خطأ غير متوقع أثناء الحذف: {ex.Message}";
             }
 
             return RedirectToAction(nameof(Index));
         }
     }
-}
+    }

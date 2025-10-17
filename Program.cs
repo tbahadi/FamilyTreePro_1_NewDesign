@@ -46,8 +46,8 @@ using (var scope = app.Services.CreateScope())
         logger.LogInformation("✅ تم حذف قاعدة البيانات القديمة");
 
         // أنشئ قاعدة البيانات جديدة
-        await db.Database.EnsureCreatedAsync();
-        logger.LogInformation("✅ تم إنشاء قاعدة البيانات جديدة");
+        db.Database.EnsureCreated();
+        logger.LogInformation("✅ تم إنشاء قاعدة بيانات جديدة");
 
         // إضافة بيانات أولية
         await SeedData(db);

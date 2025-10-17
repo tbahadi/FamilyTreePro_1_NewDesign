@@ -1,0 +1,139 @@
+﻿@{
+    ViewData["Title"] = "الشجرة الهرمية";
+    var rootPersons = ViewBag.RootPersons as List<FamilyTreePro.Models.Person>;
+    var allPersons = ViewBag.AllPersons as List<FamilyTreePro.Models.Person>;
+}
+
+<div class="container mt-4" dir="rtl">
+    <h2 class="text-center mb-4">@ViewBag.FamilyTreeName - الشجرة الهرمية</h2>
+
+    <div class="d-flex justify-content-between mb-3">
+        <a href="@Url.Action("Index", "Person", new { familyTreeId = ViewBag.FamilyTreeId })" class="btn btn-secondary">
+            <i class="fas fa-list"></i> العرض العادي
+        </a>
+        <a href="@Url.Action("Create", "Person", new { familyTreeId = ViewBag.FamilyTreeId })" class="btn btn-primary">
+            <i class="fas fa-plus"></i> إضافة فرد جديد
+        </a>
+    </div>
+
+    @if (rootPersons != null && rootPersons.Any())
+    {
+        <div class="family-tree">
+            @foreach (var rootPerson in rootPersons)
+            {
+                <div class="root-person">
+                    @await Html.PartialAsync("_PersonNode", new { Person = rootPerson, AllPersons = allPersons, Level = 0 })
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info text-center">
+            <h4>لا توجد بيانات للعرض</h4>
+            <p>لم يتم إضافة أي أفراد إلى هذه الشجرة بعد، أو لا توجد أشخاص بدون أب (جذور).</p>
+            <a href="@Url.Action("Create", "Person", new { familyTreeId = ViewBag.FamilyTreeId })" class="btn btn-primary">
+                <i class="fas fa-plus"></i> إضافة أول فرد
+            </a>
+        </div>
+    }
+</div>
+
+<style>
+    .family-tree {
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        min-height: 500px;
+    }
+
+    .root-person {
+        margin-bottom: 30px;
+    }
+
+    .person-card {
+        background: white;
+        border: 2px solid #007bff;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        min-width: 200px;
+        text-align: center;
+    }
+
+        .person-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .person-card.male {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+
+        .person-card.female {
+            border-color: #e91e63;
+            background: #fce4ec;
+        }
+
+    .children-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px dashed #ccc;
+        position: relative;
+    }
+
+    .level-0 {
+        margin-left: 0;
+    }
+
+    .level-1 {
+        margin-left: 40px;
+    }
+
+    .level-2 {
+        margin-left: 80px;
+    }
+
+    .level-3 {
+        margin-left: 120px;
+    }
+
+    .level-4 {
+        margin-left: 160px;
+    }
+
+    .person-name {
+        font-weight: bold;
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+
+    .person-details {
+        font-size: 12px;
+        color: #666;
+    }
+
+    .person-actions {
+        margin-top: 10px;
+    }
+
+    .connector {
+        position: relative;
+    }
+
+        .connector::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            width: 2px;
+            height: 20px;
+            background: #007bff;
+        }
+</style>
