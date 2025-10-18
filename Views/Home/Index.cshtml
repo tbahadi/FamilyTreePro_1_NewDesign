@@ -15,7 +15,7 @@
         <h2 class="page-title">
             <i class="fas fa-tree me-2"></i>شجراتي العائلية
         </h2>
-        <p class="text-muted">إدارة وتصفح جميع الشجرات العائلية الخاصة بك</p>
+        <p class="page-subtitle">إدارة وتصفح جميع الشجرات العائلية الخاصة بك</p>
     </div>
 
     <!-- رسائل التنبيه المحسنة -->
@@ -65,8 +65,8 @@
         <!-- إحصائيات سريعة -->
         <div class="row mb-4">
             <div class="col-md-3 col-6">
-                <div class="stat-card">
-                    <div class="stat-icon text-primary">
+                <div class="stat-card stat-card-1">
+                    <div class="stat-icon">
                         <i class="fas fa-tree"></i>
                     </div>
                     <div class="stat-content">
@@ -76,8 +76,8 @@
                 </div>
             </div>
             <div class="col-md-3 col-6">
-                <div class="stat-card">
-                    <div class="stat-icon text-success">
+                <div class="stat-card stat-card-2">
+                    <div class="stat-icon">
                         <i class="fas fa-users"></i>
                     </div>
                     <div class="stat-content">
@@ -87,8 +87,8 @@
                 </div>
             </div>
             <div class="col-md-3 col-6">
-                <div class="stat-card">
-                    <div class="stat-icon text-info">
+                <div class="stat-card stat-card-3">
+                    <div class="stat-icon">
                         <i class="fas fa-network-wired"></i>
                     </div>
                     <div class="stat-content">
@@ -98,8 +98,8 @@
                 </div>
             </div>
             <div class="col-md-3 col-6">
-                <div class="stat-card">
-                    <div class="stat-icon text-warning">
+                <div class="stat-card stat-card-4">
+                    <div class="stat-icon">
                         <i class="fas fa-history"></i>
                     </div>
                     <div class="stat-content">
@@ -110,92 +110,150 @@
             </div>
         </div>
 
-        <!-- شبكة الشجرات العائلية -->
-        <div class="row">
-            @foreach (var tree in Model)
-            {
-                var personCount = ViewBag.PersonCounts != null && ViewBag.PersonCounts.ContainsKey(tree.Id)
-                ? ViewBag.PersonCounts[tree.Id]
-                : tree.Persons?.Count ?? 0;
+        <!-- جدول الشجرات العائلية -->
+        <div class="card table-card">
+            <div class="card-header table-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-table me-2"></i>قائمة الشجرات العائلية
+                </h5>
+                <div class="table-actions">
+                    <a href="@Url.Action("CreateFamilyTree", "Home")" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus me-1"></i>شجرة جديدة
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th width="50">
+                                    <i class="fas fa-palette"></i>
+                                </th>
+                                <th>اسم الشجرة</th>
+                                <th>الوصف</th>
+                                <th width="120">عدد الأفراد</th>
+                                <th width="120">الحالة</th>
+                                <th width="150">تاريخ الإنشاء</th>
+                                <th width="250" class="text-center">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var tree in Model)
+                            {
+                                var personCount = ViewBag.PersonCounts != null && ViewBag.PersonCounts.ContainsKey(tree.Id)
+                                ? ViewBag.PersonCounts[tree.Id]
+                                : tree.Persons?.Count ?? 0;
 
-                <div class="col-xl-4 col-lg-6 mb-4">
-                    <div class="family-tree-card card h-100">
-                        <div class="card-header" style="background: linear-gradient(135deg, @tree.Color 0%, @AdjustColor(tree.Color, -20) 100%);">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="card-title text-white mb-0">
-                                    <i class="fas fa-tree me-2"></i>@tree.Name
-                                </h5>
-                                <span class="badge bg-light text-dark">
-                                    <i class="fas fa-users me-1"></i>@personCount
-                                </span>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <p class="card-text tree-description">@(string.IsNullOrEmpty(tree.Description) ? "لا يوجد وصف" : tree.Description)</p>
-
-                            <!-- معلومات الشجرة -->
-                            <div class="tree-info">
-                                <div class="info-item">
-                                    <i class="fas fa-calendar text-muted me-2"></i>
-                                    <small>تم الإنشاء: @tree.CreatedDate.ToString("yyyy/MM/dd")</small>
-                                </div>
-                                @if (tree.ParentTree != null)
-                                {
-                                    <div class="info-item">
-                                        <i class="fas fa-link text-success me-2"></i>
-                                        <small>مرتبطة بـ: @tree.ParentTree.Name</small>
+                                <tr>
+                                    <td>
+                                        <div class="color-badge" style="background-color: @tree.Color;" title="لون الشجرة"></div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-tree text-muted me-2"></i>
+                                            <div>
+                                                <strong class="d-block">@tree.Name</strong>
+                                                @if (tree.ParentTree != null)
+                                                {
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-link text-success me-1"></i>مرتبطة بـ @tree.ParentTree.Name
+                                                    </small>
+                                                }
+                                        </div>
                                     </div>
-                                }
-                                @if (tree.ChildTrees?.Any() == true)
-                                {
-                                    <div class="info-item">
-                                        <i class="fas fa-network-wired text-info me-2"></i>
-                                        <small>لها @tree.ChildTrees.Count شجرة فرعية</small>
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                        <div class="card-footer">
-                            <div class="btn-group-vertical w-100" role="group">
-                                <div class="btn-group w-100" role="group">
-                                    <a href="@Url.Action("Index", "Person", new { familyTreeId = tree.Id })"
-                                       class="btn btn-outline-success btn-action">
-                                        <i class="fas fa-list me-1"></i>القائمة
-                                    </a>
-                                    <a href="@Url.Action("FamilyTreeView", "Person", new { familyTreeId = tree.Id })"
-                                       class="btn btn-outline-info btn-action">
-                                        <i class="fas fa-project-diagram me-1"></i>الهرمي
-                                    </a>
-                                </div>
-                                <div class="btn-group w-100 mt-2" role="group">
-                                    <a href="@Url.Action("Create", "Person", new { familyTreeId = tree.Id })"
-                                       class="btn btn-outline-primary btn-action">
-                                        <i class="fas fa-plus me-1"></i>إضافة فرد
-                                    </a>
-                                    <a href="@Url.Action("ConnectTrees", "Home", new { id = tree.Id })"
-                                       class="btn btn-outline-warning btn-action">
-                                        <i class="fas fa-link me-1"></i>ربط
-                                    </a>
-                                    <a href="@Url.Action("DeleteTree", "Home", new { id = tree.Id })"
-                                       class="btn btn-outline-danger btn-action"
-                                       onclick="return confirm('هل أنت متأكد من حذف الشجرة العائلية \" @tree.Name\"؟')">
-                                        <i class="fas fa-trash me-1"></i>حذف
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
+                                </td>
+                                <td>
+                                    <span class="tree-description" title="@tree.Description">
+                                        @(string.IsNullOrEmpty(tree.Description) ? "لا يوجد وصف" :
+                                                                            (tree.Description.Length > 50 ? tree.Description.Substring(0, 50) + "..." : tree.Description))
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-person-count">
+                                            <i class="fas fa-users me-1"></i>@personCount
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (tree.ParentTree != null)
+                                        {
+                                            <span class="badge bg-linked">
+                                                <i class="fas fa-link me-1"></i>مرتبطة
+                                            </span>
+                                        }
+                                        else if (tree.ChildTrees?.Any() == true)
+                                        {
+                                            <span class="badge bg-parent">
+                                                <i class="fas fa-sitemap me-1"></i>أم
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-single">
+                                                <i class="fas fa-tree me-1"></i>منفردة
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            @tree.CreatedDate.ToString("yyyy/MM/dd")
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="@Url.Action("Index", "Person", new { familyTreeId = tree.Id })"
+                                               class="btn btn-outline-primary" title="عرض الأفراد">
+                                                <i class="fas fa-list"></i>
+                                            </a>
+                                            <a href="@Url.Action("FamilyTreeView", "Person", new { familyTreeId = tree.Id })"
+                                               class="btn btn-outline-info" title="العرض الهرمي">
+                                                <i class="fas fa-project-diagram"></i>
+                                            </a>
+                                            <a href="@Url.Action("Create", "Person", new { familyTreeId = tree.Id })"
+                                               class="btn btn-outline-success" title="إضافة فرد">
+                                                <i class="fas fa-plus"></i>
+                                            </a>
+                                            <a href="@Url.Action("ConnectTrees", "Home", new { id = tree.Id })"
+                                               class="btn btn-outline-warning" title="ربط الشجرة">
+                                                <i class="fas fa-link"></i>
+                                            </a>
+                                            <a href="@Url.Action("DeleteTree", "Home", new { id = tree.Id })"
+                                               class="btn btn-outline-danger"
+                                               title="حذف الشجرة"
+                                               onclick="return confirm('هل أنت متأكد من حذف الشجرة العائلية \" @tree.Name\"؟')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            إجمالي <strong>@Model.Count</strong> شجرة عائلية
+                        </small>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <small class="text-muted">
+                            آخر تحديث: @DateTime.Now.ToString("yyyy/MM/dd HH:mm")
+                        </small>
                     </div>
                 </div>
-            }
+            </div>
         </div>
 
         <!-- أزرار الإجراءات الرئيسية -->
-        <div class="text-center mt-5">
+        <div class="text-center mt-4">
             <div class="action-buttons">
                 <a href="@Url.Action("CreateFamilyTree", "Home")" class="btn btn-primary btn-lg me-3">
                     <i class="fas fa-plus-circle me-2"></i>إنشاء شجرة جديدة
                 </a>
-                <a href="@Url.Action("CheckDatabaseDirectly", "Home")" class="btn btn-outline-info btn-lg">
+                <a href="@Url.Action("CheckDatabaseDirectly", "Home")" class="btn btn-database btn-lg">
                     <i class="fas fa-database me-2"></i>فحص قاعدة البيانات
                 </a>
             </div>
@@ -206,107 +264,248 @@
 <style>
     /* تنسيقات مخصصة للصفحة */
     .page-title {
-        color: #2c3e50;
-        font-weight: 700;
-        margin-bottom: 1rem;
+        color: #000000 !important;
+        font-weight: 800 !important;
+        margin-bottom: 0.5rem;
         position: relative;
+        font-size: 2.2rem !important;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
     }
 
-        .page-title:after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            right: 50%;
-            transform: translateX(50%);
-            width: 80px;
-            height: 3px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 2px;
-        }
+    .page-subtitle {
+        color: #333333 !important;
+        font-weight: 600 !important;
+        font-size: 1.2rem !important;
+        margin-bottom: 2rem;
+    }
+
+    .page-title:after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        right: 50%;
+        transform: translateX(50%);
+        width: 100px;
+        height: 4px;
+        background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%); /* تدرج بني خشبي */
+        border-radius: 2px;
+    }
 
     .welcome-card {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         border: none;
         border-radius: 15px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border: 2px dashed #dee2e6;
     }
 
     .welcome-icon {
         font-size: 4rem;
-        color: #27ae60;
+        color: #8B4513; /* بني خشبي */
     }
 
-    .family-tree-card {
-        border: none;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-        overflow: hidden;
-    }
-
-        .family-tree-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-        }
-
-    .tree-description {
-        color: #555;
-        line-height: 1.6;
-        min-height: 60px;
-    }
-
-    .tree-info {
-        border-top: 1px solid #eee;
-        padding-top: 15px;
-        margin-top: 15px;
-    }
-
-    .info-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 8px;
-    }
-
-    .btn-action {
-        border-radius: 8px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-
-        .btn-action:hover {
-            transform: translateY(-2px);
-        }
-
+    /* تنسيقات البطاقات الإحصائية بألوان جديدة */
     .stat-card {
         background: white;
         padding: 20px;
-        border-radius: 12px;
+        border-radius: 15px;
         text-align: center;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         transition: all 0.3s ease;
+        border: none;
+        position: relative;
+        overflow: hidden;
     }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 4px;
         }
+
+    .stat-card-1 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* أرجواني */
+        color: white;
+    }
+
+    .stat-card-2 {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); /* وردي/أحمر */
+        color: white;
+    }
+
+    .stat-card-3 {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); /* أزرق/سماوي */
+        color: white;
+    }
+
+    .stat-card-4 {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); /* أخضر/تركواز */
+        color: white;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    }
 
     .stat-icon {
         font-size: 2.5rem;
         margin-bottom: 10px;
+        opacity: 0.9;
     }
 
     .stat-content h4 {
-        font-weight: 700;
-        color: #2c3e50;
+        font-weight: 800;
+        color: white;
         margin-bottom: 5px;
+        font-size: 2rem;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
     }
 
     .stat-content p {
-        color: #7f8c8d;
+        color: rgba(255,255,255,0.9);
         margin: 0;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
+        font-weight: 600;
     }
+
+    /* تنسيقات الجدول */
+    .table-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        overflow: hidden;
+        background: white;
+    }
+
+    .table-header {
+        background: linear-gradient(135deg, #2C5530 0%, #4A7C59 100%); /* أخضر طبيعي */
+        color: white;
+        border-bottom: none;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .table-header .card-title {
+            color: white;
+            margin: 0;
+            font-weight: 700;
+        }
+
+    .table-actions .btn {
+        border-radius: 8px;
+        font-weight: 600;
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+    }
+
+        .table-actions .btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+    .table th {
+        border-bottom: 3px solid #2C5530;
+        font-weight: 700;
+        color: #000000;
+        padding: 15px 12px;
+        background: #f8f9fa;
+    }
+
+    .table td {
+        padding: 15px 12px;
+        vertical-align: middle;
+        border-color: #f1f1f1;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-1px);
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .color-badge {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        transition: transform 0.2s ease;
+    }
+
+        .color-badge:hover {
+            transform: scale(1.2);
+        }
+
+    .tree-description {
+        color: #555;
+        line-height: 1.4;
+        display: block;
+        max-width: 200px;
+    }
+
+    /* ألوان جديدة للشارات */
+    .bg-person-count {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+
+    .bg-linked {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
+    }
+
+    .bg-parent {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+    }
+
+    .bg-single {
+        background: linear-gradient(135deg, #a8a8a8 0%, #696969 100%) !important;
+    }
+
+    /* زر فحص قاعدة البيانات الجديد */
+    .btn-database {
+        background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%) !important; /* بني خشبي */
+        color: white !important;
+        border: 2px solid #8B4513 !important;
+        border-radius: 10px !important;
+        padding: 12px 30px !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3) !important;
+    }
+
+        .btn-database:hover {
+            background: linear-gradient(135deg, #A0522D 0%, #8B4513 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(139, 69, 19, 0.4) !important;
+            border-color: #8B4513 !important;
+            color: white !important;
+        }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #2C5530 0%, #4A7C59 100%) !important; /* أخضر طبيعي */
+        border: 2px solid #2C5530 !important;
+        border-radius: 10px !important;
+        padding: 12px 30px !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(44, 85, 48, 0.3) !important;
+    }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4A7C59 0%, #2C5530 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(44, 85, 48, 0.4) !important;
+            border-color: #2C5530 !important;
+        }
 
     .hilal-alert {
         border: none;
@@ -319,10 +518,22 @@
         border-top: 1px solid #eee;
     }
 
+    /* أزرار الجدول */
+    .btn-group-sm > .btn {
+        padding: 6px 8px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+    }
+
+        .btn-group-sm > .btn:hover {
+            transform: translateY(-1px);
+        }
+
     /* النجوم المتحركة */
     .star {
         position: fixed;
-        background-color: white;
+        background-color: #8B4513; /* بني خشبي */
         border-radius: 50%;
         animation: twinkle 3s infinite alternate;
         z-index: -1;
@@ -371,14 +582,61 @@
             transform: scale(1.2);
         }
     }
+
+    /* تحسينات التجاوب */
+    @@media (max-width: 768px) {
+        .table-header {
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .table-responsive {
+            font-size: 0.9rem;
+        }
+
+        .btn-group-sm > .btn {
+            padding: 4px 6px;
+            font-size: 0.75rem;
+        }
+
+        .tree-description {
+            max-width: 150px;
+        }
+
+        .stat-content h4 {
+            font-size: 1.5rem;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+        }
+
+        .action-buttons .btn {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .table td, .table th {
+            padding: 10px 8px;
+        }
+
+        .tree-description {
+            max-width: 120px;
+        }
+
+        .btn-group-sm > .btn {
+            padding: 3px 5px;
+            font-size: 0.7rem;
+        }
+    }
 </style>
 
 @functions {
-    // دالة مساعدة لتعديل الألوان
     public string AdjustColor(string color, int amount)
     {
-        // يمكن تنفيذ منطق تعديل اللون هنا
-        // للتبسيط، سنعود بلون ثابت
         return color;
     }
 }

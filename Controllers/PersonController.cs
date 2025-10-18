@@ -1,15 +1,16 @@
 ﻿using FamilyTreePro.Models;
+using FamilyTreePro.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-
-namespace FamilyTreePro.Controllers  // تأكد من وجود namespace
+namespace FamilyTreePro.Controllers
 {
     public class PersonController : Controller
     {
@@ -26,6 +27,300 @@ namespace FamilyTreePro.Controllers  // تأكد من وجود namespace
         {
             return HttpContext.Session.GetInt32("UserId");
         }
+
+        // دالة مساعدة لبناء الاسم الكامل
+        private string GetFullName(Person person)
+        {
+            if (person == null) return "غير معروف";
+
+            var names = new List<string>();
+
+            if (!string.IsNullOrEmpty(person.FirstName))
+                names.Add(person.FirstName);
+
+            if (!string.IsNullOrEmpty(person.FatherName))
+                names.Add(person.FatherName);
+
+            if (!string.IsNullOrEmpty(person.GrandFatherName))
+                names.Add(person.GrandFatherName);
+
+            if (!string.IsNullOrEmpty(person.LastName))
+                names.Add(person.LastName);
+
+            return string.Join(" ", names);
+        }
+
+        // GET: إضافة فرد جديد
+        [HttpGet]
+        public IActionResult Create(int familyTreeId, int? fatherId = null, int? motherId = null)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var tree = _context.FamilyTrees.FirstOrDefault(ft => ft.Id == familyTreeId && ft.UserId == userId);
+            if (tree == null)
+            {
+                TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var viewModel = new CreatePersonViewModel
+            {
+                FamilyTreeId = familyTreeId,
+                FatherId = fatherId,
+                MotherId = motherId
+            };
+
+            RepopulateViewBags(familyTreeId).Wait();
+
+            if (fatherId.HasValue)
+            {
+                var father = _context.Persons.Find(fatherId.Value);
+                ViewBag.FatherName = father != null ? GetFullName(father) : "غير معروف";
+                ViewBag.IsAddingChild = true;
+            }
+
+            if (motherId.HasValue)
+            {
+                var mother = _context.Persons.Find(motherId.Value);
+                ViewBag.MotherName = mother != null ? GetFullName(mother) : "غير معروف";
+            }
+
+            return View(viewModel);
+        }
+
+        // POST: إضافة فرد جديد
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CreatePersonViewModel viewModel)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            _logger.LogInformation($"🔍 بيانات النموذج المستلمة:");
+            _logger.LogInformation($"   - الاسم: {viewModel.FirstName}");
+            _logger.LogInformation($"   - اسم الأب: {viewModel.FatherName}");
+            _logger.LogInformation($"   - اسم الجد: {viewModel.GrandFatherName}");
+            _logger.LogInformation($"   - العائلة: {viewModel.LastName}");
+            _logger.LogInformation($"   - الجنس: {viewModel.Gender}");
+            _logger.LogInformation($"   - الشجرة: {viewModel.FamilyTreeId}");
+
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                _logger.LogWarning($"❌ أخطاء التحقق: {string.Join(", ", errors)}");
+                TempData["ErrorMessage"] = "البيانات غير صالحة. يرجى تصحيح الأخطاء أدناه.";
+
+                await RepopulateViewBags(viewModel.FamilyTreeId);
+                return View(viewModel);
+            }
+
+            var tree = await _context.FamilyTrees
+                .FirstOrDefaultAsync(ft => ft.Id == viewModel.FamilyTreeId && ft.UserId == userId);
+
+            if (tree == null)
+            {
+                _logger.LogWarning($"❌ الشجرة غير موجودة: {viewModel.FamilyTreeId} للمستخدم: {userId}");
+                TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
+                return RedirectToAction("Index", "Home");
+            }
+
+            try
+            {
+                var person = new Person
+                {
+                    FirstName = viewModel.FirstName?.Trim(),
+                    FatherName = viewModel.FatherName?.Trim(),
+                    GrandFatherName = viewModel.GrandFatherName?.Trim(),
+                    LastName = viewModel.LastName?.Trim(),
+                    Nickname = viewModel.Nickname?.Trim(),
+                    Gender = viewModel.Gender,
+                    BirthDate = viewModel.BirthDate,
+                    DeathDate = viewModel.DeathDate,
+                    OccupationId = viewModel.OccupationId,
+                    CountryId = viewModel.CountryId,
+                    City = viewModel.City?.Trim(),
+                    Notes = viewModel.Notes?.Trim(),
+                    FamilyTreeId = viewModel.FamilyTreeId,
+                    FatherId = viewModel.FatherId,
+                    MotherId = viewModel.MotherId,
+                    AdditionReason = viewModel.AdditionReason,
+                    Photo = viewModel.Photo ?? string.Empty,
+                    IsOriginalRecord = true,
+                    IsConnectionPoint = false,
+                    CreatedDate = DateTime.Now,
+                    LastUpdated = DateTime.Now
+                };
+
+                var fullName = GetFullName(person);
+                _logger.LogInformation($"💾 محاولة حفظ الشخص: {fullName}");
+
+                _context.Persons.Add(person);
+                int recordsAffected = await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"✅ تم حفظ الشخص بنجاح! السجلات المتأثرة: {recordsAffected}, الرقم: {person.Id}");
+
+                TempData["SuccessMessage"] = $"تم إضافة الفرد {fullName} بنجاح!";
+                return RedirectToAction("Index", new { familyTreeId = viewModel.FamilyTreeId });
+            }
+            catch (DbUpdateException dbEx)
+            {
+                _logger.LogError(dbEx, "❌ خطأ في قاعدة البيانات أثناء إضافة الفرد");
+                _logger.LogError($"تفاصيل الخطأ الداخلية: {dbEx.InnerException?.Message}");
+
+                TempData["ErrorMessage"] = "حدث خطأ في قاعدة البيانات. قد تكون البيانات مكررة أو غير صالحة.";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ خطأ غير متوقع أثناء إضافة الفرد");
+                TempData["ErrorMessage"] = $"حدث خطأ غير متوقع: {ex.Message}";
+            }
+
+            await RepopulateViewBags(viewModel.FamilyTreeId);
+            return View(viewModel);
+        }
+
+        // GET: تعديل فرد
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                var person = await _context.Persons
+                    .Include(p => p.FamilyTree)
+                    .FirstOrDefaultAsync(p => p.Id == id && p.FamilyTree.UserId == userId);
+
+                if (person == null)
+                {
+                    TempData["ErrorMessage"] = "الفرد غير موجود أو لا تملك صلاحية الوصول له";
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var viewModel = new EditPersonViewModel
+                {
+                    Id = person.Id,
+                    FirstName = person.FirstName,
+                    FatherName = person.FatherName,
+                    GrandFatherName = person.GrandFatherName,
+                    LastName = person.LastName,
+                    Nickname = person.Nickname,
+                    Gender = person.Gender,
+                    BirthDate = person.BirthDate,
+                    DeathDate = person.DeathDate,
+                    OccupationId = person.OccupationId,
+                    CountryId = person.CountryId,
+                    City = person.City,
+                    Notes = person.Notes,
+                    Photo = person.Photo,
+                    AdditionReason = person.AdditionReason,
+                    IsOriginalRecord = person.IsOriginalRecord,
+                    IsConnectionPoint = person.IsConnectionPoint,
+                    FamilyTreeId = person.FamilyTreeId,
+                    FatherId = person.FatherId,
+                    MotherId = person.MotherId,
+                    CreatedDate = person.CreatedDate,
+                    LastUpdated = person.LastUpdated
+                };
+
+                await RepopulateViewBags(person.FamilyTreeId, person.Id);
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطأ في تحميل صفحة التعديل");
+                TempData["ErrorMessage"] = "حدث خطأ في تحميل صفحة التعديل";
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
+        // POST: تعديل فرد
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(EditPersonViewModel viewModel)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            _logger.LogInformation($"🔍 بدء تعديل الفرد {viewModel.Id}");
+
+            if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("❌ نموذج التعديل غير صالح");
+                await RepopulateViewBags(viewModel.FamilyTreeId, viewModel.Id);
+                return View(viewModel);
+            }
+
+            try
+            {
+                var person = await _context.Persons
+                    .Include(p => p.FamilyTree)
+                    .FirstOrDefaultAsync(p => p.Id == viewModel.Id && p.FamilyTree.UserId == userId);
+
+                if (person == null)
+                {
+                    TempData["ErrorMessage"] = "الفرد غير موجود أو لا تملك صلاحية الوصول له";
+                    return RedirectToAction("Index", "Home");
+                }
+
+                // تحديث البيانات
+                person.FirstName = viewModel.FirstName?.Trim();
+                person.FatherName = viewModel.FatherName?.Trim();
+                person.GrandFatherName = viewModel.GrandFatherName?.Trim();
+                person.LastName = viewModel.LastName?.Trim();
+                person.Nickname = viewModel.Nickname?.Trim();
+                person.Gender = viewModel.Gender;
+                person.BirthDate = viewModel.BirthDate;
+                person.DeathDate = viewModel.DeathDate;
+                person.OccupationId = viewModel.OccupationId;
+                person.CountryId = viewModel.CountryId;
+                person.City = viewModel.City?.Trim();
+                person.Notes = viewModel.Notes?.Trim();
+                person.FatherId = viewModel.FatherId;
+                person.MotherId = viewModel.MotherId;
+                person.AdditionReason = viewModel.AdditionReason;
+                person.Photo = viewModel.Photo;
+                person.IsOriginalRecord = viewModel.IsOriginalRecord;
+                person.IsConnectionPoint = viewModel.IsConnectionPoint;
+                person.LastUpdated = DateTime.Now;
+
+                _context.Persons.Update(person);
+                int recordsAffected = await _context.SaveChangesAsync();
+
+                var fullName = GetFullName(person);
+                _logger.LogInformation($"✅ تم تعديل الفرد بنجاح! السجلات المتأثرة: {recordsAffected}");
+
+                TempData["SuccessMessage"] = $"تم تعديل الفرد {fullName} بنجاح!";
+                return RedirectToAction("Details", new { id = viewModel.Id });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ خطأ أثناء تعديل الفرد");
+                TempData["ErrorMessage"] = $"حدث خطأ أثناء التعديل: {ex.Message}";
+
+                await RepopulateViewBags(viewModel.FamilyTreeId, viewModel.Id);
+                return View(viewModel);
+            }
+        }
+
         // GET: حذف فرد
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
@@ -49,7 +344,6 @@ namespace FamilyTreePro.Controllers  // تأكد من وجود namespace
                     return RedirectToAction("Index", "Home");
                 }
 
-                // التحقق من وجود أبناء
                 if (person.Children.Any())
                 {
                     ViewBag.CanDelete = false;
@@ -95,9 +389,8 @@ namespace FamilyTreePro.Controllers  // تأكد من وجود namespace
                 }
 
                 var familyTreeId = person.FamilyTreeId;
-                var personName = person.FullName;
+                var personName = GetFullName(person);
 
-                // التحقق من وجود أبناء
                 if (person.Children.Any())
                 {
                     TempData["ErrorMessage"] = "لا يمكن حذف الفرد لأنه لديه أبناء. يرجى حذف الأبناء أولاً.";
@@ -117,51 +410,91 @@ namespace FamilyTreePro.Controllers  // تأكد من وجود namespace
                 return RedirectToAction("Index", "Home");
             }
         }
-        // GET: إضافة فرد جديد
-        [HttpGet]
-        public IActionResult Create(int familyTreeId, int? fatherId = null)
+
+        // أكشن لعرض قائمة الأشخاص في شجرة معينة
+        public async Task<IActionResult> Index(int familyTreeId)
         {
-            // التحقق من وجود المستخدم
             var userId = GetCurrentUserId();
             if (userId == null)
             {
                 return RedirectToAction("Login", "Account");
             }
 
-            // التحقق من أن الشجرة تتبع للمستخدم
-            var tree = _context.FamilyTrees.FirstOrDefault(ft => ft.Id == familyTreeId && ft.UserId == userId);
-            if (tree == null)
+            _logger.LogInformation($"🔍 بدء تحميل الأفراد للشجرة {familyTreeId} للمستخدم {userId}");
+
+            try
             {
-                TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
-                return RedirectToAction("Index", "Home");
+                var tree = await _context.FamilyTrees
+                    .FirstOrDefaultAsync(ft => ft.Id == familyTreeId && ft.UserId == userId);
+
+                if (tree == null)
+                {
+                    _logger.LogWarning($"❌ الشجرة {familyTreeId} غير موجودة أو لا تتبع للمستخدم {userId}");
+                    TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
+                    return RedirectToAction("Index", "Home");
+                }
+
+                _logger.LogInformation($"✅ الشجرة موجودة: {tree.Name}");
+
+                var persons = await _context.Persons
+                    .Include(p => p.Occupation)
+                    .Include(p => p.Country)
+                    .Include(p => p.Father)
+                    .Where(p => p.FamilyTreeId == familyTreeId)
+                    .OrderBy(p => p.FirstName)
+                    .ThenBy(p => p.FatherName)
+                    .ToListAsync();
+
+                _logger.LogInformation($"✅ تم تحميل {persons.Count} فرد للشجرة {familyTreeId}");
+
+                ViewBag.FamilyTreeId = familyTreeId;
+                ViewBag.FamilyTreeName = tree.Name;
+
+                return View(persons);
             }
-
-            var viewModel = new CreatePersonViewModel
+            catch (Exception ex)
             {
-                FamilyTreeId = familyTreeId,
-                FatherId = fatherId // تعيين الأب إذا كان موجوداً
-            };
-
-            // تعبئة القوائم المنسدلة
-            ViewBag.Occupations = _context.Occupations.ToList();
-            ViewBag.Countries = _context.Countries.ToList();
-            ViewBag.PotentialFathers = _context.Persons
-                .Where(p => p.FamilyTreeId == familyTreeId && p.Gender == "Male")
-                .ToList();
-
-            // إذا كان هناك أب محدد، عرض معلوماته
-            if (fatherId.HasValue)
-            {
-                var father = _context.Persons.Find(fatherId.Value);
-                ViewBag.FatherName = father?.FullName;
-                ViewBag.IsAddingChild = true;
+                _logger.LogError(ex, $"❌ خطأ في تحميل قائمة الأشخاص للشجرة {familyTreeId}");
+                TempData["ErrorMessage"] = "حدث خطأ في تحميل قائمة الأشخاص";
+                return View(new List<Person>());
             }
-
-            return View(viewModel);
         }
 
-        // الشجرة الهرمية المتقدمة
-        // الشجرة الهرمية المتقدمة
+        // أكشن تفاصيل الشخص
+        public async Task<IActionResult> Details(int id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                if (userId == null)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
+                var person = await _context.Persons
+                    .Include(p => p.Occupation)
+                    .Include(p => p.Country)
+                    .Include(p => p.Father)
+                    .Include(p => p.Mother)
+                    .Include(p => p.FamilyTree)
+                    .FirstOrDefaultAsync(p => p.Id == id && p.FamilyTree.UserId == userId);
+
+                if (person == null)
+                {
+                    TempData["ErrorMessage"] = "الفرد غير موجود أو لا تملك صلاحية الوصول له";
+                    return RedirectToAction("Index", "Home");
+                }
+
+                return View(person);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطأ في تحميل تفاصيل الفرد");
+                TempData["ErrorMessage"] = "حدث خطأ في تحميل التفاصيل";
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
         // الشجرة الهرمية المتقدمة
         public async Task<IActionResult> ProfessionalTree(int familyTreeId)
         {
@@ -173,7 +506,6 @@ namespace FamilyTreePro.Controllers  // تأكد من وجود namespace
 
             try
             {
-                // التحقق من أن الشجرة تتبع للمستخدم
                 var tree = await _context.FamilyTrees
                     .FirstOrDefaultAsync(ft => ft.Id == familyTreeId && ft.UserId == userId);
 
@@ -183,7 +515,7 @@ namespace FamilyTreePro.Controllers  // تأكد من وجود namespace
                     return RedirectToAction("Index", "Home");
                 }
 
-                // جلب البيانات بدون العلاقات الدائرية
+                // جلب البيانات مع تضمين العلاقات
                 var persons = await _context.Persons
                     .Where(p => p.FamilyTreeId == familyTreeId)
                     .Select(p => new
@@ -194,33 +526,25 @@ namespace FamilyTreePro.Controllers  // تأكد من وجود namespace
                         GrandFatherName = p.GrandFatherName,
                         LastName = p.LastName,
                         Nickname = p.Nickname,
-                        FullName = p.FullName,
+                        FullName = GetFullName(p),
                         Gender = p.Gender,
                         BirthDate = p.BirthDate,
                         City = p.City,
                         FatherId = p.FatherId,
                         IsConnectionPoint = p.IsConnectionPoint,
-                        // بيانات المهنة بدون العلاقات الدائرية
                         OccupationName = p.Occupation != null ? p.Occupation.Name : null,
                         OccupationId = p.OccupationId,
-                        // بيانات الدولة بدون العلاقات الدائرية
                         CountryName = p.Country != null ? p.Country.Name : null,
                         CountryId = p.CountryId
                     })
                     .ToListAsync();
 
-                // تسجيل البيانات للتصحيح
                 _logger.LogInformation($"🔍 بيانات الشجرة المتقدمة: {persons.Count} فرد");
-                foreach (var person in persons)
-                {
-                    _logger.LogInformation($"   - {person.FullName} (الأب: {person.FatherId})");
-                }
 
                 ViewBag.FamilyTreeId = familyTreeId;
                 ViewBag.FamilyTreeName = tree.Name;
                 ViewBag.PersonsCount = persons.Count;
 
-                // تحويل البيانات إلى JSON مع التعامل مع القيم الفارغة
                 var jsonOptions = new JsonSerializerOptions
                 {
                     ReferenceHandler = ReferenceHandler.IgnoreCycles,
@@ -240,222 +564,6 @@ namespace FamilyTreePro.Controllers  // تأكد من وجود namespace
             }
         }
 
-        // GET: تعديل فرد
-        [HttpGet]
-        public async Task<IActionResult> Edit(int id)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == null)
-                {
-                    return RedirectToAction("Login", "Account");
-                }
-
-                var person = await _context.Persons
-                    .Include(p => p.FamilyTree)
-                    .FirstOrDefaultAsync(p => p.Id == id && p.FamilyTree.UserId == userId);
-
-                if (person == null)
-                {
-                    TempData["ErrorMessage"] = "الفرد غير موجود أو لا تملك صلاحية الوصول له";
-                    return RedirectToAction("Index", "Home");
-                }
-
-                // تحويل Person إلى EditPersonViewModel
-                var viewModel = new EditPersonViewModel
-                {
-                    Id = person.Id,
-                    FirstName = person.FirstName,
-                    FatherName = person.FatherName,
-                    GrandFatherName = person.GrandFatherName,
-                    LastName = person.LastName,
-                    Nickname = person.Nickname,
-                    Gender = person.Gender,
-                    BirthDate = person.BirthDate,
-                    OccupationId = person.OccupationId,
-                    CountryId = person.CountryId,
-                    City = person.City,
-                    Notes = person.Notes,
-                    FamilyTreeId = person.FamilyTreeId,
-                    FatherId = person.FatherId
-                };
-
-                // تعبئة القوائم المنسدلة
-                await RepopulateViewBags(person.FamilyTreeId);
-
-                return View(viewModel);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "خطأ في تحميل صفحة التعديل");
-                TempData["ErrorMessage"] = "حدث خطأ في تحميل صفحة التعديل";
-                return RedirectToAction("Index", "Home");
-            }
-        }
-
-        // POST: تعديل فرد
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(EditPersonViewModel viewModel)
-        {
-            var userId = GetCurrentUserId();
-            if (userId == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            _logger.LogInformation($"🔍 بدء تعديل الفرد {viewModel.Id}");
-
-            if (!ModelState.IsValid)
-            {
-                _logger.LogWarning("❌ نموذج التعديل غير صالح");
-                await RepopulateViewBags(viewModel.FamilyTreeId);
-                return View(viewModel);
-            }
-
-            try
-            {
-                var person = await _context.Persons
-                    .Include(p => p.FamilyTree)
-                    .FirstOrDefaultAsync(p => p.Id == viewModel.Id && p.FamilyTree.UserId == userId);
-
-                if (person == null)
-                {
-                    TempData["ErrorMessage"] = "الفرد غير موجود أو لا تملك صلاحية الوصول له";
-                    return RedirectToAction("Index", "Home");
-                }
-
-                // تحديث البيانات
-                person.FirstName = viewModel.FirstName?.Trim();
-                person.FatherName = viewModel.FatherName?.Trim();
-                person.GrandFatherName = viewModel.GrandFatherName?.Trim();
-                person.LastName = viewModel.LastName?.Trim();
-                person.Nickname = viewModel.Nickname?.Trim();
-                person.Gender = viewModel.Gender;
-                person.BirthDate = viewModel.BirthDate;
-                person.OccupationId = viewModel.OccupationId;
-                person.CountryId = viewModel.CountryId;
-                person.City = viewModel.City?.Trim();
-                person.Notes = viewModel.Notes?.Trim();
-                person.FatherId = viewModel.FatherId;
-
-                _context.Persons.Update(person);
-                int recordsAffected = await _context.SaveChangesAsync();
-
-                _logger.LogInformation($"✅ تم تعديل الفرد بنجاح! السجلات المتأثرة: {recordsAffected}");
-
-                TempData["SuccessMessage"] = $"تم تعديل الفرد {person.FullName} بنجاح!";
-                return RedirectToAction("Index", new { familyTreeId = viewModel.FamilyTreeId });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ خطأ أثناء تعديل الفرد");
-                TempData["ErrorMessage"] = $"حدث خطأ أثناء التعديل: {ex.Message}";
-
-                await RepopulateViewBags(viewModel.FamilyTreeId);
-                return View(viewModel);
-            }
-        }
-        // POST: إضافة فرد جديد
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreatePersonViewModel viewModel)
-        {
-            var userId = GetCurrentUserId();
-            if (userId == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            _logger.LogInformation($"🔍 بيانات النموذج المستلمة:");
-            _logger.LogInformation($"   - الاسم: {viewModel.FirstName}");
-            _logger.LogInformation($"   - اسم الأب: {viewModel.FatherName}");
-            _logger.LogInformation($"   - اسم الجد: {viewModel.GrandFatherName}");
-            _logger.LogInformation($"   - العائلة: {viewModel.LastName}");
-            _logger.LogInformation($"   - الجنس: {viewModel.Gender}");
-            _logger.LogInformation($"   - الشجرة: {viewModel.FamilyTreeId}");
-
-            // التحقق من صحة النموذج
-            _logger.LogInformation($"🔍 حالة ModelState: {ModelState.IsValid}");
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-
-                _logger.LogWarning($"❌ أخطاء التحقق: {string.Join(", ", errors)}");
-                TempData["ErrorMessage"] = "البيانات غير صالحة. يرجى تصحيح الأخطاء أدناه.";
-
-                await RepopulateViewBags(viewModel.FamilyTreeId);
-                return View(viewModel);
-            }
-
-            // التحقق من وجود الشجرة
-            var tree = await _context.FamilyTrees
-                .FirstOrDefaultAsync(ft => ft.Id == viewModel.FamilyTreeId && ft.UserId == userId);
-
-            if (tree == null)
-            {
-                _logger.LogWarning($"❌ الشجرة غير موجودة: {viewModel.FamilyTreeId} للمستخدم: {userId}");
-                TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
-                return RedirectToAction("Index", "Home");
-            }
-
-            try
-            {
-                // إنشاء الشخص الجديد مع تعيين جميع القيم
-                var person = new Person
-                {
-                    FirstName = viewModel.FirstName?.Trim(),
-                    FatherName = viewModel.FatherName?.Trim(),
-                    GrandFatherName = viewModel.GrandFatherName?.Trim(),
-                    LastName = viewModel.LastName?.Trim(),
-                    Nickname = viewModel.Nickname?.Trim(),
-                    Gender = viewModel.Gender,
-                    BirthDate = viewModel.BirthDate,
-                    OccupationId = viewModel.OccupationId,
-                    CountryId = viewModel.CountryId,
-                    City = viewModel.City?.Trim(),
-                    Notes = viewModel.Notes?.Trim(),
-                    FamilyTreeId = viewModel.FamilyTreeId,
-                    FatherId = viewModel.FatherId,
-                    Photo = string.Empty, // قيمة افتراضية واضحة
-                    CreatedDate = DateTime.Now
-                };
-
-                _logger.LogInformation($"💾 محاولة حفظ الشخص: {person.FullName}");
-                _logger.LogInformation($"   - Photo: '{person.Photo}'");
-                _logger.LogInformation($"   - City: '{person.City}'");
-                _logger.LogInformation($"   - Notes: '{person.Notes}'");
-
-                // حفظ البيانات
-                _context.Persons.Add(person);
-                int recordsAffected = await _context.SaveChangesAsync();
-
-                _logger.LogInformation($"✅ تم حفظ الشخص بنجاح! السجلات المتأثرة: {recordsAffected}, الرقم: {person.Id}");
-
-                TempData["SuccessMessage"] = $"تم إضافة الفرد {person.FullName} بنجاح!";
-                return RedirectToAction("Index", new { familyTreeId = viewModel.FamilyTreeId });
-            }
-            catch (DbUpdateException dbEx)
-            {
-                _logger.LogError(dbEx, "❌ خطأ في قاعدة البيانات أثناء إضافة الفرد");
-                _logger.LogError($"تفاصيل الخطأ الداخلية: {dbEx.InnerException?.Message}");
-
-                TempData["ErrorMessage"] = "حدث خطأ في قاعدة البيانات. قد تكون البيانات مكررة أو غير صالحة.";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ خطأ غير متوقع أثناء إضافة الفرد");
-                TempData["ErrorMessage"] = $"حدث خطأ غير متوقع: {ex.Message}";
-            }
-
-            // في حالة الخطأ، إعادة تعبئة القوائم المنسدلة
-            await RepopulateViewBags(viewModel.FamilyTreeId);
-            return View(viewModel);
-        }
         // عرض الشجرة الهرمية
         public async Task<IActionResult> FamilyTreeView(int familyTreeId)
         {
@@ -467,7 +575,6 @@ namespace FamilyTreePro.Controllers  // تأكد من وجود namespace
 
             try
             {
-                // التحقق من أن الشجرة تتبع للمستخدم
                 var tree = await _context.FamilyTrees
                     .FirstOrDefaultAsync(ft => ft.Id == familyTreeId && ft.UserId == userId);
 
@@ -477,14 +584,12 @@ namespace FamilyTreePro.Controllers  // تأكد من وجود namespace
                     return RedirectToAction("Index", "Home");
                 }
 
-                // جلب جميع أفراد الشجرة مع العلاقات
                 var persons = await _context.Persons
                     .Include(p => p.Father)
                     .Include(p => p.Children)
                     .Where(p => p.FamilyTreeId == familyTreeId)
                     .ToListAsync();
 
-                // العثور على الجذر (الأشخاص الذين ليس لهم أب)
                 var rootPersons = persons.Where(p => p.FatherId == null).ToList();
 
                 ViewBag.FamilyTreeId = familyTreeId;
@@ -503,108 +608,32 @@ namespace FamilyTreePro.Controllers  // تأكد من وجود namespace
                 return RedirectToAction("Index", "Home");
             }
         }
-        // أكشن لعرض قائمة الأشخاص في شجرة معينة
-        // أكشن لعرض قائمة الأشخاص في شجرة معينة
-        // أكشن لعرض قائمة الأشخاص في شجرة معينة
-        public async Task<IActionResult> Index(int familyTreeId)
-        {
-            var userId = GetCurrentUserId();
-            if (userId == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            _logger.LogInformation($"🔍 بدء تحميل الأفراد للشجرة {familyTreeId} للمستخدم {userId}");
-
-            try
-            {
-                // التحقق أولاً من وجود الشجرة وتتبعها للمستخدم
-                var tree = await _context.FamilyTrees
-                    .FirstOrDefaultAsync(ft => ft.Id == familyTreeId && ft.UserId == userId);
-
-                if (tree == null)
-                {
-                    _logger.LogWarning($"❌ الشجرة {familyTreeId} غير موجودة أو لا تتبع للمستخدم {userId}");
-                    TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
-                    return RedirectToAction("Index", "Home");
-                }
-
-                _logger.LogInformation($"✅ الشجرة موجودة: {tree.Name}");
-
-                // جلب الأشخاص مع العلاقات
-                var persons = await _context.Persons
-                    .Include(p => p.Occupation)
-                    .Include(p => p.Country)
-                    .Include(p => p.Father)
-                    .Where(p => p.FamilyTreeId == familyTreeId)
-                    .OrderBy(p => p.FirstName)
-                    .ThenBy(p => p.FatherName)
-                    .ToListAsync();
-
-                _logger.LogInformation($"✅ تم تحميل {persons.Count} فرد للشجرة {familyTreeId}");
-
-                // تسجيل تفاصيل كل فرد
-                foreach (var person in persons)
-                {
-                    _logger.LogInformation($"   - الفرد: {person.Id} | {person.FullName} | الجنس: {person.Gender}");
-                }
-
-                ViewBag.FamilyTreeId = familyTreeId;
-                ViewBag.FamilyTreeName = tree.Name;
-
-                return View(persons);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"❌ خطأ في تحميل قائمة الأشخاص للشجرة {familyTreeId}");
-                TempData["ErrorMessage"] = "حدث خطأ في تحميل قائمة الأشخاص";
-                return View(new List<Person>());
-            }
-        }
 
         // دالة مساعدة لإعادة تعبئة ViewBags
-        private async Task RepopulateViewBags(int familyTreeId)
+        private async Task RepopulateViewBags(int familyTreeId, int? currentPersonId = null)
         {
             ViewBag.Occupations = await _context.Occupations.ToListAsync();
             ViewBag.Countries = await _context.Countries.ToListAsync();
-            ViewBag.PotentialFathers = await _context.Persons
-                .Where(p => p.FamilyTreeId == familyTreeId && p.Gender == "Male")
-                .ToListAsync();
-        }
 
-        // أكشن إضافي: تفاصيل الشخص
-        public async Task<IActionResult> Details(int id)
-        {
-            try
+            var potentialFathersQuery = _context.Persons
+                .Where(p => p.FamilyTreeId == familyTreeId && p.Gender == "Male");
+
+            if (currentPersonId.HasValue)
             {
-                var userId = GetCurrentUserId();
-                if (userId == null)
-                {
-                    return RedirectToAction("Login", "Account");
-                }
-
-                var person = await _context.Persons
-                    .Include(p => p.Occupation)
-                    .Include(p => p.Country)
-                    .Include(p => p.Father)
-                    // .Include(p => p.Mother) // تم إزالته مؤقتاً
-                    .Include(p => p.FamilyTree)
-                    .FirstOrDefaultAsync(p => p.Id == id && p.FamilyTree.UserId == userId);
-
-                if (person == null)
-                {
-                    TempData["ErrorMessage"] = "الفرد غير موجود أو لا تملك صلاحية الوصول له";
-                    return RedirectToAction("Index", "Home");
-                }
-
-                return View(person);
+                potentialFathersQuery = potentialFathersQuery.Where(p => p.Id != currentPersonId.Value);
             }
-            catch (Exception ex)
+
+            ViewBag.PotentialFathers = await potentialFathersQuery.ToListAsync();
+
+            var potentialMothersQuery = _context.Persons
+                .Where(p => p.FamilyTreeId == familyTreeId && p.Gender == "Female");
+
+            if (currentPersonId.HasValue)
             {
-                _logger.LogError(ex, "خطأ في تحميل تفاصيل الفرد");
-                TempData["ErrorMessage"] = "حدث خطأ في تحميل التفاصيل";
-                return RedirectToAction("Index", "Home");
+                potentialMothersQuery = potentialMothersQuery.Where(p => p.Id != currentPersonId.Value);
             }
+
+            ViewBag.PotentialMothers = await potentialMothersQuery.ToListAsync();
         }
     }
 }

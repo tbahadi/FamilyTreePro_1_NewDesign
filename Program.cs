@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Http.Json; // أضف هذا
+using Microsoft.AspNetCore.Http.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +15,6 @@ builder.Services.AddControllersWithViews()
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 
-// إعدادات JSON لمنع دورات الكائنات
 builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -32,14 +31,11 @@ builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true; options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SameSite = SameSiteMode.Lax; // أو SameSiteMode.None
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // للتطوير
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
 });
 
-// إضافة خدمات التسجيل
 builder.Services.AddLogging(logging =>
 {
     logging.ClearProviders();
@@ -61,37 +57,40 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        // فقط تأكد من وجود قاعدة البيانات، لا تحذفها
         db.Database.EnsureCreated();
 
-        // التحقق إذا كانت قاعدة البيانات فارغة، فقط тогда نضيف بيانات أولية
         if (!db.Users.Any())
         {
-            await SeedData(db);
-            logger.LogInformation("✅ تم إضافة البيانات الأولية لأن القاعدة كانت فارغة");
-        }
-        else
-        {
-            logger.LogInformation("✅ قاعدة البيانات موجودة بالفعل، تم الحفاظ على البيانات");
+            // إضافة مستخدمين افتراضيين
+            var adminUser = new User
+            {
+                Username = "admin",
+                Password = "admin123",
+                FullName = "مدير النظام",
+                Email = "admin@example.com",
+                CreatedDate = DateTime.Now
+            };
+            db.Users.Add(adminUser);
 
-            // طباعة إحصاءات البيانات الحالية للمساعدة في التجربة
-            var userCount = await db.Users.CountAsync();
-            var treeCount = await db.FamilyTrees.CountAsync();
-            var personCount = await db.Persons.CountAsync();
+            var normalUser = new User
+            {
+                Username = "user",
+                Password = "123456",
+                FullName = "مستخدم عادي",
+                Email = "user@example.com",
+                CreatedDate = DateTime.Now
+            };
+            db.Users.Add(normalUser);
 
-            logger.LogInformation($"📊 إحصاءات البيانات الحالية:");
-            logger.LogInformation($"   - عدد المستخدمين: {userCount}");
-            logger.LogInformation($"   - عدد الشجرات: {treeCount}");
-            logger.LogInformation($"   - عدد الأفراد: {personCount}");
+            await db.SaveChangesAsync();
+            logger.LogInformation("تم إضافة المستخدمين الافتراضيين");
         }
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "❌ خطأ في التحقق من قاعدة البيانات");
+        logger.LogError(ex, "خطأ في إنشاء قاعدة البيانات");
     }
 }
-
-
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -110,83 +109,68 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.Run();
 
-// دالة لإضافة بيانات أولية (محدثة)
-async Task SeedData(AppDbContext context)
+// تحديث قاعدة البيانات تلقائياً عند تشغيل التطبيق
+using (var scope = app.Services.CreateScope())
 {
-    // إضافة الدول
-    if (!context.Countries.Any())
-    {
-        var countries = new[]
-        {
-            new Country { Name = "المملكة العربية السعودية", Code = "SA" },
-            new Country { Name = "مصر", Code = "EG" },
-            new Country { Name = "العراق", Code = "IQ" },
-            new Country { Name = "الجزائر", Code = "DZ" },
-            new Country { Name = "المغرب", Code = "MA" },
-            new Country { Name = "السودان", Code = "SD" },
-            new Country { Name = "اليمن", Code = "YE" },
-            new Country { Name = "سوريا", Code = "SY" },
-            new Country { Name = "تونس", Code = "TN" },
-            new Country { Name = "الإمارات العربية المتحدة", Code = "AE" },
-            new Country { Name = "قطر", Code = "QA" },
-            new Country { Name = "الكويت", Code = "KW" },
-            new Country { Name = "البحرين", Code = "BH" },
-            new Country { Name = "عُمان", Code = "OM" },
-            new Country { Name = "الأردن", Code = "JO" },
-            new Country { Name = "لبنان", Code = "LB" },
-            new Country { Name = "فلسطين", Code = "PS" },
-            new Country { Name = "ليبيا", Code = "LY" },
-            new Country { Name = "موريتانيا", Code = "MR" },
-            new Country { Name = "جيبوتي", Code = "DJ" },
-            new Country { Name = "جزر القمر", Code = "KM" },
-            new Country { Name = "الصومال", Code = "SO" }
-        };
-        await context.Countries.AddRangeAsync(countries);
-    }
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
-    // إضافة المهن مع وصف افتراضي
-    if (!context.Occupations.Any())
+    try
     {
-        var occupations = new[]
-        {
-            new Occupation { Name = "طبيب", Description = "ممارس طبي" },
-            new Occupation { Name = "مهندس", Description = "مختص في الهندسة" },
-            new Occupation { Name = "معلم", Description = "مربي ومدرس" },
-            new Occupation { Name = "تاجر", Description = "رجل أعمال وتجارة" },
-            new Occupation { Name = "موظف حكومي", Description = "يعمل في القطاع الحكومي" },
-            new Occupation { Name = "طالب", Description = "يدرس في مدرسة أو جامعة" },
-            new Occupation { Name = "متقاعد", Description = "أنهى فترة العمل" },
-            new Occupation { Name = "ربة منزل", Description = "تعمل في رعاية المنزل والأسرة" },
-            new Occupation { Name = "طيار", Description = "يقود الطائرات" },
-            new Occupation { Name = "ضابط", Description = "يعمل في القوات المسلحة" },
-            new Occupation { Name = "محامي", Description = "ممارس في مجال القانون" },
-            new Occupation { Name = "محاسب", Description = "متخصص في المحاسبة" },
-            new Occupation { Name = "مبرمج", Description = "مطور برمجيات" },
-            new Occupation { Name = "ممرض", Description = "يعمل في التمريض" },
-            new Occupation { Name = "صيدلي", Description = "متخصص في الصيدلة" },
-            new Occupation { Name = "فنان", Description = "يعمل في المجال الفني" },
-            new Occupation { Name = "كاتب", Description = "يعمل في الكتابة والتأليف" },
-            new Occupation { Name = "رياضي", Description = "يمارس الرياضة محترفاً" },
-            new Occupation { Name = "إمام", Description = "إمام مسجد" },
-            new Occupation { Name = "داعية", Description = "يعمل في الدعوة الإسلامية" }
-        };
-        await context.Occupations.AddRangeAsync(occupations);
-    }
+        logger.LogInformation("🔧 جاري تحديث قاعدة البيانات...");
 
-    // إضافة مستخدم افتراضي للتجربة
-    if (!context.Users.Any())
+        // الحصول على الاتصال مباشرة
+        var connection = db.Database.GetDbConnection();
+        connection.Open();
+
+        // محاولة إضافة الحقول الجديدة
+        try
+        {
+            using var command1 = connection.CreateCommand();
+            command1.CommandText = "ALTER TABLE Users ADD COLUMN IsActive INTEGER NOT NULL DEFAULT 1";
+            command1.ExecuteNonQuery();
+            logger.LogInformation("✅ تم إضافة حقل IsActive");
+        }
+        catch (Exception ex)
+        {
+            logger.LogInformation($"ℹ️ حقل IsActive موجود بالفعل: {ex.Message}");
+        }
+
+        try
+        {
+            using var command2 = connection.CreateCommand();
+            command2.CommandText = "ALTER TABLE Users ADD COLUMN IsAdmin INTEGER NOT NULL DEFAULT 0";
+            command2.ExecuteNonQuery();
+            logger.LogInformation("✅ تم إضافة حقل IsAdmin");
+        }
+        catch (Exception ex)
+        {
+            logger.LogInformation($"ℹ️ حقل IsAdmin موجود بالفعل: {ex.Message}");
+        }
+
+        // تحديث مستخدم admin
+        var adminUser = db.Users.FirstOrDefault(u => u.Username == "admin");
+        if (adminUser != null)
+        {
+            // استخدام Reflection لتحديث الحقول الجديدة بشكل آمن
+            var isActiveProp = adminUser.GetType().GetProperty("IsActive");
+            var isAdminProp = adminUser.GetType().GetProperty("IsAdmin");
+
+            if (isActiveProp != null) isActiveProp.SetValue(adminUser, true);
+            if (isAdminProp != null) isAdminProp.SetValue(adminUser, true);
+
+            db.SaveChanges();
+            logger.LogInformation("✅ تم ترقية admin إلى مدير نظام");
+        }
+
+        connection.Close();
+        logger.LogInformation("🎉 تم تحديث قاعدة البيانات بنجاح");
+    }
+    catch (Exception ex)
     {
-        var defaultUser = new User
-        {
-            Username = "admin",
-            Password = "123456",
-            Email = "admin@example.com",
-            FullName = "مدير النظام"
-        };
-        context.Users.Add(defaultUser);
+        logger.LogError(ex, "❌ خطأ في تحديث قاعدة البيانات");
     }
-
-    await context.SaveChangesAsync();
 }
+
+app.Run();

@@ -9,27 +9,59 @@ namespace FamilyTreePro.Models
     {
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "حقل الاسم الأول مطلوب")]
+        [Required]
         [Display(Name = "الاسم الأول")]
         public string FirstName { get; set; }
 
-        [Required(ErrorMessage = "حقل اسم الأب مطلوب")]
+        [Required]
         [Display(Name = "اسم الأب")]
         public string FatherName { get; set; }
 
-        [Required(ErrorMessage = "حقل اسم الجد مطلوب")]
         [Display(Name = "اسم الجد")]
         public string GrandFatherName { get; set; }
 
-        [Required(ErrorMessage = "حقل اسم العائلة مطلوب")]
         [Display(Name = "اسم العائلة")]
         public string LastName { get; set; }
 
         [Display(Name = "اللقب")]
         public string Nickname { get; set; }
 
-        [Display(Name = "الاسم الكامل")]
-        public string FullName => $"{FirstName} {FatherName} {GrandFatherName} {LastName} {(!string.IsNullOrEmpty(Nickname) ? "(" + Nickname + ")" : "")}";
+        // خاصية محسوبة للاسم الكامل
+        [NotMapped]
+        public string FullName
+        {
+            get
+            {
+                var names = new List<string>();
+
+                if (!string.IsNullOrEmpty(FirstName))
+                    names.Add(FirstName);
+
+                if (!string.IsNullOrEmpty(FatherName))
+                    names.Add(FatherName);
+
+                if (!string.IsNullOrEmpty(GrandFatherName))
+                    names.Add(GrandFatherName);
+
+                if (!string.IsNullOrEmpty(LastName))
+                    names.Add(LastName);
+
+                return string.Join(" ", names);
+            }
+        }
+
+        [Display(Name = "هل هو سجل أصلي؟")]
+        public bool IsOriginalRecord { get; set; } = true;
+
+        [Display(Name = "نقطة اتصال؟")]
+        public bool IsConnectionPoint { get; set; } = false;
+
+        [Display(Name = "معرف الشجرة الأصلية")]
+        public int? OriginalTreeId { get; set; } // الخاصية المضافة
+
+        [Required]
+        [Display(Name = "الجنس")]
+        public string Gender { get; set; }
 
         [Display(Name = "تاريخ الميلاد")]
         [DataType(DataType.Date)]
@@ -39,73 +71,37 @@ namespace FamilyTreePro.Models
         [DataType(DataType.Date)]
         public DateTime? DeathDate { get; set; }
 
-        [Required(ErrorMessage = "حقل الجنس مطلوب")]
-        [Display(Name = "الجنس")]
-        public string Gender { get; set; }
-
         [Display(Name = "المدينة")]
         public string City { get; set; }
 
-        [Display(Name = "صورة")]
-        public string Photo { get; set; } = string.Empty; // قيمة افتراضية
+        [Display(Name = "الصورة")]
+        public string Photo { get; set; }
 
         [Display(Name = "ملاحظات")]
         public string Notes { get; set; }
 
-        [Display(Name = "تاريخ الإضافة")]
+        [Display(Name = "سبب الإضافة")]
+        public string AdditionReason { get; set; }
+
         public DateTime CreatedDate { get; set; }
+        public DateTime? LastUpdated { get; set; }
 
         // العلاقات
-        [Display(Name = "المهنة")]
-        public int? OccupationId { get; set; }
-        public Occupation Occupation { get; set; }
-
-        [Display(Name = "الدولة")]
-        public int? CountryId { get; set; }
-        public Country Country { get; set; }
-
-        [Display(Name = "الشجرة العائلية")]
         public int FamilyTreeId { get; set; }
         public FamilyTree FamilyTree { get; set; }
 
-        // العلاقات العائلية
-        [Display(Name = "الأب")]
+        public int? OccupationId { get; set; }
+        public Occupation Occupation { get; set; }
+
+        public int? CountryId { get; set; }
+        public Country Country { get; set; }
+
         public int? FatherId { get; set; }
-        [ForeignKey("FatherId")]
-        public virtual Person Father { get; set; }
+        public Person Father { get; set; }
 
-        [Display(Name = "الأم")]
         public int? MotherId { get; set; }
-        [ForeignKey("MotherId")]
-        public virtual Person Mother { get; set; }
+        public Person Mother { get; set; }
 
-        public virtual ICollection<Person> Children { get; set; }
-
-        // خاصية للإشارة إلى أن هذا الشخص يمثل نقطة الربط بين الشجرات
-        [Display(Name = "يمثل نقطة ربط بين الشجرات")]
-        public bool IsConnectionPoint { get; set; }
-
-        // خاصية جديدة: معرف الشجرة الأصلية (إذا كانت البيانات منسوخة)
-        [Display(Name = "الشجرة الأصلية")]
-        public int? OriginalTreeId { get; set; }
-
-        [ForeignKey("OriginalTreeId")]
-        public virtual FamilyTree OriginalTree { get; set; }
-
-        // خاصية جديدة: هل السجل أصلي أم منسوخ؟
-        [Display(Name = "سجل أصلي")]
-        public bool IsOriginalRecord { get; set; }
-
-        public Person()
-        {
-            Children = new HashSet<Person>();
-            CreatedDate = DateTime.Now;
-            IsConnectionPoint = false;
-            Photo = string.Empty;
-            City = string.Empty;
-            Notes = string.Empty;
-            Nickname = string.Empty;
-            IsOriginalRecord = true; // القيمة الافتراضية
-        }
+        public ICollection<Person> Children { get; set; }
     }
 }

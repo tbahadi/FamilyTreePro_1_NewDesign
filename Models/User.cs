@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FamilyTreePro.Models
 {
@@ -27,12 +26,23 @@ namespace FamilyTreePro.Models
         [Display(Name = "تاريخ التسجيل")]
         public DateTime CreatedDate { get; set; }
 
+        // الحقول الجديدة - نضيفها فقط
+        [Display(Name = "مفعل")]
+        public bool IsActive { get; set; }
+
+        [Display(Name = "مدير النظام")]
+        public bool IsAdmin { get; set; }
+
+        // العلاقات
         public virtual ICollection<FamilyTree> FamilyTrees { get; set; }
 
         public User()
         {
             FamilyTrees = new HashSet<FamilyTree>();
             CreatedDate = DateTime.Now;
+            // قيم افتراضية بسيطة
+            IsActive = true;
+            IsAdmin = false;
         }
     }
 }

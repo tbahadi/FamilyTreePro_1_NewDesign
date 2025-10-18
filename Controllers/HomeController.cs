@@ -1,9 +1,10 @@
 ﻿using FamilyTreePro.Models;
 using FamilyTreePro.Services;
+using FamilyTreePro.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
-
 
 namespace FamilyTreePro.Controllers
 {
@@ -23,7 +24,28 @@ namespace FamilyTreePro.Controllers
             return HttpContext.Session.GetInt32("UserId");
         }
 
-        // الصفحة الرئيسية - عرض جميع الشجرات للمستخدم
+        // دالة مساعدة لبناء الاسم الكامل
+        private string GetFullName(Person person)
+        {
+            if (person == null) return "غير معروف";
+
+            var names = new List<string>();
+
+            if (!string.IsNullOrEmpty(person.FirstName))
+                names.Add(person.FirstName);
+
+            if (!string.IsNullOrEmpty(person.FatherName))
+                names.Add(person.FatherName);
+
+            if (!string.IsNullOrEmpty(person.GrandFatherName))
+                names.Add(person.GrandFatherName);
+
+            if (!string.IsNullOrEmpty(person.LastName))
+                names.Add(person.LastName);
+
+            return string.Join(" ", names);
+        }
+
         // الصفحة الرئيسية - عرض جميع الشجرات للمستخدم
         public async Task<IActionResult> Index()
         {
@@ -73,7 +95,62 @@ namespace FamilyTreePro.Controllers
             }
         }
 
-        // ربط شجرة بأخرى - GET (محدث)
+        public async Task<IActionResult> AdvancedFamilyTreeView(int familyTreeId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                var persons = await _context.Persons
+                    .Where(p => p.FamilyTreeId == familyTreeId)
+                    .Include(p => p.Occupation)
+                    .ToListAsync();
+
+                var familyTree = await _context.FamilyTrees.FindAsync(familyTreeId);
+
+                ViewBag.FamilyTreeId = familyTreeId;
+                ViewBag.FamilyTreeName = familyTree?.Name ?? "شجرة عائلية";
+                ViewBag.PersonsCount = persons.Count;
+
+                // تحويل آمن للبيانات إلى JSON
+                try
+                {
+                    var personsData = persons.Select(p => new
+                    {
+                        id = p.Id,
+                        fullName = GetFullName(p), // استخدام الدالة المساعدة بدلاً من الخاصية
+                        gender = p.Gender,
+                        birthDate = p.BirthDate?.ToString("yyyy-MM-dd"),
+                        city = p.City,
+                        occupationName = p.Occupation?.Name,
+                        fatherId = p.FatherId,
+                        isConnectionPoint = p.IsConnectionPoint // الآن موجودة
+                    }).ToList();
+
+                    ViewBag.PersonsJson = JsonSerializer.Serialize(personsData,
+                        new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                }
+                catch (Exception ex)
+                {
+                    ViewBag.PersonsJson = "[]";
+                    _logger.LogError(ex, "Error serializing persons data");
+                }
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطأ في تحميل الشجرة المتقدمة");
+                TempData["ErrorMessage"] = "حدث خطأ في تحميل الشجرة المتقدمة";
+                return RedirectToAction("Index");
+            }
+        }
+
+        // ربط شجرة بأخرى - GET
         public async Task<IActionResult> ConnectTrees(int id)
         {
             var userId = GetCurrentUserId();
@@ -100,47 +177,7 @@ namespace FamilyTreePro.Controllers
             return View();
         }
 
-        public async Task<IActionResult> AdvancedFamilyTreeView(int familyTreeId)
-        {
-            var persons = await _context.Persons
-                .Where(p => p.FamilyTreeId == familyTreeId)
-                .Include(p => p.Occupation)
-                .ToListAsync();
-
-            var familyTree = await _context.FamilyTrees.FindAsync(familyTreeId);
-
-            ViewBag.FamilyTreeId = familyTreeId;
-            ViewBag.FamilyTreeName = familyTree?.Name ?? "شجرة عائلية";
-            ViewBag.PersonsCount = persons.Count;
-
-            // تحويل آمن للبيانات إلى JSON
-            try
-            {
-                var personsData = persons.Select(p => new
-                {
-                    id = p.Id,
-                    fullName = p.FullName,
-                    gender = p.Gender,
-                    birthDate = p.BirthDate?.ToString("yyyy-MM-dd"),
-                    city = p.City,
-                    occupationName = p.Occupation?.Name,
-                    fatherId = p.FatherId,
-                    isConnectionPoint = p.IsConnectionPoint
-                }).ToList();
-
-                ViewBag.PersonsJson = JsonSerializer.Serialize(personsData,
-                    new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-            }
-            catch (Exception ex)
-            {
-                ViewBag.PersonsJson = "[]";
-                _logger.LogError(ex, "Error serializing persons data");
-            }
-
-            return View();
-        }
-
-        // ربط شجرة بأخرى - POST (محدث)
+        // ربط شجرة بأخرى - POST
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConnectTrees(int treeId, int? parentTreeId, int? connectionPersonId,
@@ -187,7 +224,7 @@ namespace FamilyTreePro.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-        // حذف شجرة عائلية - محدث
+
         // حذف شجرة عائلية - GET
         public async Task<IActionResult> DeleteTree(int id)
         {
@@ -428,8 +465,6 @@ namespace FamilyTreePro.Controllers
             return View(viewModel);
         }
 
-         
-
         // عرض الـ Logs مباشرة في المتصفح
         public IActionResult ViewLogs()
         {
@@ -467,15 +502,16 @@ namespace FamilyTreePro.Controllers
             catch (Exception ex)
             {
                 var errorLogs = new List<string>
-        {
-            "خطأ في تحميل السجلات:",
-            ex.Message,
-            ex.StackTrace ?? "لا يوجد Stack Trace"
-        };
+                {
+                    "خطأ في تحميل السجلات:",
+                    ex.Message,
+                    ex.StackTrace ?? "لا يوجد Stack Trace"
+                };
                 ViewBag.Logs = errorLogs;
                 return View();
             }
         }
+
         // فحص قاعدة البيانات مباشرة
         public async Task<IActionResult> CheckDatabase()
         {
@@ -535,7 +571,7 @@ namespace FamilyTreePro.Controllers
                 .Select(p => new
                 {
                     id = p.Id,
-                    fullName = p.FullName
+                    fullName = GetFullName(p) // استخدام الدالة المساعدة
                 })
                 .ToListAsync();
 
@@ -560,6 +596,7 @@ namespace FamilyTreePro.Controllers
 
             return View(mainTrees);
         }
+
         // فحص قاعدة البيانات مباشرة
         public async Task<IActionResult> CheckDatabaseDirectly()
         {
@@ -597,7 +634,7 @@ namespace FamilyTreePro.Controllers
 
                 foreach (var person in persons)
                 {
-                    _logger.LogInformation($"   - الفرد: {person.Id} - {person.FullName} - الشجرة: {person.FamilyTreeId}");
+                    _logger.LogInformation($"   - الفرد: {person.Id} - {GetFullName(person)} - الشجرة: {person.FamilyTreeId}");
                 }
 
                 return View();
@@ -609,6 +646,7 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction("Index", "Home");
             }
         }
+
         // فحص جميع البيانات
         public async Task<IActionResult> DebugPersons(int familyTreeId = 1)
         {
@@ -639,6 +677,7 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction("Index", "Home");
             }
         }
+
         // أكشن لحذف جميع أفراد الشجرة
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -669,6 +708,7 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction("DeleteTree", new { id = familyTreeId });
             }
         }
+
         // فحص حالة شجرة معينة
         public async Task<IActionResult> CheckTreeStatus(int id)
         {
@@ -705,7 +745,5 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction(nameof(Index));
             }
         }
-
-         
     }
-    }
+}

@@ -1,0 +1,313 @@
+﻿@{
+    ViewData["Title"] = "تفاصيل المستخدم";
+    var user = ViewData["User"] as User;
+}
+
+<style>
+    .info-card {
+        border-left: 4px solid #007bff;
+    }
+
+    .stats-card {
+        border-left: 4px solid #28a745;
+    }
+
+    .actions-card {
+        border-left: 4px solid #17a2b8;
+    }
+
+    .trees-card {
+        border-left: 4px solid #6f42c1;
+    }
+</style>
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-action="Index" asp-controller="Home">الرئيسية</a></li>
+                    <li class="breadcrumb-item"><a asp-action="Users">إدارة المستخدمين</a></li>
+                    <li class="breadcrumb-item active">تفاصيل المستخدم</li>
+                </ol>
+            </nav>
+
+            <h1 class="text-center mb-4">👤 تفاصيل المستخدم</h1>
+        </div>
+    </div>
+
+    @if (user != null)
+    {
+        <div class="row">
+            <!-- معلومات المستخدم -->
+            <div class="col-md-6 mb-4">
+                <div class="card info-card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="fas fa-user me-2"></i>المعلومات الأساسية</h4>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">اسم المستخدم:</th>
+                                <td>
+                                    <strong>@user.Username</strong>
+                                    @if (user.IsAdmin)
+                                    {
+                                        <span class="badge bg-warning text-dark ms-2">👑 مدير</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>الاسم الكامل:</th>
+                                <td>@user.FullName</td>
+                            </tr>
+                            <tr>
+                                <th>البريد الإلكتروني:</th>
+                                <td>@user.Email</td>
+                            </tr>
+                            <tr>
+                                <th>تاريخ التسجيل:</th>
+                                <td>@user.CreatedDate.ToString("yyyy/MM/dd HH:mm")</td>
+                            </tr>
+                            <tr>
+                                <th>حالة الحساب:</th>
+                                <td>
+                                    @if (user.IsActive)
+                                    {
+                                        <span class="badge bg-success">✅ نشط</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">❌ معطل</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>صلاحية المستخدم:</th>
+                                <td>
+                                    @if (user.IsAdmin)
+                                    {
+                                        <span class="badge bg-warning text-dark">👑 مدير نظام</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">👤 مستخدم عادي</span>
+                                    }
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- إحصائيات المستخدم -->
+            <div class="col-md-6 mb-4">
+                <div class="card stats-card">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0"><i class="fas fa-chart-bar me-2"></i>الإحصائيات</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <div class="border rounded p-3 bg-light">
+                                    <i class="fas fa-tree fa-2x text-success mb-2"></i>
+                                    <h3>@(user.FamilyTrees?.Count ?? 0)</h3>
+                                    <small class="text-muted">عدد الشجرات</small>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="border rounded p-3 bg-light">
+                                    <i class="fas fa-users fa-2x text-info mb-2"></i>
+                                    <h3>@(user.FamilyTrees?.Sum(ft => ft.Persons?.Count ?? 0) ?? 0)</h3>
+                                    <small class="text-muted">إجمالي الأفراد</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded p-3 bg-light">
+                                    <i class="fas fa-layer-group fa-2x text-warning mb-2"></i>
+                                    <h3>
+                                        @{
+                                            var treeCount = user.FamilyTrees?.Count ?? 0;
+                                            var personCount = user.FamilyTrees?.Sum(ft => ft.Persons?.Count ?? 0) ?? 0;
+                                            var avg = treeCount > 0 ? personCount / treeCount : 0;
+                                        }
+                                        @avg
+                                    </h3>
+                                    <small class="text-muted">متوسط الأفراد لكل شجرة</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded p-3 bg-light">
+                                    <i class="fas fa-calendar-alt fa-2x text-primary mb-2"></i>
+                                    <h3>@user.CreatedDate.ToString("MMM yyyy")</h3>
+                                    <small class="text-muted">تاريخ الانضمام</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الإجراءات -->
+        <div class="row">
+            <div class="col-12 mb-4">
+                <div class="card actions-card">
+                    <div class="card-header bg-info text-white">
+                        <h4 class="mb-0"><i class="fas fa-cogs me-2"></i>الإجراءات</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                            @if (!user.IsAdmin)
+                            {
+                                <button class="btn btn-warning toggle-admin-btn me-2"
+                                        data-userid="@user.Id"
+                                        data-isadmin="@user.IsAdmin.ToString().ToLower()">
+                                    <i class="fas @(user.IsAdmin ? "fa-user-times" : "fa-user-shield") me-1"></i>
+                                    @(user.IsAdmin ? "إلغاء صلاحية المدير" : "ترقية إلى مدير")
+                                </button>
+
+                                <button class="btn @(user.IsActive ? "btn-danger" : "btn-success") toggle-status-btn me-2"
+                                        data-userid="@user.Id"
+                                        data-isactive="@user.IsActive.ToString().ToLower()">
+                                    <i class="fas @(user.IsActive ? "fa-user-slash" : "fa-user-check") me-1"></i>
+                                    @(user.IsActive ? "تعطيل الحساب" : "تفعيل الحساب")
+                                </button>
+
+                                <button class="btn btn-outline-danger delete-user-btn me-2"
+                                        data-userid="@user.Id"
+                                        data-username="@user.Username">
+                                    <i class="fas fa-trash me-1"></i>حذف المستخدم
+                                </button>
+                            }
+                            else
+                            {
+                                <p class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    الإجراءات محدودة لحسابات المديرين
+                                </p>
+                            }
+
+                            <a href="@Url.Action("Users")" class="btn btn-secondary ms-auto">
+                                <i class="fas fa-arrow-right me-1"></i>العودة إلى القائمة
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الشجرات العائلية -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card trees-card">
+                    <div class="card-header bg-purple text-white">
+                        <h4 class="mb-0"><i class="fas fa-tree me-2"></i>الشجرات العائلية (@(user.FamilyTrees?.Count ?? 0))</h4>
+                    </div>
+                    <div class="card-body">
+                        @if (user.FamilyTrees != null && user.FamilyTrees.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>اسم الشجرة</th>
+                                            <th>عدد الأفراد</th>
+                                            <th>تاريخ الإنشاء</th>
+                                            <th>آخر تحديث</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var tree in user.FamilyTrees)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@tree.Name</strong>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-primary">@(tree.Persons?.Count ?? 0) فرد</span>
+                                                </td>
+                                                <td>@tree.CreatedDate.ToString("yyyy/MM/dd")</td>
+                                                <td>@tree.CreatedDate.ToString("yyyy/MM/dd")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-center text-muted">
+                                <i class="fas fa-tree fa-2x mb-3"></i><br>
+                                لا توجد شجرات عائلية لهذا المستخدم
+                            </p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-danger text-center">
+                    <h4><i class="fas fa-exclamation-triangle me-2"></i>المستخدم غير موجود</h4>
+                    <p>لم يتم العثور على المستخدم المطلوب.</p>
+                    <a href="@Url.Action("Users")" class="btn btn-primary">العودة إلى القائمة</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('صفحة تفاصيل المستخدم محملة');
+
+            // إضافة event listeners للأزرار
+            const toggleAdminButtons = document.querySelectorAll('.toggle-admin-btn');
+            const toggleStatusButtons = document.querySelectorAll('.toggle-status-btn');
+            const deleteButtons = document.querySelectorAll('.delete-user-btn');
+
+            toggleAdminButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const userId = this.dataset.userid;
+                    const isAdmin = this.dataset.isadmin === 'true';
+                    const action = isAdmin ? 'إلغاء صلاحية المدير' : 'ترقية إلى مدير';
+
+                    if (confirm(`هل أنت متأكد من ${action} لهذا المستخدم؟`)) {
+                        alert(`سيتم ${action} للمستخدم ${userId}`);
+                        // يمكنك إضافة AJAX call هنا
+                    }
+                });
+            });
+
+            toggleStatusButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const userId = this.dataset.userid;
+                    const isActive = this.dataset.isactive === 'true';
+                    const action = isActive ? 'تعطيل' : 'تفعيل';
+
+                    if (confirm(`هل أنت متأكد من ${action} هذا الحساب؟`)) {
+                        alert(`سيتم ${action} الحساب للمستخدم ${userId}`);
+                        // يمكنك إضافة AJAX call هنا
+                    }
+                });
+            });
+
+            deleteButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const userId = this.dataset.userid;
+                    const username = this.dataset.username;
+
+                    if (confirm(`هل أنت متأكد من حذف المستخدم "${username}"؟ هذا الإجراء لا يمكن التراجع عنه.`)) {
+                        alert(`سيتم حذف المستخدم ${username}`);
+                        // يمكنك إضافة AJAX call هنا
+                    }
+                });
+            });
+        });
+    </script>
+}

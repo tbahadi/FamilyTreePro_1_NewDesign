@@ -1,0 +1,117 @@
+﻿@model string
+
+<div class="gender-selection">
+    <label class="form-label fw-bold">الجنس <span class="text-danger">*</span></label>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="gender-option">
+                <input type="radio" id="Gender_Male" name="Gender" value="Male"
+                       @(Model == "Male" ? "checked" : "") class="btn-check" required>
+                <label class="btn btn-outline-primary gender-btn male-btn" for="Gender_Male">
+                    <i class="fas fa-mars fa-2x mb-2"></i>
+                    <span class="d-block">ذكر</span>
+                </label>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="gender-option">
+                <input type="radio" id="Gender_Female" name="Gender" value="Female"
+                       @(Model == "Female" ? "checked" : "") class="btn-check" required>
+                <label class="btn btn-outline-danger gender-btn female-btn" for="Gender_Female">
+                    <i class="fas fa-venus fa-2x mb-2"></i>
+                    <span class="d-block">أنثى</span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .gender-selection {
+        margin: 20px 0;
+    }
+
+    .gender-option {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .gender-btn {
+        width: 100%;
+        height: 120px;
+        border: 3px solid #dee2e6;
+        border-radius: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        padding: 20px;
+    }
+
+    .male-btn {
+        color: #007bff;
+        border-color: #007bff;
+    }
+
+    .female-btn {
+        color: #e91e63;
+        border-color: #e91e63;
+    }
+
+    .btn-check:checked + .male-btn {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        border-color: #0056b3;
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+    }
+
+    .btn-check:checked + .female-btn {
+        background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+        color: white;
+        border-color: #c2185b;
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(233, 30, 99, 0.3);
+    }
+
+    .gender-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .gender-btn i {
+        transition: all 0.3s ease;
+    }
+
+    .btn-check:checked + .gender-btn i {
+        transform: scale(1.2);
+    }
+
+    /* تحسينات للشاشات الصغيرة */
+    @@media (max-width: 768px) {
+        .gender-btn {
+            height: 100px;
+            padding: 15px;
+            font-size: 1rem;
+        }
+
+            .gender-btn i {
+                font-size: 1.5rem;
+            }
+    }
+
+    @@media (max-width: 576px) {
+        .gender-btn {
+            height: 90px;
+            padding: 12px;
+            font-size: 0.9rem;
+        }
+
+            .gender-btn i {
+                font-size: 1.3rem;
+            }
+    }
+</style>

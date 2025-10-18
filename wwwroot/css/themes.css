@@ -1,0 +1,141 @@
+﻿/* ثيمات الأندية السعودية */
+
+/* ثيم الهلال (الإفتراضي) */
+:root, [data-theme="hilal"] {
+    --primary-color: #0047ab;
+    --secondary-color: #ffffff;
+    --accent-color: #d4af37;
+    --success-color: #28a745;
+    --info-color: #17a2b8;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --text-color: #333333;
+    --background-color: #f8f9fa;
+    --card-bg: #ffffff;
+    --border-color: #dee2e6;
+}
+
+/* ثيم النصر */
+[data-theme="nasr"] {
+    --primary-color: #f8f8f8;
+    --secondary-color: #c60c30;
+    --accent-color: #ffd700;
+    --success-color: #28a745;
+    --info-color: #17a2b8;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --text-color: #2c2c2c;
+    --background-color: #f5f5f5;
+    --card-bg: #ffffff;
+    --border-color: #e0e0e0;
+}
+
+/* ثيم الاتحاد */
+[data-theme="ittihad"] {
+    --primary-color: #000000;
+    --secondary-color: #ffd700;
+    --accent-color: #ffffff;
+    --success-color: #28a745;
+    --info-color: #17a2b8;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --text-color: #333333;
+    --background-color: #f8f8f8;
+    --card-bg: #ffffff;
+    --border-color: #ddd;
+}
+
+/* ثيم الأهلي */
+[data-theme="ahly"] {
+    --primary-color: #da251c;
+    --secondary-color: #ffffff;
+    --accent-color: #f8d568;
+    --success-color: #28a745;
+    --info-color: #17a2b8;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --text-color: #333333;
+    --background-color: #fefefe;
+    --card-bg: #ffffff;
+    --border-color: #e9ecef;
+}
+
+/* تطبيق الثيمات على العناصر */
+[data-theme] {
+    transition: all 0.3s ease;
+}
+
+/* تطبيق الألوان على العناصر */
+.hilal-navbar {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+}
+
+.hilal-nav-brand {
+    color: var(--accent-color) !important;
+}
+
+.hilal-nav-link {
+    color: var(--secondary-color) !important;
+}
+
+    .hilal-nav-link:hover {
+        color: var(--accent-color) !important;
+    }
+
+.btn-primary {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn-outline-primary {
+    color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+    .btn-outline-primary:hover {
+        background-color: var(--primary-color) !important;
+        color: var(--secondary-color) !important;
+    }
+
+/* معاينات الثيمات في القائمة */
+.theme-preview {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+}
+
+.hilal-preview {
+    background: linear-gradient(135deg, #0047ab 50%, #d4af37 50%);
+}
+
+.nasr-preview {
+    background: linear-gradient(135deg, #f8f8f8 50%, #c60c30 50%);
+}
+
+.ittihad-preview {
+    background: linear-gradient(135deg, #000000 50%, #ffd700 50%);
+}
+
+.ahly-preview {
+    background: linear-gradient(135deg, #da251c 50%, #ffffff 50%);
+}
+
+/* تعديل النجوم حسب الثيم */
+[data-theme] .star {
+    background-color: var(--accent-color);
+}
+
+/* تعديل التموجات الذهبية */
+[data-theme="nasr"] .gold-waves {
+    background: linear-gradient(45deg, var(--accent-color), var(--secondary-color));
+}
+
+[data-theme="ittihad"] .gold-waves {
+    background: linear-gradient(45deg, var(--accent-color), var(--primary-color));
+}
+
+[data-theme="ahly"] .gold-waves {
+    background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+}

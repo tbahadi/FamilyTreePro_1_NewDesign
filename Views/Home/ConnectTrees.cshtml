@@ -4,54 +4,296 @@
     var availableTrees = ViewBag.AvailableTrees as List<FamilyTreePro.Models.FamilyTree>;
 }
 
-<div class="container mt-4" dir="rtl">
-    <h2>ربط الشجرة: @currentTree?.Name</h2>
+<div class="container mt-4 content-container" dir="rtl">
+    <!-- النجوم المتحركة -->
+    <div class="star star-1"></div>
+    <div class="star star-2"></div>
+    <div class="star star-3"></div>
+    <div class="star star-4"></div>
 
-    <form asp-action="ConnectTrees" method="post">
-        <input type="hidden" name="treeId" value="@currentTree?.Id" />
+    <div class="text-center mb-4">
+        <h2 class="page-title">ربط الشجرات العائلية</h2>
+        <p class="page-subtitle">ربط الشجرة: <strong>@currentTree?.Name</strong> بشجرة أم</p>
+    </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h5>اختر الشجرة الأم</h5>
-            </div>
-            <div class="card-body">
-                <div class="form-group mb-3">
-                    <label>الشجرة الأم:</label>
-                    <select name="parentTreeId" class="form-control" onchange="updatePersons(this.value)">
-                        <option value="">-- اختر الشجرة الأم --</option>
-                        @if (availableTrees != null)
-                        {
-                            @foreach (var tree in availableTrees)
+    <div class="form-container">
+        <form asp-action="ConnectTrees" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="treeId" value="@currentTree?.Id" />
+
+            <div class="card connection-card">
+                <div class="card-header connection-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-link me-2"></i>اختيار الشجرة الأم
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group mb-4">
+                        <label class="form-label">
+                            <i class="fas fa-tree me-2"></i>الشجرة الأم:
+                        </label>
+                        <select name="parentTreeId" class="form-control form-select-lg" onchange="updatePersons(this.value)">
+                            <option value="">-- اختر الشجرة الأم --</option>
+                            @if (availableTrees != null)
                             {
-                                <option value="@tree.Id">@tree.Name</option>
+                                @foreach (var tree in availableTrees)
+                                {
+                                    <option value="@tree.Id">@tree.Name - (@tree.Persons?.Count ?? 0 أفراد)</option>
+                                }
                             }
-                        }
-                    </select>
-                </div>
+                        </select>
+                        <div class="form-text">اختر الشجرة التي تريد ربطها كشجرة أم</div>
+                    </div>
 
-                <div class="form-group mb-3" id="personsSection" style="display: none;">
-                    <label>اختر شخص الربط (الجد الأول):</label>
-                    <select name="connectionPersonId" class="form-control" id="personsSelect">
-                        <option value="">-- اختر شخص الربط --</option>
-                    </select>
-                    <small class="text-muted">سيتم ربط هذه الشجرة من خلال هذا الشخص</small>
-                </div>
+                    <div class="form-group mb-4" id="personsSection" style="display: none;">
+                        <label class="form-label">
+                            <i class="fas fa-user me-2"></i>شخص الربط (الجد الأول):
+                        </label>
+                        <select name="connectionPersonId" class="form-control" id="personsSelect">
+                            <option value="">-- اختر شخص الربط --</option>
+                        </select>
+                        <div class="form-text">سيتم ربط هذه الشجرة من خلال هذا الشخص كجد أول للعائلة</div>
+                    </div>
 
-                <button type="submit" class="btn btn-success">ربط الشجرات</button>
-                <a asp-action="Index" class="btn btn-secondary">إلغاء</a>
+                    <div class="connection-info alert alert-info mt-4" id="connectionInfo" style="display: none;">
+                        <h6><i class="fas fa-info-circle me-2"></i>معلومات الربط</h6>
+                        <p class="mb-0" id="infoText">سيتم ربط الشجرات مع الحفاظ على البيانات</p>
+                    </div>
+
+                    <div class="form-actions mt-4">
+                        <button type="submit" class="btn btn-success btn-lg" id="submitBtn" disabled>
+                            <i class="fas fa-link me-2"></i>ربط الشجرات
+                        </button>
+                        <a asp-action="Index" class="btn btn-view-normal">
+                            <i class="fas fa-arrow-right me-2"></i>إلغاء والعودة
+                        </a>
+                    </div>
+                </div>
             </div>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
+
+<style>
+    .page-title {
+        color: #000000 !important;
+        font-weight: 800 !important;
+        margin-bottom: 0.5rem;
+        position: relative;
+        font-size: 2.2rem !important;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .page-subtitle {
+        color: #333333 !important;
+        font-weight: 600 !important;
+        font-size: 1.2rem !important;
+        margin-bottom: 2rem;
+    }
+
+    .page-title:after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        right: 50%;
+        transform: translateX(50%);
+        width: 100px;
+        height: 4px;
+        background: linear-gradient(135deg, #000000 0%, #333333 100%);
+        border-radius: 2px;
+    }
+
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .connection-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .connection-header {
+        background: linear-gradient(135deg, #0047ab 0%, #002d72 100%);
+        color: white;
+        padding: 20px;
+        border-bottom: none;
+    }
+
+    .card-body {
+        padding: 30px;
+    }
+
+    .form-label {
+        color: #000000 !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+        margin-bottom: 10px;
+    }
+
+    .form-control, .form-select-lg {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 12px 15px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+
+        .form-control:focus, .form-select-lg:focus {
+            border-color: #0047ab;
+            box-shadow: 0 0 0 0.2rem rgba(0, 71, 171, 0.25);
+            background: white;
+        }
+
+    .form-text {
+        color: #666 !important;
+        font-size: 0.85rem;
+        margin-top: 5px;
+    }
+
+    .connection-info {
+        border-radius: 10px;
+        border: none;
+        background: #e3f2fd;
+        border-left: 4px solid #0047ab;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        padding-top: 20px;
+        border-top: 2px solid #f1f1f1;
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
+        border: 2px solid #1e7e34 !important;
+        border-radius: 10px !important;
+        padding: 12px 30px !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3) !important;
+    }
+
+        .btn-success:hover:not(:disabled) {
+            background: linear-gradient(135deg, #1e7e34 0%, #155724 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4) !important;
+            border-color: #155724 !important;
+        }
+
+        .btn-success:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+    .btn-view-normal {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+        color: white !important;
+        border: 2px solid #495057 !important;
+        border-radius: 10px !important;
+        padding: 12px 25px !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3) !important;
+    }
+
+        .btn-view-normal:hover {
+            background: linear-gradient(135deg, #495057 0%, #343a40 100%) !important;
+            color: white !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4) !important;
+            border-color: #343a40 !important;
+        }
+
+    /* النجوم المتحركة */
+    .star {
+        position: fixed;
+        background-color: #000000;
+        border-radius: 50%;
+        animation: twinkle 3s infinite alternate;
+        z-index: -1;
+    }
+
+    .star-1 {
+        top: 10%;
+        right: 5%;
+        width: 3px;
+        height: 3px;
+        animation-delay: 0s;
+    }
+
+    .star-2 {
+        top: 20%;
+        right: 15%;
+        width: 2px;
+        height: 2px;
+        animation-delay: 1s;
+    }
+
+    .star-3 {
+        top: 15%;
+        right: 25%;
+        width: 4px;
+        height: 4px;
+        animation-delay: 2s;
+    }
+
+    .star-4 {
+        top: 25%;
+        right: 10%;
+        width: 2px;
+        height: 2px;
+        animation-delay: 1.5s;
+    }
+
+    @@keyframes twinkle {
+        from {
+            opacity: 0.3;
+            transform: scale(1);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .form-actions {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-success, .btn-view-normal {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
 
 @section Scripts {
     <script>
         function updatePersons(treeId) {
             const personsSection = document.getElementById('personsSection');
             const personsSelect = document.getElementById('personsSelect');
+            const connectionInfo = document.getElementById('connectionInfo');
+            const infoText = document.getElementById('infoText');
+            const submitBtn = document.getElementById('submitBtn');
 
             if (!treeId) {
                 personsSection.style.display = 'none';
+                connectionInfo.style.display = 'none';
+                submitBtn.disabled = true;
                 return;
             }
 
@@ -66,11 +308,29 @@
                         option.textContent = person.fullName;
                         personsSelect.appendChild(option);
                     });
+
                     personsSection.style.display = 'block';
+                    connectionInfo.style.display = 'block';
+                    infoText.innerHTML = `سيتم ربط <strong>@currentTree?.Name</strong> بالشجرة الأم من خلال الشخص المحدد كجد أول`;
+                    submitBtn.disabled = false;
                 })
                 .catch(error => {
                     console.error('Error fetching persons:', error);
+                    personsSection.style.display = 'none';
+                    submitBtn.disabled = true;
                 });
         }
+
+        // التحقق من الحقول قبل الإرسال
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const parentTreeId = document.querySelector('select[name="parentTreeId"]').value;
+            const connectionPersonId = document.querySelector('select[name="connectionPersonId"]').value;
+
+            if (!parentTreeId || !connectionPersonId) {
+                e.preventDefault();
+                alert('يرجى اختيار الشجرة الأم وشخص الربط');
+                return false;
+            }
+        });
     </script>
 }

@@ -4,117 +4,167 @@
     ViewData["Title"] = "حذف شجرة عائلية";
 }
 
-<div class="container mt-4" dir="rtl">
-    <h2 class="text-center mb-4">حذف شجرة عائلية</h2>
+<div class="container mt-4 content-container" dir="rtl">
+    <!-- النجوم المتحركة -->
+    <div class="star star-1"></div>
+    <div class="star star-2"></div>
+    <div class="star star-3"></div>
+    <div class="star star-4"></div>
+
+    <div class="text-center mb-4">
+        <h2 class="page-title">حذف شجرة عائلية</h2>
+        <p class="page-subtitle">إدارة حذف الشجرات العائلية</p>
+    </div>
 
     <!-- رسائل المعلومات الخاصة بالنظام الجديد -->
     @if (ViewBag.IsLinkedTree == true)
     {
-        <div class="alert alert-info">
-            <h4><i class="fas fa-info-circle"></i> شجرة مرتبطة</h4>
-            <p>هذه الشجرة مربوطة بشجرة أم. عند الحذف:</p>
-            <ul>
-                <li>✅ سيتم حذف الشجرة فقط</li>
-                <li>✅ البيانات ستظل محفوظة في الشجرة الأم</li>
-                <li>🔗 الشجرة الأم: <a href="@Url.Action("Index", "Person", new { familyTreeId = ViewBag.ParentTreeId })">عرض البيانات في الشجرة الأم</a></li>
-            </ul>
+        <div class="alert alert-info hilal-alert">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-info-circle fa-2x me-3 mt-1"></i>
+                <div>
+                    <h4 class="alert-heading">شجرة مرتبطة</h4>
+                    <p>هذه الشجرة مربوطة بشجرة أم. عند الحذف:</p>
+                    <ul class="mb-2">
+                        <li>✅ سيتم حذف الشجرة فقط</li>
+                        <li>✅ البيانات ستظل محفوظة في الشجرة الأم</li>
+                        <li>🔗 الشجرة الأم: <a href="@Url.Action("Index", "Person", new { familyTreeId = ViewBag.ParentTreeId })" class="alert-link">عرض البيانات في الشجرة الأم</a></li>
+                    </ul>
+                </div>
+            </div>
         </div>
     }
     else if (ViewBag.HasChildTrees == true)
     {
-        <div class="alert alert-warning">
-            <h4><i class="fas fa-exclamation-triangle"></i> شجرة أم</h4>
-            <p>هذه الشجرة تحتوي على @ViewBag.ChildTreeCount شجرة فرعية مرتبطة بها.</p>
-            <p>عند الحذف:</p>
-            <ul>
-                <li>❌ سيتم حذف الشجرة وجميع بياناتها</li>
-                <li>❌ ستفقد الشجرات الفرعية ارتباطها</li>
-                <li>⚠️ هذا الإجراء لا يمكن التراجع عنه</li>
-            </ul>
+        <div class="alert alert-warning hilal-alert">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-exclamation-triangle fa-2x me-3 mt-1"></i>
+                <div>
+                    <h4 class="alert-heading">شجرة أم</h4>
+                    <p>هذه الشجرة تحتوي على @ViewBag.ChildTreeCount شجرة فرعية مرتبطة بها.</p>
+                    <p>عند الحذف:</p>
+                    <ul class="mb-2">
+                        <li>❌ سيتم حذف الشجرة وجميع بياناتها</li>
+                        <li>❌ ستفقد الشجرات الفرعية ارتباطها</li>
+                        <li>⚠️ هذا الإجراء لا يمكن التراجع عنه</li>
+                    </ul>
+                </div>
+            </div>
         </div>
     }
 
     <!-- التحقق من إمكانية الحذف -->
     @if (ViewBag.CanDelete == false && ViewBag.IsLinkedTree != true)
     {
-        <div class="alert alert-danger">
-            <h4><i class="fas fa-exclamation-triangle"></i> لا يمكن حذف هذه الشجرة</h4>
-            <p>لا يمكن حذف الشجرة لأنها تحتوي على:</p>
-            <ul>
-                @if (ViewBag.PersonCount > 0)
-                {
-                    <li>@ViewBag.PersonCount فرد</li>
-                }
-                @if (ViewBag.ChildTreeCount > 0)
-                {
-                    <li>@ViewBag.ChildTreeCount شجرة فرعية</li>
-                }
-            </ul>
-            <p class="mb-0">يرجى حذف جميع الأفراد والشجرات الفرعية أولاً.</p>
+        <div class="alert alert-danger hilal-alert">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-ban fa-2x me-3 mt-1"></i>
+                <div>
+                    <h4 class="alert-heading">لا يمكن حذف هذه الشجرة</h4>
+                    <p>لا يمكن حذف الشجرة لأنها تحتوي على:</p>
+                    <ul class="mb-2">
+                        @if (ViewBag.PersonCount > 0)
+                        {
+                            <li>@ViewBag.PersonCount فرد</li>
+                        }
+                        @if (ViewBag.ChildTreeCount > 0)
+                        {
+                            <li>@ViewBag.ChildTreeCount شجرة فرعية</li>
+                        }
+                    </ul>
+                    <p class="mb-0">يرجى حذف جميع الأفراد والشجرات الفرعية أولاً.</p>
+                </div>
+            </div>
         </div>
 
-        <div class="text-center">
-            <a href="@Url.Action("Index", "Person", new { familyTreeId = Model.Id })" class="btn btn-info">
-                <i class="fas fa-users"></i> عرض الأفراد
+        <div class="form-actions text-center">
+            <a href="@Url.Action("Index", "Person", new { familyTreeId = Model.Id })" class="btn btn-info btn-lg">
+                <i class="fas fa-users me-2"></i> عرض الأفراد
             </a>
-            <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">
-                <i class="fas fa-arrow-right"></i> العودة للقائمة
+            <a href="@Url.Action("Index", "Home")" class="btn btn-view-normal">
+                <i class="fas fa-arrow-right me-2"></i> العودة للقائمة
             </a>
         </div>
     }
     else
     {
-        <div class="alert alert-warning">
-            <h4><i class="fas fa-exclamation-triangle"></i> تأكيد الحذف</h4>
-            <p>هل أنت متأكد من أنك تريد حذف الشجرة العائلية التالية؟</p>
+        <div class="alert alert-warning hilal-alert">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-exclamation-triangle fa-2x me-3 mt-1"></i>
+                <div>
+                    <h4 class="alert-heading">تأكيد الحذف</h4>
+                    <p>هل أنت متأكد من أنك تريد حذف الشجرة العائلية التالية؟</p>
 
-            @if (ViewBag.IsLinkedTree == true)
-            {
-                <p class="text-success">✅ <strong>البيانات محفوظة في الشجرة الأم</strong></p>
-            }
-            else if (ViewBag.HasChildTrees == true)
-            {
-                <p class="text-danger">❌ <strong>سيتم حذف جميع البيانات</strong></p>
-            }
+                    @if (ViewBag.IsLinkedTree == true)
+                    {
+                        <p class="text-success mb-0">✅ <strong>البيانات محفوظة في الشجرة الأم</strong></p>
+                    }
+                    else if (ViewBag.HasChildTrees == true)
+                    {
+                        <p class="text-danger mb-0">❌ <strong>سيتم حذف جميع البيانات</strong></p>
+                    }
+                </div>
+            </div>
         </div>
 
-        <div class="card">
-            <div class="card-header" style="background-color: @Model.Color;">
-                <h5 class="card-title text-white">@Model.Name</h5>
+        <div class="card delete-card">
+            <div class="card-header delete-header" style="background: linear-gradient(135deg, @Model.Color 0%, #@(Model.Color.Replace("#", "")) 100%);">
+                <h5 class="card-title text-white mb-0">
+                    <i class="fas fa-tree me-2"></i>@Model.Name
+                </h5>
             </div>
             <div class="card-body">
-                <p><strong>الوصف:</strong> @Model.Description</p>
-                <p><strong>تاريخ الإنشاء:</strong> @Model.CreatedDate.ToString("yyyy/MM/dd")</p>
-                <p><strong>عدد الأفراد:</strong> @(ViewBag.PersonCount ?? 0)</p>
+                <div class="tree-details">
+                    <div class="detail-item">
+                        <i class="fas fa-file-alt text-muted me-2"></i>
+                        <strong>الوصف:</strong> 
+                        <span>@(string.IsNullOrEmpty(Model.Description) ? "لا يوجد وصف" : Model.Description)</span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <i class="fas fa-calendar text-muted me-2"></i>
+                        <strong>تاريخ الإنشاء:</strong> 
+                        <span>@Model.CreatedDate.ToString("yyyy/MM/dd")</span>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <i class="fas fa-users text-muted me-2"></i>
+                        <strong>عدد الأفراد:</strong> 
+                        <span>@(ViewBag.PersonCount ?? 0)</span>
+                    </div>
 
-                @if (ViewBag.IsLinkedTree == true)
-                {
-                    <p class="text-success">
-                        <i class="fas fa-link"></i> <strong>مرتبطة بشجرة أم</strong> - البيانات محفوظة
-                    </p>
-                }
-                else if (ViewBag.HasChildTrees == true)
-                {
-                    <p class="text-warning">
-                        <i class="fas fa-sitemap"></i> <strong>شجرة أم</strong> - تحتوي على @ViewBag.ChildTreeCount شجرة فرعية
-                    </p>
-                }
-                else
-                {
-                    <p class="text-danger">
-                        <strong>⚠️ سيتم حذف هذه الشجرة بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.</strong>
-                    </p>
-                }
+                    @if (ViewBag.IsLinkedTree == true)
+                    {
+                        <div class="detail-item text-success">
+                            <i class="fas fa-link me-2"></i>
+                            <strong>مرتبطة بشجرة أم</strong> - البيانات محفوظة
+                        </div>
+                    }
+                    else if (ViewBag.HasChildTrees == true)
+                    {
+                        <div class="detail-item text-warning">
+                            <i class="fas fa-sitemap me-2"></i>
+                            <strong>شجرة أم</strong> - تحتوي على @ViewBag.ChildTreeCount شجرة فرعية
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="detail-item text-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>⚠️ سيتم حذف هذه الشجرة بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.</strong>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
 
-        <form asp-action="DeleteTree" method="post" class="mt-4">
+        <form asp-action="DeleteTree" method="post" class="mt-4" id="deleteForm">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="Id" />
 
-            <div class="d-flex justify-content-center gap-2">
-                <button type="submit" class="btn @(ViewBag.IsLinkedTree == true ? "btn-warning" : "btn-danger")">
-                    <i class="fas fa-trash"></i>
+            <div class="form-actions">
+                <button type="submit" class="btn @(ViewBag.IsLinkedTree == true ? "btn-warning" : "btn-danger") btn-lg" id="deleteBtn">
+                    <i class="fas fa-trash me-2"></i>
                     @if (ViewBag.IsLinkedTree == true)
                     {
                         <span>نعم، احذف الشجرة (البيانات محفوظة)</span>
@@ -124,10 +174,228 @@
                         <span>نعم، احذف الشجرة والبيانات</span>
                     }
                 </button>
-                <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">
-                    <i class="fas fa-times"></i> إلغاء
+                <a href="@Url.Action("Index", "Home")" class="btn btn-view-normal">
+                    <i class="fas fa-times me-2"></i> إلغاء
                 </a>
             </div>
         </form>
     }
 </div>
+
+<style>
+    .page-title {
+        color: #000000 !important;
+        font-weight: 800 !important;
+        margin-bottom: 0.5rem;
+        position: relative;
+        font-size: 2.2rem !important;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .page-subtitle {
+        color: #333333 !important;
+        font-weight: 600 !important;
+        font-size: 1.2rem !important;
+        margin-bottom: 2rem;
+    }
+
+    .page-title:after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        right: 50%;
+        transform: translateX(50%);
+        width: 100px;
+        height: 4px;
+        background: linear-gradient(135deg, #000000 0%, #333333 100%);
+        border-radius: 2px;
+    }
+
+    .hilal-alert {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+    }
+
+    .delete-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        overflow: hidden;
+        margin-bottom: 25px;
+    }
+
+    .delete-header {
+        padding: 20px;
+        border-bottom: none;
+    }
+
+    .tree-details {
+        padding: 10px 0;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f1f1;
+    }
+
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        padding-top: 20px;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+        border: 2px solid #c82333 !important;
+        border-radius: 10px !important;
+        padding: 12px 30px !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3) !important;
+    }
+
+    .btn-danger:hover {
+        background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4) !important;
+        border-color: #a71e2a !important;
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+        border: 2px solid #e0a800 !important;
+        border-radius: 10px !important;
+        padding: 12px 30px !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3) !important;
+        color: #000 !important;
+    }
+
+    .btn-warning:hover {
+        background: linear-gradient(135deg, #e0a800 0%, #b38f00 100%) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4) !important;
+        border-color: #b38f00 !important;
+    }
+
+    .btn-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
+        border: 2px solid #138496 !important;
+        border-radius: 10px !important;
+        padding: 12px 25px !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3) !important;
+    }
+
+    .btn-info:hover {
+        background: linear-gradient(135deg, #138496 0%, #0f6674 100%) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(23, 162, 184, 0.4) !important;
+        border-color: #0f6674 !important;
+    }
+
+    .btn-view-normal {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+        color: white !important;
+        border: 2px solid #495057 !important;
+        border-radius: 10px !important;
+        padding: 12px 25px !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3) !important;
+    }
+
+    .btn-view-normal:hover {
+        background: linear-gradient(135deg, #495057 0%, #343a40 100%) !important;
+        color: white !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4) !important;
+        border-color: #343a40 !important;
+    }
+
+    /* النجوم المتحركة */
+    .star {
+        position: fixed;
+        background-color: #000000;
+        border-radius: 50%;
+        animation: twinkle 3s infinite alternate;
+        z-index: -1;
+    }
+
+    .star-1 { top: 10%; right: 5%; width: 3px; height: 3px; animation-delay: 0s; }
+    .star-2 { top: 20%; right: 15%; width: 2px; height: 2px; animation-delay: 1s; }
+    .star-3 { top: 15%; right: 25%; width: 4px; height: 4px; animation-delay: 2s; }
+    .star-4 { top: 25%; right: 10%; width: 2px; height: 2px; animation-delay: 1.5s; }
+
+    @@keyframes twinkle {
+        from { opacity: 0.3; transform: scale(1); }
+        to { opacity: 1; transform: scale(1.2); }
+    }
+
+    @@media (max-width: 768px) {
+        .form-actions {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .btn-danger, .btn-warning, .btn-info, .btn-view-normal {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+
+    @section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // تأكيد الحذف مع رسالة منبثقة
+            const deleteForm = document.getElementById('deleteForm');
+            const deleteBtn = document.getElementById('deleteBtn');
+            
+            if (deleteForm && deleteBtn) {
+                deleteForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const treeName = '@Model.Name';
+                    const isLinkedTree = @(ViewBag.IsLinkedTree == true ? "true" : "false");
+                    const hasChildTrees = @(ViewBag.HasChildTrees == true ? "true" : "false");
+                    
+                    let message = '';
+                    
+                    if (isLinkedTree) {
+                        message = `هل أنت متأكد من حذف الشجرة "${treeName}"؟\n\n✅ البيانات محفوظة في الشجرة الأم`;
+                    } else if (hasChildTrees) {
+                        message = `⚠️ تحذير: هذه الشجرة تحتوي على @ViewBag.ChildTreeCount شجرة فرعية!\n\nهل أنت متأكد من حذف الشجرة "${treeName}" وجميع بياناتها؟\n\n❌ هذا الإجراء لا يمكن التراجع عنه`;
+                    } else {
+                        message = `هل أنت متأكد من حذف الشجرة "${treeName}" وجميع بياناتها؟\n\n❌ هذا الإجراء لا يمكن التراجع عنه`;
+                    }
+                    
+                    if (confirm(message)) {
+                        deleteForm.submit();
+                    }
+                });
+            }
+            
+            console.log('تم تحميل صفحة حذف الشجرة العائلية');
+        });
+    </script>
+}

@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FamilyTreePro.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using FamilyTreePro.Models;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace FamilyTreePro.Controllers
 {
@@ -16,10 +19,8 @@ namespace FamilyTreePro.Controllers
             _logger = logger;
         }
 
-        // تسجيل الدخول - GET
         public IActionResult Login()
         {
-            // إذا كان المستخدم مسجل دخول بالفعل، توجيه للصفحة الرئيسية
             if (HttpContext.Session.GetInt32("UserId") != null)
             {
                 return RedirectToAction("Index", "Home");
@@ -27,63 +28,59 @@ namespace FamilyTreePro.Controllers
             return View();
         }
 
-        // تسجيل الدخول - POST
         [HttpPost]
         public async Task<IActionResult> Login(string username, string password)
         {
             try
             {
+                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+                {
+                    ViewBag.Error = "اسم المستخدم وكلمة المرور مطلوبان";
+                    return View();
+                }
+
                 var user = await _context.Users
                     .FirstOrDefaultAsync(u => u.Username == username && u.Password == password);
 
-                if (user != null)
+                if (user == null)
                 {
-                    HttpContext.Session.SetInt32("UserId", user.Id);
-                    HttpContext.Session.SetString("Username", user.Username);
-
-                    // التحقق وإضافة شجرة افتراضية إذا لم توجد
-                    await EnsureDefaultFamilyTree(user.Id);
-
-                    _logger.LogInformation($"تم تسجيل دخول المستخدم: {username}");
-                    return RedirectToAction("Index", "Home");
+                    ViewBag.Error = "اسم المستخدم أو كلمة المرور غير صحيح";
+                    return View();
                 }
 
-                ViewBag.Error = "اسم المستخدم أو كلمة المرور غير صحيحة";
-                _logger.LogWarning($"محاولة تسجيل دخول فاشلة للمستخدم: {username}");
-                return View();
+                // تسجيل الدخول العادي
+                HttpContext.Session.SetInt32("UserId", user.Id);
+                HttpContext.Session.SetString("Username", user.Username);
+
+                // نستخدم اسم المستخدم لتحديد المدير (مؤقتاً)
+                bool isAdmin = user.Username.ToLower() == "admin";
+                HttpContext.Session.SetString("IsAdmin", isAdmin.ToString());
+
+                return RedirectToAction("Index", "Home");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "خطأ أثناء تسجيل الدخول");
+                _logger.LogError(ex, "خطأ في تسجيل الدخول");
                 ViewBag.Error = "حدث خطأ أثناء تسجيل الدخول";
                 return View();
             }
         }
 
-        // تسجيل جديد - GET
         public IActionResult Register()
         {
-            // إذا كان المستخدم مسجل دخول بالفعل، توجيه للصفحة الرئيسية
-            if (HttpContext.Session.GetInt32("UserId") != null)
-            {
-                return RedirectToAction("Index", "Home");
-            }
             return View();
         }
 
-        // تسجيل جديد - POST
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(User user)
         {
             try
             {
                 if (ModelState.IsValid)
                 {
-                    // التحقق من عدم وجود اسم مستخدم مكرر
                     if (await _context.Users.AnyAsync(u => u.Username == user.Username))
                     {
-                        ModelState.AddModelError("Username", "اسم المستخدم موجود مسبقاً");
+                        ViewBag.Error = "اسم المستخدم موجود مسبقاً";
                         return View(user);
                     }
 
@@ -91,73 +88,93 @@ namespace FamilyTreePro.Controllers
                     _context.Users.Add(user);
                     await _context.SaveChangesAsync();
 
-                    // تسجيل الدخول تلقائياً بعد التسجيل
+                    // تسجيل الدخول بعد التسجيل
                     HttpContext.Session.SetInt32("UserId", user.Id);
                     HttpContext.Session.SetString("Username", user.Username);
+                    HttpContext.Session.SetString("IsAdmin", "False");
 
-                    // إنشاء شجرة افتراضية للمستخدم الجديد
-                    await EnsureDefaultFamilyTree(user.Id);
-
-                    _logger.LogInformation($"تم تسجيل مستخدم جديد: {user.Username}");
                     return RedirectToAction("Index", "Home");
                 }
-
                 return View(user);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "خطأ أثناء تسجيل المستخدم الجديد");
+                _logger.LogError(ex, "خطأ في التسجيل");
                 ViewBag.Error = "حدث خطأ أثناء التسجيل";
                 return View(user);
             }
         }
 
-        // تسجيل الخروج
-        public IActionResult Logout()
-        {
-            var username = HttpContext.Session.GetString("Username");
-            HttpContext.Session.Clear();
-            _logger.LogInformation($"تم تسجيل خروج المستخدم: {username}");
-            return RedirectToAction("Login");
-        }
-
-        // دالة مساعدة لإنشاء شجرة افتراضية
-        // دالة مساعدة لإنشاء شجرة افتراضية
-        private async Task EnsureDefaultFamilyTree(int userId)
+        // التحقق من صلاحية المدير
+        private async Task<bool> IsAdminAsync()
         {
             try
             {
-                // التحقق إذا كان للمستخدم شجرة بالفعل
-                var hasTree = await _context.FamilyTrees
-                    .AnyAsync(ft => ft.UserId == userId);
-
-                _logger.LogInformation($"التحقق من الشجرات للمستخدم {userId}: يوجد {hasTree} شجرة");
-
-                if (!hasTree)
+                var userId = HttpContext.Session.GetInt32("UserId");
+                if (userId == null)
                 {
-                    var defaultTree = new FamilyTree
-                    {
-                        Name = "شجرتي العائلية",
-                        Description = "الشجرة العائلية الرئيسية",
-                        Color = "#007bff",
-                        UserId = userId,
-                        CreatedDate = DateTime.Now
-                    };
-
-                    _context.FamilyTrees.Add(defaultTree);
-                    await _context.SaveChangesAsync();
-
-                    _logger.LogInformation($"تم إنشاء شجرة افتراضية للمستخدم: {userId} برقم: {defaultTree.Id}");
+                    _logger.LogWarning("المستخدم غير مسجل دخول");
+                    return false;
                 }
-                else
+
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
                 {
-                    _logger.LogInformation($"المستخدم {userId} لديه شجرة بالفعل، لم يتم إنشاء جديدة");
+                    _logger.LogWarning($"المستخدم برقم {userId} غير موجود في قاعدة البيانات");
+                    return false;
                 }
+
+                bool isAdmin = user.IsAdmin;
+                _logger.LogInformation($"التحقق من صلاحية المستخدم {user.Username}: IsAdmin = {isAdmin}");
+
+                return isAdmin;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "خطأ في إنشاء الشجرة الافتراضية");
+                _logger.LogError(ex, "خطأ في التحقق من صلاحية المدير");
+                return false;
             }
+        }
+
+        // عرض تفاصيل المستخدم
+        public async Task<IActionResult> UserDetails(int id)
+        {
+            try
+            {
+                if (!await IsAdminAsync())
+                {
+                    TempData["ErrorMessage"] = "ليس لديك صلاحية للوصول إلى هذه الصفحة";
+                    return RedirectToAction("Index", "Home");
+                }
+
+                var user = await _context.Users
+                    .Include(u => u.FamilyTrees)
+                    .ThenInclude(ft => ft.Persons)
+                    .FirstOrDefaultAsync(u => u.Id == id);
+
+                if (user == null)
+                {
+                    TempData["ErrorMessage"] = "المستخدم غير موجود";
+                    return RedirectToAction("Users");
+                }
+
+                // استخدام ViewData بدلاً من النموذج المباشر
+                ViewData["User"] = user;
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"خطأ في تحميل تفاصيل المستخدم {id}");
+                TempData["ErrorMessage"] = "حدث خطأ في تحميل البيانات: " + ex.Message;
+                return RedirectToAction("Users");
+            }
+        }
+
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction("Login");
         }
     }
 }

@@ -2,58 +2,558 @@
     ViewData["Title"] = "فحص قاعدة البيانات مباشرة";
 }
 
-<div class="container mt-4" dir="rtl">
-    <h2 class="text-center mb-4">فحص قاعدة البيانات مباشرة</h2>
+<div class="container mt-4 content-container" dir="rtl">
+    <!-- النجوم المتحركة -->
+    <div class="star star-1"></div>
+    <div class="star star-2"></div>
+    <div class="star star-3"></div>
+    <div class="star star-4"></div>
+
+    <div class="text-center mb-5">
+        <h2 class="page-title">
+            <i class="fas fa-database me-2"></i>فحص قاعدة البيانات مباشرة
+        </h2>
+        <p class="page-subtitle">عرض شامل لجميع البيانات المخزنة في النظام</p>
+    </div>
+
+    <!-- إحصائيات سريعة -->
+    <div class="row mb-4">
+        <div class="col-md-4 col-6">
+            <div class="stat-card stat-card-1">
+                <div class="stat-icon">
+                    <i class="fas fa-tree"></i>
+                </div>
+                <div class="stat-content">
+                    <h4>@(ViewBag.Trees?.Count ?? 0)</h4>
+                    <p>شجرة عائلية</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-6">
+            <div class="stat-card stat-card-2">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <h4>@(ViewBag.Persons?.Count ?? 0)</h4>
+                    <p>فرد</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-12">
+            <div class="stat-card stat-card-3">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="stat-content">
+                    <h4>@((ViewBag.Trees?.Count ?? 0) + (ViewBag.Persons?.Count ?? 0))</h4>
+                    <p>إجمالي السجلات</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="row">
-        <div class="col-md-6">
-            <h4>الشجرات (@ViewBag.Trees.Count)</h4>
-            @if (ViewBag.Trees.Count > 0)
-            {
-                @foreach (var tree in ViewBag.Trees)
-                {
-                    <div class="card mb-2">
-                        <div class="card-body">
-                            <h5>@tree.Name</h5>
-                            <p><strong>الرقم:</strong> @tree.Id</p>
-                            <p><strong>الوصف:</strong> @tree.Description</p>
-                            <p><strong>المستخدم:</strong> @tree.UserId</p>
+        <!-- قسم الشجرات -->
+        <div class="col-lg-6 mb-4">
+            <div class="card database-card">
+                <div class="card-header database-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tree me-2"></i>الشجرات العائلية
+                        <span class="badge bg-count">@(ViewBag.Trees?.Count ?? 0)</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.Trees != null && ViewBag.Trees.Count > 0)
+                    {
+                        <div class="database-list">
+                            @foreach (var tree in ViewBag.Trees)
+                            {
+                                <div class="database-item">
+                                    <div class="item-header">
+                                        @if (tree.Color != null)
+                                        {
+                                            <div class="color-badge" style="background-color: @tree.Color;"></div>
+                                        }
+                                        <h6 class="item-title">@tree.Name</h6>
+                                        <span class="badge bg-info">#@tree.Id</span>
+                                    </div>
+                                    <div class="item-details">
+                                        <div class="detail-row">
+                                            <i class="fas fa-file-alt text-muted me-2"></i>
+                                            <span>@(string.IsNullOrEmpty(tree.Description) ? "لا يوجد وصف" : tree.Description)</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="fas fa-user text-muted me-2"></i>
+                                            <span>المستخدم: @tree.UserId</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="fas fa-calendar text-muted me-2"></i>
+                                            <span>@tree.CreatedDate.ToString("yyyy/MM/dd HH:mm")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
                         </div>
-                    </div>
-                }
-            }
-            else
-            {
-                <div class="alert alert-warning">لا توجد شجرات</div>
-            }
+                    }
+                    else
+                    {
+                        <div class="empty-state text-center py-4">
+                            <i class="fas fa-tree fa-3x text-muted mb-3"></i>
+                            <h5>لا توجد شجرات</h5>
+                            <p class="text-muted">لم يتم إنشاء أي شجرات عائلية بعد</p>
+                            <a href="@Url.Action("CreateFamilyTree", "Home")" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>إنشاء شجرة جديدة
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
 
-        <div class="col-md-6">
-            <h4>الأفراد (@ViewBag.Persons.Count)</h4>
-            @if (ViewBag.Persons.Count > 0)
-            {
-                @foreach (var person in ViewBag.Persons)
-                {
-                    <div class="card mb-2">
-                        <div class="card-body">
-                            <h5>@person.FullName</h5>
-                            <p><strong>الرقم:</strong> @person.Id</p>
-                            <p><strong>الشجرة:</strong> @person.FamilyTreeId</p>
-                            <p><strong>الجنس:</strong> @person.Gender</p>
-                            <p><strong>تاريخ الإضافة:</strong> @person.CreatedDate.ToString("yyyy/MM/dd HH:mm")</p>
+        <!-- قسم الأفراد -->
+        <div class="col-lg-6 mb-4">
+            <div class="card database-card">
+                <div class="card-header database-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-users me-2"></i>الأفراد
+                        <span class="badge bg-count">@(ViewBag.Persons?.Count ?? 0)</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.Persons != null && ViewBag.Persons.Count > 0)
+                    {
+                        <div class="database-list">
+                            @foreach (var person in ViewBag.Persons)
+                            {
+                                <div class="database-item">
+                                    <div class="item-header">
+                                        <div class="gender-badge @(person.Gender == "Male" ? "male" : "female")">
+                                            <i class="fas @(person.Gender == "Male" ? "fa-mars" : "fa-venus")"></i>
+                                        </div>
+                                        <h6 class="item-title">@person.FullName</h6>
+                                        <span class="badge bg-secondary">#@person.Id</span>
+                                    </div>
+                                    <div class="item-details">
+                                        <div class="detail-row">
+                                            <i class="fas fa-tree text-muted me-2"></i>
+                                            <span>الشجرة: @person.FamilyTreeId</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <i class="fas @(person.Gender == "Male" ? "fa-mars text-primary" : "fa-venus text-danger") me-2"></i>
+                                            <span>@(person.Gender == "Male" ? "ذكر" : "أنثى")</span>
+                                        </div>
+                                        @if (person.BirthDate != null)
+                                        {
+                                            <div class="detail-row">
+                                                <i class="fas fa-birthday-cake text-muted me-2"></i>
+                                                <span>الميلاد: @person.BirthDate.ToString("yyyy/MM/dd")</span>
+                                            </div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(person.City))
+                                        {
+                                            <div class="detail-row">
+                                                <i class="fas fa-city text-muted me-2"></i>
+                                                <span>المدينة: @person.City</span>
+                                            </div>
+                                        }
+                                        <div class="detail-row">
+                                            <i class="fas fa-calendar text-muted me-2"></i>
+                                            <span>@person.CreatedDate.ToString("yyyy/MM/dd HH:mm")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
                         </div>
-                    </div>
-                }
-            }
-            else
-            {
-                <div class="alert alert-warning">لا توجد أفراد</div>
-            }
+                    }
+                    else
+                    {
+                        <div class="empty-state text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5>لا توجد أفراد</h5>
+                            <p class="text-muted">لم يتم إضافة أي أفراد بعد</p>
+                            <a href="@Url.Action("Create", "Person", new { familyTreeId = 1 })" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>إضافة فرد جديد
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="mt-4 text-center">
-        <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">العودة</a>
-        <a href="@Url.Action("Create", "Person", new { familyTreeId = 1 })" class="btn btn-primary">إضافة فرد جديد</a>
+    <!-- أزرار التحكم -->
+    <div class="text-center mt-4">
+        <div class="action-buttons">
+            <a href="@Url.Action("Index", "Home")" class="btn btn-view-normal">
+                <i class="fas fa-arrow-right me-2"></i>العودة للرئيسية
+            </a>
+            <a href="@Url.Action("Create", "Person", new { familyTreeId = 1 })" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>إضافة فرد جديد
+            </a>
+            <a href="@Url.Action("CreateFamilyTree", "Home")" class="btn btn-success">
+                <i class="fas fa-tree me-2"></i>إنشاء شجرة جديدة
+            </a>
+        </div>
     </div>
 </div>
+
+<style>
+    /* تنسيقات مخصصة للصفحة */
+    .page-title {
+        color: #000000 !important;
+        font-weight: 800 !important;
+        margin-bottom: 0.5rem;
+        position: relative;
+        font-size: 2.2rem !important;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .page-subtitle {
+        color: #333333 !important;
+        font-weight: 600 !important;
+        font-size: 1.2rem !important;
+        margin-bottom: 2rem;
+    }
+
+    .page-title:after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        right: 50%;
+        transform: translateX(50%);
+        width: 100px;
+        height: 4px;
+        background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+        border-radius: 2px;
+    }
+
+    /* بطاقات قاعدة البيانات */
+    .database-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+        height: 100%;
+    }
+
+    .database-header {
+        background: linear-gradient(135deg, #2C5530 0%, #4A7C59 100%);
+        color: white;
+        border-bottom: none;
+        padding: 20px;
+    }
+
+        .database-header .card-title {
+            color: white;
+            margin: 0;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+    .bg-count {
+        background: rgba(255,255,255,0.2) !important;
+        color: white !important;
+        font-size: 0.8rem;
+    }
+
+    /* قائمة البيانات */
+    .database-list {
+        max-height: 500px;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    .database-item {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+        .database-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: white;
+        }
+
+    .item-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        gap: 10px;
+    }
+
+    .color-badge {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .gender-badge {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+    }
+
+        .gender-badge.male {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .gender-badge.female {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+
+    .item-title {
+        flex: 1;
+        margin: 0;
+        color: #000000;
+        font-weight: 600;
+    }
+
+    .item-details {
+        padding-right: 10px;
+    }
+
+    .detail-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+        font-size: 0.85rem;
+    }
+
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+
+    /* البطاقات الإحصائية */
+    .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .stat-card-1 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .stat-card-2 {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+
+    .stat-card-3 {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        opacity: 0.9;
+    }
+
+    .stat-content h4 {
+        font-weight: 800;
+        color: white;
+        margin-bottom: 5px;
+        font-size: 2rem;
+    }
+
+    .stat-content p {
+        color: rgba(255,255,255,0.9);
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    /* الحالة الفارغة */
+    .empty-state {
+        color: #6c757d;
+    }
+
+    /* أزرار التحكم */
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-view-normal {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+        color: white !important;
+        border: 2px solid #495057 !important;
+        border-radius: 10px !important;
+        padding: 12px 25px !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3) !important;
+    }
+
+        .btn-view-normal:hover {
+            background: linear-gradient(135deg, #495057 0%, #343a40 100%) !important;
+            color: white !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4) !important;
+            border-color: #343a40 !important;
+        }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #2C5530 0%, #4A7C59 100%) !important;
+        border: 2px solid #2C5530 !important;
+        border-radius: 10px !important;
+        padding: 12px 25px !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(44, 85, 48, 0.3) !important;
+    }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4A7C59 0%, #2C5530 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(44, 85, 48, 0.4) !important;
+            border-color: #2C5530 !important;
+        }
+
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
+        border: 2px solid #1e7e34 !important;
+        border-radius: 10px !important;
+        padding: 12px 25px !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3) !important;
+    }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #1e7e34 0%, #155724 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4) !important;
+            border-color: #155724 !important;
+        }
+
+    /* النجوم المتحركة */
+    .star {
+        position: fixed;
+        background-color: #8B4513;
+        border-radius: 50%;
+        animation: twinkle 3s infinite alternate;
+        z-index: -1;
+    }
+
+    .star-1 {
+        top: 10%;
+        right: 5%;
+        width: 3px;
+        height: 3px;
+        animation-delay: 0s;
+    }
+
+    .star-2 {
+        top: 20%;
+        right: 15%;
+        width: 2px;
+        height: 2px;
+        animation-delay: 1s;
+    }
+
+    .star-3 {
+        top: 15%;
+        right: 25%;
+        width: 4px;
+        height: 4px;
+        animation-delay: 2s;
+    }
+
+    .star-4 {
+        top: 25%;
+        right: 10%;
+        width: 2px;
+        height: 2px;
+        animation-delay: 1.5s;
+    }
+
+    @@keyframes twinkle {
+        from {
+            opacity: 0.3;
+            transform: scale(1);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+    }
+
+    /* تحسينات التجاوب */
+    @@media (max-width: 768px) {
+        .database-header .card-title {
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+            .action-buttons .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+        .item-header {
+            flex-wrap: wrap;
+        }
+
+        .stat-content h4 {
+            font-size: 1.5rem;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+        }
+    }
+
+    @@media (max-width: 576px) {
+        .database-item {
+            padding: 12px;
+        }
+
+        .item-title {
+            font-size: 0.9rem;
+        }
+
+        .detail-row {
+            font-size: 0.8rem;
+        }
+    }
+</style>

@@ -29,3 +29,26 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+.bg-purple {
+    background-color: #6f42c1 !important;
+}
+
+.card {
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.table th {
+    text-align: center;
+}
+
+.btn-group-sm > .btn {
+    border-radius: 5px;
+}
+
+.breadcrumb {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 10px 15px;
+}

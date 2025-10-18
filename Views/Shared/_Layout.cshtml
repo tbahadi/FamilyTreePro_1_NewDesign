@@ -53,14 +53,52 @@
                                     <i class="fas fa-database"></i> إدارة البيانات
                                 </a>
                             </li>
+
+                            <!-- قسم الإدارة يظهر فقط للمديرين -->
+                            @if (await IsUserAdmin())
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle hilal-nav-link" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-users-cog"></i> الإدارة
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Admin" asp-action="Users">
+                                                <i class="fas fa-users me-2"></i>إدارة المستخدمين
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Admin" asp-action="Statistics">
+                                                <i class="fas fa-chart-bar me-2"></i>إحصائيات النظام
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Admin" asp-action="Profile">
+                                                <i class="fas fa-user-cog me-2"></i>الملف الشخصي
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            }
                         }
                     </ul>
                     <ul class="navbar-nav">
                         @if (Context.Session.GetInt32("UserId") != null)
                         {
+                            <!-- عرض بادئة المدير إذا كان المستخدم مدير -->
+                            @if (await IsUserAdmin())
+                            {
+                                <li class="nav-item">
+                                    <span class="nav-link hilal-nav-user text-warning">
+                                        <i class="fas fa-crown me-1"></i> مدير النظام
+                                    </span>
+                                </li>
+                            }
+
                             <li class="nav-item">
                                 <span class="nav-link hilal-nav-user">
-                                    <i class="fas fa-user"></i> @Context.Session.GetString("Username")
+                                    <i class="fas fa-user me-1"></i> @Context.Session.GetString("Username")
                                 </span>
                             </li>
                             <li class="nav-item">
@@ -76,6 +114,11 @@
                                     <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link hilal-nav-link" asp-controller="Account" asp-action="Register">
+                                    <i class="fas fa-user-plus"></i> تسجيل جديد
+                                </a>
+                            </li>
                         }
                     </ul>
                 </div>
@@ -89,10 +132,10 @@
         </main>
     </div>
 
-    <!-- الفوتر المعدل - تم إزالة "بروح الهلال" -->
+    <!-- الفوتر المعدل -->
     <footer class="border-top footer text-muted hilal-footer">
         <div class="container">
-            &copy; 2024 - الشجرة العائلية
+            &copy; 2024 - الشجرة العائلية - نظام إدارة الشجرات العائلية
         </div>
     </footer>
 
@@ -103,5 +146,27 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
+    @await RenderSectionAsync("Styles", required: false)
+
 </body>
 </html>
+@functions {
+    private async Task<bool> IsUserAdmin()
+    {
+        try
+        {
+            var userId = Context.Session.GetInt32("UserId");
+            if (userId == null) return false;
+
+            var context = Context.RequestServices.GetService(typeof(AppDbContext)) as AppDbContext;
+            if (context == null) return false;
+
+            var user = await context.Users.FindAsync(userId);
+            return user?.Username.ToLower() == "admin";
+        }
+        catch
+        {
+            return false;
+        }
+    }
+}
