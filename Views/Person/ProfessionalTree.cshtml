@@ -6,191 +6,108 @@
     var personsJson = ViewBag.PersonsJson ?? "[]";
 }
 
-@if (personsCount == 0)
-{
-    <div class="container-fluid mt-4" dir="rtl">
-        <div class="alert alert-info text-center">
-            <h4>ℹ️ لا توجد بيانات</h4>
-            <p>لم يتم إضافة أي أفراد إلى هذه الشجرة العائلية بعد.</p>
-            <a href="@Url.Action("Create", "Person", new { familyTreeId = familyTreeId })" class="btn btn-primary">
-                <i class="fas fa-plus"></i> إضافة أول فرد
-            </a>
-        </div>
-    </div>
-    return;
-}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - الشجرة العائلية</title>
 
-<div class="container-fluid mt-4" dir="rtl">
-    <h2 class="text-center mb-4">@familyTreeName - الشجرة العائلية المتقدمة</h2>
+    <!-- جميع المكتبات المطلوبة -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* الأنيميشن */
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
 
-    <div class="d-flex justify-content-between mb-3">
-        <div>
-            <a href="@Url.Action("Index", "Person", new { familyTreeId = familyTreeId })" class="btn btn-secondary no-print">
-                <i class="fas fa-list"></i> العرض العادي
-            </a>
-            <a href="@Url.Action("FamilyTreeView", "Person", new { familyTreeId = familyTreeId })" class="btn btn-info no-print">
-                <i class="fas fa-project-diagram"></i> الشجرة البسيطة
-            </a>
-            <button id="debugData" class="btn btn-warning no-print">
-                <i class="fas fa-bug"></i> فحص البيانات
-            </button>
-            <button id="printPdf" class="btn btn-success no-print">
-                <i class="fas fa-file-pdf"></i> طباعة PDF
-            </button>
-        </div>
-        <div class="no-print">
-            <!-- تحسين قائمة شكل البطاقة -->
-            <div class="btn-group me-2">
-                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-palette"></i> شكل البطاقة
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item card-style" href="#" data-style="default">🔵 شكل افتراضي</a></li>
-                    <li><a class="dropdown-item card-style" href="#" data-style="modern">🎨 شكل حديث</a></li>
-                    <li><a class="dropdown-item card-style" href="#" data-style="elegant">✨ شكل أنيق</a></li>
-                    <li><a class="dropdown-item card-style" href="#" data-style="minimal">⚪ شكل بسيط</a></li>
-                    <li><a class="dropdown-item card-style" href="#" data-style="colorful">🌈 شكل ملون</a></li>
-                </ul>
-            </div>
-
-            <!-- تحسين قائمة شكل العرض -->
-            <div class="btn-group me-2">
-                <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-project-diagram"></i> شكل العرض
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item layout-style" href="#" data-layout="hierarchical">🌳 شكل هرمي</a></li>
-                    <li><a class="dropdown-item layout-style" href="#" data-layout="leaf">🍃 شكل ورقة شجرة</a></li>
-                    <li><a class="dropdown-item layout-style" href="#" data-layout="simple">📊 شكل مبسط</a></li>
-                </ul>
-            </div>
-
-            <button id="zoomIn" class="btn btn-outline-primary">
-                <i class="fas fa-search-plus"></i> تكبير
-            </button>
-            <button id="zoomOut" class="btn btn-outline-primary">
-                <i class="fas fa-search-minus"></i> تصغير
-            </button>
-            <button id="resetView" class="btn btn-outline-secondary">
-                <i class="fas fa-sync"></i> إعادة تعيين
-            </button>
-        </div>
-    </div>
-
-    <div id="tree-container" style="width: 100%; height: 700px; border: 1px solid #ddd; border-radius: 10px; background: #f8f9fa; overflow: auto; position: relative;">
-        <div id="family-tree" style="position: relative;">
-            <!-- سيتم رسم الشجرة هنا بالJavaScript -->
-        </div>
-    </div>
-
-    <!-- معلومات عند التمرير -->
-    <div id="node-info" class="card mt-3 no-print" style="display: none;">
-        <div class="card-body">
-            <h5 id="info-name"></h5>
-            <p id="info-details" class="mb-0"></p>
-        </div>
-    </div>
-</div>
-
-<!-- ستايل متقدم للشجرة -->
-<style>
-    /* الأنيميشن */
-    @@keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+        @@keyframes drawLine {
+            from {
+                stroke-dashoffset: 1000;
+            }
 
-    @@keyframes pulse {
-        0% {
-            transform: scale(1);
-        }
-
-        50% {
-            transform: scale(1.05);
+            to {
+                stroke-dashoffset: 0;
+            }
         }
 
-        100% {
-            transform: scale(1);
-        }
-    }
-
-    @@keyframes slideInRight {
-        from {
-            opacity: 0;
-            transform: translateX(30px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    @@keyframes bounceIn {
-        0% {
-            opacity: 0;
-            transform: scale(0.3);
+        /* العقد */
+        .tree-node {
+            position: absolute;
+            min-width: 180px;
+            max-width: 250px;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            background: white;
+            word-wrap: break-word;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            animation: fadeInUp 0.5s ease-out;
+            border: 2px solid transparent;
         }
 
-        50% {
-            opacity: 1;
-            transform: scale(1.05);
+            .tree-node.male {
+                background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+                border-color: #1976d2;
+            }
+
+            .tree-node.female {
+                background: linear-gradient(135deg, #fce4ec, #f8bbd9);
+                border-color: #c2185b;
+            }
+
+            .tree-node:hover {
+                transform: translateY(-5px) scale(1.05);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                z-index: 100;
+            }
+
+        .node-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+            line-height: 1.3;
         }
 
-        70% {
-            transform: scale(0.9);
+        .node-details {
+            font-size: 11px;
+            line-height: 1.3;
         }
 
-        100% {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
-
-    /* الأشكال الافتراضية */
-    .tree-node {
-        position: absolute;
-        min-width: 180px;
-        max-width: 250px;
-        padding: 12px;
-        border-radius: 10px;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        z-index: 10;
-        background: white;
-        word-wrap: break-word;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        animation: fadeInUp 0.5s ease-out;
-        border: 2px solid transparent;
-    }
-
-        .tree-node.male {
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-            border-color: #1976d2;
-            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.2);
+        /* الخطوط */
+        .connection-line {
+            stroke: #666;
+            stroke-width: 2;
+            fill: none;
+            marker-end: url(#arrowhead);
         }
 
-        .tree-node.female {
-            background: linear-gradient(135deg, #fce4ec, #f8bbd9);
-            border-color: #c2185b;
-            box-shadow: 0 4px 15px rgba(194, 24, 91, 0.2);
-        }
+            .connection-line.male {
+                stroke: #1976d2;
+            }
+
+            .connection-line.female {
+                stroke: #c2185b;
+            }
 
         /* أشكال البطاقات */
         .tree-node.modern {
             border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             border: none;
-            background: white;
         }
 
             .tree-node.modern.male {
@@ -210,34 +127,12 @@
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         }
 
-            .tree-node.elegant.male {
-                background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-                color: white;
-                border: none;
-            }
-
-            .tree-node.elegant.female {
-                background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-                color: white;
-                border: none;
-            }
-
         .tree-node.minimal {
             border-radius: 5px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border: 1px solid #ddd;
             background: white;
         }
-
-            .tree-node.minimal.male {
-                border-left: 4px solid #1976d2;
-                background: #f8fbff;
-            }
-
-            .tree-node.minimal.female {
-                border-left: 4px solid #c2185b;
-                background: #fff8fb;
-            }
 
         .tree-node.colorful {
             border-radius: 12px;
@@ -255,905 +150,645 @@
                 color: #333;
             }
 
-        /* تأثيرات */
-        .tree-node:hover {
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            z-index: 100;
+        /* إشعارات */
+        .alert-notification {
+            position: fixed !important;
+            top: 20px !important;
+            right: 20px !important;
+            z-index: 9999 !important;
+            min-width: 300px !important;
         }
 
-    .node-name {
-        font-weight: bold;
-        font-size: 14px;
-        margin-bottom: 5px;
-        line-height: 1.3;
-    }
-
-    .node-details {
-        font-size: 11px;
-        line-height: 1.3;
-    }
-
-    /* خطوط الوصل المحسنة */
-    .tree-connector {
-        position: absolute;
-        z-index: 1;
-        pointer-events: none;
-        animation: fadeInUp 0.8s ease-out;
-        transition: all 0.3s ease;
-    }
-
-    .connector-horizontal {
-        height: 2px;
-        background: linear-gradient(to right, #4a5568, #718096);
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .connector-vertical {
-        width: 2px;
-        background: linear-gradient(to bottom, #4a5568, #718096);
-        box-shadow: 1px 0 3px rgba(0,0,0,0.1);
-    }
-
-    /* رأس السهم */
-    .connector-arrow {
-        position: absolute;
-        width: 0;
-        height: 0;
-        border-style: solid;
-        z-index: 2;
-        pointer-events: none;
-        animation: fadeInUp 0.8s ease-out;
-    }
-
-    .connector-arrow-down {
-        border-width: 8px 6px 0 6px;
-        border-color: #4a5568 transparent transparent transparent;
-    }
-
-    .connector-arrow-up {
-        border-width: 0 6px 8px 6px;
-        border-color: transparent transparent #4a5568 transparent;
-    }
-
-    .connector-arrow-right {
-        border-width: 6px 0 6px 8px;
-        border-color: transparent transparent transparent #4a5568;
-    }
-
-    .connector-arrow-left {
-        border-width: 6px 8px 6px 0;
-        border-color: transparent #4a5568 transparent transparent;
-    }
-
-    /* خطوط SVG متصلة */
-    .connection-path {
-        stroke: #4a5568;
-        stroke-width: 2;
-        fill: none;
-        marker-end: url(#arrowhead);
-    }
-
-    /* تعريف رأس السهم في SVG */
-    .marker-arrow {
-        fill: #4a5568;
-    }
-
-    /* تأثيرات للخطوط عند التفاعل */
-    .tree-connector:hover {
-        background: linear-gradient(to right, #e53e3e, #ed8936);
-    }
-
-    /* شكل ورقة الشجرة */
-    .leaf-layout {
-        background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
-        border-radius: 20px;
-        padding: 30px;
-        min-height: 600px;
-        border: 3px solid #4CAF50;
-        text-align: center;
-        width: 100%;
-        display: block;
-    }
-
-    .leaf-node {
-        background: white;
-        border-radius: 15px;
-        padding: 15px;
-        margin: 10px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        border: 2px solid #4CAF50;
-        text-align: center;
-        display: inline-block;
-        min-width: 180px;
-        max-width: 220px;
-        transition: all 0.3s ease;
-        position: relative;
-        animation: fadeInUp 0.5s ease-out;
-        vertical-align: top;
-    }
-
-        .leaf-node.male {
-            border-color: #1976d2;
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        /* تحسينات للقوائم المنسدلة */
+        .dropdown-menu {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
-        .leaf-node.female {
-            border-color: #c2185b;
-            background: linear-gradient(135deg, #fce4ec, #f8bbd9);
+        .dropdown-item {
+            transition: all 0.2s ease;
         }
 
-        .leaf-node:hover {
-            transform: translateY(-3px) scale(1.03);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-        }
-
-    .leaf-generation {
-        text-align: center;
-        margin: 20px 0;
-        position: relative;
-        padding: 15px 0;
-        animation: slideInRight 0.6s ease-out;
-        border-bottom: 2px dashed #4CAF50;
+            .dropdown-item:hover {
+                background-color: #f8f9fa;
+                transform: translateX(5px);
+            }
+    </style>
+</head>
+<body>
+    @if (personsCount == 0)
+    {
+        <div class="container-fluid mt-4" dir="rtl">
+            <div class="alert alert-info text-center">
+                <h4>ℹ️ لا توجد بيانات</h4>
+                <p>لم يتم إضافة أي أفراد إلى هذه الشجرة العائلية بعد.</p>
+                <a href="@Url.Action("Create", "Person", new { familyTreeId = familyTreeId })" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> إضافة أول فرد
+                </a>
+            </div>
+        </div>
+        return;
     }
 
-        .leaf-generation:last-child {
-            border-bottom: none;
-        }
+    <div class="container-fluid mt-4" dir="rtl">
+        <h2 class="text-center mb-4">@familyTreeName - الشجرة العائلية المتقدمة</h2>
 
-    .generation-title {
-        background: #4CAF50;
-        color: white;
-        padding: 8px 20px;
-        border-radius: 25px;
-        display: inline-block;
-        margin-bottom: 15px;
-        font-weight: bold;
-        box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
-        animation: bounceIn 0.5s ease-out;
-    }
+        <div class="d-flex justify-content-between mb-3">
+            <div>
+                <a href="@Url.Action("Index", "Person", new { familyTreeId = familyTreeId })" class="btn btn-secondary">
+                    <i class="fas fa-list"></i> العرض العادي
+                </a>
+                <a href="@Url.Action("FamilyTreeView", "Person", new { familyTreeId = familyTreeId })" class="btn btn-info">
+                    <i class="fas fa-project-diagram"></i> الشجرة البسيطة
+                </a>
+                <button id="debugData" class="btn btn-warning">
+                    <i class="fas fa-bug"></i> فحص البيانات
+                </button>
+                <button id="printPdf" class="btn btn-success">
+                    <i class="fas fa-file-pdf"></i> طباعة PDF
+                </button>
+            </div>
 
-    /* شكل مبسط */
-    .simple-layout {
-        background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
-        padding: 20px;
-        text-align: center;
-        min-height: 600px;
-    }
+            <div>
+                <!-- قائمة أشكال البطاقات -->
+                <div class="btn-group me-2">
+                    <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-palette"></i> شكل البطاقة
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item card-style" href="#" data-style="default">🔵 افتراضي</a></li>
+                        <li><a class="dropdown-item card-style" href="#" data-style="modern">🎨 حديث</a></li>
+                        <li><a class="dropdown-item card-style" href="#" data-style="elegant">✨ أنيق</a></li>
+                        <li><a class="dropdown-item card-style" href="#" data-style="minimal">⚪ بسيط</a></li>
+                        <li><a class="dropdown-item card-style" href="#" data-style="colorful">🌈 ملون</a></li>
+                    </ul>
+                </div>
 
-    .simple-node {
-        background: white;
-        border-radius: 8px;
-        padding: 12px 15px;
-        margin: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: 1px solid #ddd;
-        display: inline-block;
-        text-align: center;
-        min-width: 160px;
-        transition: all 0.3s ease;
-        animation: fadeInUp 0.4s ease-out;
-    }
+                <!-- قائمة أشكال العرض -->
+                <div class="btn-group me-2">
+                    <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-project-diagram"></i> شكل العرض
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item layout-style" href="#" data-layout="hierarchical">🌳 هرمي</a></li>
+                        <li><a class="dropdown-item layout-style" href="#" data-layout="leaf">🍃 ورقة شجرة</a></li>
+                        <li><a class="dropdown-item layout-style" href="#" data-layout="simple">📊 مبسط</a></li>
+                    </ul>
+                </div>
 
-        .simple-node.male {
-            border-left: 4px solid #1976d2;
-            background: #f8fbff;
-        }
+                <button id="zoomIn" class="btn btn-outline-primary">
+                    <i class="fas fa-search-plus"></i> تكبير
+                </button>
+                <button id="zoomOut" class="btn btn-outline-primary">
+                    <i class="fas fa-search-minus"></i> تصغير
+                </button>
+                <button id="resetView" class="btn btn-outline-secondary">
+                    <i class="fas fa-sync"></i> إعادة تعيين
+                </button>
+            </div>
+        </div>
 
-        .simple-node.female {
-            border-left: 4px solid #c2185b;
-            background: #fff8fb;
-        }
+        <div id="tree-container" style="width: 100%; height: 700px; border: 1px solid #ddd; border-radius: 10px; background: #f8f9fa; overflow: auto; position: relative;">
+            <div id="family-tree" style="position: relative; min-width: 2000px; min-height: 1000px; padding: 50px;">
+                <!-- سيتم رسم الشجرة هنا -->
+            </div>
+            <!-- SVG للخطوط -->
+            <svg id="connections-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
+        </div>
 
-        .simple-node:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
+        <div id="node-info" class="card mt-3" style="display: none;">
+            <div class="card-body">
+                <h5 id="info-name"></h5>
+                <p id="info-details" class="mb-0"></p>
+            </div>
+        </div>
+    </div>
 
-    /* عناصر مشتركة */
-    #tree-container {
-        cursor: grab;
-    }
+    <!-- جميع مكتبات JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-        #tree-container:active {
-            cursor: grabbing;
-        }
-
-    .no-print {
-        display: block;
-    }
-
-    /* إشعارات */
-    .alert-notification {
-        position: fixed !important;
-        top: 20px !important;
-        right: 20px !important;
-        z-index: 9999 !important;
-        min-width: 300px !important;
-        animation: slideInRight 0.5s ease-out !important;
-    }
-
-    /* تحسينات للقوائم المنسدلة */
-    .dropdown-menu {
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        border: 1px solid rgba(0,0,0,0.1);
-        animation: fadeInUp 0.3s ease-out;
-    }
-
-    .dropdown-item {
-        padding: 8px 16px;
-        transition: all 0.2s ease;
-        border-radius: 4px;
-        margin: 2px 4px;
-        width: auto;
-    }
-
-        .dropdown-item:hover {
-            background-color: #f8f9fa;
-            transform: translateX(5px);
-        }
-
-    /* تحسينات للطباعة */
-    @@media print {
-        .tree-connector {
-            background: #000 !important;
-        }
-
-        .connector-arrow {
-            border-color: #000 transparent transparent transparent !important;
-        }
-    }
-</style>
-
-@section Scripts {
     <script>
-        // بيانات الشجرة
-        const personsJson = '@Html.Raw(ViewBag.PersonsJson)' || '[]';
-        const familyTreeId = @ViewBag.FamilyTreeId;
-        const familyTreeName = '@ViewBag.FamilyTreeName';
-        const personsCount = @ViewBag.PersonsCount;
+        // الانتظار حتى تحميل جميع المكتبات
+        function waitForLibraries() {
+            if (window.jQuery && window.bootstrap && window.html2canvas && window.jspdf) {
+                console.log('✅ جميع المكتبات محملة');
+                initializeApplication();
+            } else {
+                console.log('⏳ انتظار تحميل المكتبات...');
+                setTimeout(waitForLibraries, 100);
+            }
+        }
 
-        let treeData = [];
-        let zoomLevel = 1.0;
-        let currentLayout = 'hierarchical';
-        let currentCardStyle = 'default';
+        function initializeApplication() {
+            console.log('🚀 بدء التطبيق...');
 
-        // تحميل البيانات
-        function loadTreeData() {
-            try {
-                if (personsJson && personsJson !== '[]' && personsJson.trim() !== '') {
-                    treeData = JSON.parse(personsJson);
-                    console.log('✅ تم تحليل البيانات:', treeData);
-                    return true;
-                } else {
-                    console.error('❌ بيانات JSON فارغة');
+            // بيانات الشجرة
+            const personsJson = '@Html.Raw(ViewBag.PersonsJson)' || '[]';
+            const familyTreeId = @ViewBag.FamilyTreeId;
+
+            let treeData = [];
+            let zoomLevel = 1.0;
+            let currentLayout = 'hierarchical';
+            let currentCardStyle = 'default';
+
+            // ========== دوال الأساسية ==========
+
+            function loadTreeData() {
+                try {
+                    if (personsJson && personsJson !== '[]') {
+                        treeData = JSON.parse(personsJson);
+                        console.log('✅ تم تحميل بيانات:', treeData.length, 'فرد');
+                        return true;
+                    }
+                    return false;
+                } catch (e) {
+                    console.error('❌ خطأ في تحليل JSON:', e);
                     return false;
                 }
-            } catch (e) {
-                console.error('❌ خطأ في تحليل JSON:', e);
-                return false;
             }
-        }
 
-        // وظائف مساعدة
-        function formatDate(dateString) {
-            try {
-                if (!dateString) return '';
-                const date = new Date(dateString);
-                return isNaN(date.getTime()) ? dateString : date.toLocaleDateString('ar-EG');
-            } catch (e) {
-                return dateString;
+            function initializeSVG() {
+                const svg = $('#connections-svg');
+                svg.empty();
+
+                const defs = $(`
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+                        </marker>
+                        <marker id="arrowhead-male" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#1976d2"/>
+                        </marker>
+                        <marker id="arrowhead-female" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#c2185b"/>
+                        </marker>
+                    </defs>
+                `);
+                svg.append(defs);
             }
-        }
 
-        function escapeHtml(unsafe) {
-            if (!unsafe) return '';
-            return unsafe.toString()
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+            // ========== دوال المساعدة ==========
 
-        // تنظيم الأشخاص حسب الأجيال
-        function organizeByGenerations(persons) {
-            const generations = [];
-            const personMap = new Map();
-
-            persons.forEach(person => {
-                personMap.set(person.id, person);
-            });
-
-            const firstGen = persons.filter(person => !person.fatherId);
-            generations.push(firstGen);
-
-            let currentGen = firstGen;
-
-            while (currentGen.length > 0) {
-                const nextGen = [];
-
-                currentGen.forEach(person => {
-                    const children = persons.filter(p => p.fatherId === person.id);
-                    nextGen.push(...children);
-                });
-
-                if (nextGen.length > 0) {
-                    generations.push(nextGen);
+            function formatDate(dateString) {
+                try {
+                    if (!dateString) return '';
+                    const date = new Date(dateString);
+                    return isNaN(date.getTime()) ? dateString : date.toLocaleDateString('ar-EG');
+                } catch (e) {
+                    return dateString;
                 }
-
-                currentGen = nextGen;
             }
 
-            return generations;
-        }
+            function escapeHtml(unsafe) {
+                if (!unsafe) return '';
+                return unsafe.toString()
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
 
-        // رسم عقدة فرد
-        function drawPersonNode(person, x, y, container) {
-            const birthDate = formatDate(person.birthDate);
-            const city = person.city || '';
-            const occupationName = person.occupationName || '';
-            const gender = person.gender || 'Male';
+            function getStyleName(style) {
+                const styles = {
+                    'default': 'افتراضي',
+                    'modern': 'حديث',
+                    'elegant': 'أنيق',
+                    'minimal': 'بسيط',
+                    'colorful': 'ملون'
+                };
+                return styles[style] || style;
+            }
 
-            const nodeContent = `
-                <div class="tree-node ${gender === 'Male' ? 'male' : 'female'} ${currentCardStyle !== 'default' ? currentCardStyle : ''}"
-                     data-person-id="${person.id}"
-                     style="left: ${x}px; top: ${y}px;">
-                    <div class="node-name">${escapeHtml(person.fullName || 'غير معروف')}</div>
-                    <div class="node-details">
-                        ${birthDate ? '📅 ' + birthDate + '<br>' : ''}
-                        ${city ? '🏠 ' + escapeHtml(city) + '<br>' : ''}
-                        ${occupationName ? '💼 ' + escapeHtml(occupationName) : ''}
+            function getLayoutName(layout) {
+                const layouts = {
+                    'hierarchical': 'هرمي',
+                    'leaf': 'ورقة شجرة',
+                    'simple': 'مبسط'
+                };
+                return layouts[layout] || layout;
+            }
+
+            function showNotification(message, type = 'info') {
+                $('.alert-notification').remove();
+
+                const alertClass = {
+                    'info': 'alert-info',
+                    'success': 'alert-success',
+                    'danger': 'alert-danger',
+                    'warning': 'alert-warning'
+                }[type] || 'alert-info';
+
+                const icon = {
+                    'info': 'fa-info-circle',
+                    'success': 'fa-check-circle',
+                    'danger': 'fa-exclamation-circle',
+                    'warning': 'fa-exclamation-triangle'
+                }[type] || 'fa-info-circle';
+
+                const notification = $(`
+                    <div class="alert ${alertClass} alert-dismissible fade show alert-notification">
+                        <div class="d-flex align-items-center">
+                            <i class="fas ${icon} me-2"></i>
+                            <div>${message}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
-                </div>
-            `;
+                `);
 
-            container.append(nodeContent);
+                $('body').append(notification);
 
-            container.find(`[data-person-id="${person.id}"]`).on('click', function() {
-                showPersonDetails(person);
-            });
-        }
+                setTimeout(() => {
+                    notification.alert('close');
+                }, 5000);
+            }
 
-        // رسم خطوط التوصيل مع الأسهم المحسنة
-        function drawConnectors() {
-            console.log('📐 رسم خطوط التوصيل مع الأسهم...');
+            // ========== دوال الرسم ==========
 
-            $('.tree-connector, .connector-arrow').remove();
+            function organizeByGenerations(persons) {
+                const generations = [];
+                const firstGen = persons.filter(person => !person.fatherId);
+                generations.push(firstGen);
 
-            treeData.forEach(person => {
-                if (person.fatherId) {
-                    const father = treeData.find(p => p.id === person.fatherId);
-                    if (father) {
-                        drawConnectorWithArrow(father, person);
-                    }
+                let currentGen = firstGen;
+                while (currentGen.length > 0) {
+                    const nextGen = [];
+                    currentGen.forEach(person => {
+                        const children = persons.filter(p => p.fatherId === person.id);
+                        nextGen.push(...children);
+                    });
+                    if (nextGen.length > 0) generations.push(nextGen);
+                    currentGen = nextGen;
                 }
-            });
-        }
-
-        function drawConnectorWithArrow(fromPerson, toPerson) {
-            const fromElement = $(`[data-person-id="${fromPerson.id}"]`);
-            const toElement = $(`[data-person-id="${toPerson.id}"]`);
-
-            if (fromElement.length === 0 || toElement.length === 0) return;
-
-            const fromRect = fromElement[0].getBoundingClientRect();
-            const toRect = toElement[0].getBoundingClientRect();
-
-            const container = $('#family-tree');
-            const containerRect = container[0].getBoundingClientRect();
-
-            // حساب المواضع النسبية داخل الحاوية
-            const fromX = fromRect.left - containerRect.left + fromRect.width / 2;
-            const fromY = fromRect.bottom - containerRect.top;
-            const toX = toRect.left - containerRect.left + toRect.width / 2;
-            const toY = toRect.top - containerRect.top;
-
-            const connectorId = `connector-${fromPerson.id}-${toPerson.id}`;
-
-            // الخط العمودي من الأب إلى مستوى الابن
-            const verticalLine = $(`<div class="tree-connector connector-vertical" id="${connectorId}-v"></div>`);
-            verticalLine.css({
-                left: fromX + 'px',
-                top: fromY + 'px',
-                height: (toY - fromY) + 'px'
-            });
-
-            container.append(verticalLine);
-
-            // الخط الأفقي من الخط العمودي إلى الابن
-            const horizontalLine = $(`<div class="tree-connector connector-horizontal" id="${connectorId}-h"></div>`);
-            horizontalLine.css({
-                left: Math.min(fromX, toX) + 'px',
-                top: toY + 'px',
-                width: Math.abs(toX - fromX) + 'px'
-            });
-
-            container.append(horizontalLine);
-
-            // إضافة رأس السهم عند الابن
-            const arrow = $(`<div class="connector-arrow connector-arrow-down" id="${connectorId}-arrow"></div>`);
-            arrow.css({
-                left: (toX - 6) + 'px',
-                top: (toY - 8) + 'px'
-            });
-
-            container.append(arrow);
-
-            // إضافة خطوط توصيل إضافية للوضوح
-            if (Math.abs(toX - fromX) > 100) {
-                // خط عمودي من مستوى الابن إلى الابن
-                const childVerticalLine = $(`<div class="tree-connector connector-vertical" id="${connectorId}-cv"></div>`);
-                childVerticalLine.css({
-                    left: toX + 'px',
-                    top: toY + 'px',
-                    height: '20px'
-                });
-
-                container.append(childVerticalLine);
-
-                // تحديث موقع السهم
-                arrow.css({
-                    left: (toX - 6) + 'px',
-                    top: (toY + 20 - 8) + 'px'
-                });
-            }
-        }
-
-        // رسم الأشكال
-        function drawHierarchicalTree() {
-            const container = $('#family-tree');
-            console.log('🎨 رسم الشكل الهرمي مع الأسهم المحسنة');
-
-            if (treeData.length === 0) {
-                container.html('<div class="alert alert-warning text-center">لا توجد بيانات لعرضها</div>');
-                return;
+                return generations;
             }
 
-            container.css({
-                'min-width': '2000px',
-                'min-height': '800px',
-                'padding': '50px',
-                'position': 'relative'
-            });
-
-            $('.tree-connector, .connector-arrow').remove();
-
-            const generations = organizeByGenerations(treeData);
-
-            let startY = 100;
-            const horizontalSpacing = 250;
-            const verticalSpacing = 150;
-
-            generations.forEach((generation, genIndex) => {
-                const generationY = startY + (genIndex * verticalSpacing);
-                const personCount = generation.length;
-                const totalWidth = personCount * horizontalSpacing;
-                const startX = (2000 - totalWidth) / 2;
-
-                generation.forEach((person, personIndex) => {
-                    const personX = startX + (personIndex * horizontalSpacing);
-                    drawPersonNode(person, personX, generationY, container);
-                });
-            });
-
-            setTimeout(drawConnectors, 100);
-            console.log('✅ تم رسم الشجرة الهرمية مع الأسهم المحسنة');
-        }
-
-        function drawLeafLayout() {
-            const container = $('#family-tree');
-            console.log('🍃 رسم شكل ورقة الشجرة');
-
-            if (treeData.length === 0) {
-                container.html('<div class="alert alert-warning text-center">لا توجد بيانات لعرضها</div>');
-                return;
-            }
-
-            container.addClass('leaf-layout');
-
-            const rootPersons = treeData.filter(p => !p.fatherId);
-            const children = treeData.filter(p => p.fatherId);
-
-            if (rootPersons.length > 0) {
-                const generationDiv = $('<div class="leaf-generation"></div>');
-                generationDiv.append('<div class="generation-title">الجيل الأول</div>');
-
-                rootPersons.forEach((person) => {
-                    const birthDate = formatDate(person.birthDate);
-                    const city = person.city || '';
-                    const occupationName = person.occupationName || '';
-                    const gender = person.gender || 'Male';
-
-                    const nodeContent = `
-                        <div class="leaf-node ${gender === 'Male' ? 'male' : 'female'} ${currentCardStyle !== 'default' ? currentCardStyle : ''}" data-person-id="${person.id}">
-                            <div class="node-name">${escapeHtml(person.fullName || 'غير معروف')}</div>
-                            <div class="node-details">
-                                ${birthDate ? '📅 ' + birthDate + '<br>' : ''}
-                                ${city ? '🏠 ' + escapeHtml(city) + '<br>' : ''}
-                                ${occupationName ? '💼 ' + escapeHtml(occupationName) : ''}
-                            </div>
-                        </div>
-                    `;
-
-                    generationDiv.append(nodeContent);
-                });
-
-                container.append(generationDiv);
-            }
-
-            if (children.length > 0) {
-                const generationDiv = $('<div class="leaf-generation"></div>');
-                generationDiv.append('<div class="generation-title">الجيل الثاني</div>');
-
-                children.forEach((person) => {
-                    const birthDate = formatDate(person.birthDate);
-                    const city = person.city || '';
-                    const occupationName = person.occupationName || '';
-                    const gender = person.gender || 'Male';
-
-                    const nodeContent = `
-                        <div class="leaf-node ${gender === 'Male' ? 'male' : 'female'} ${currentCardStyle !== 'default' ? currentCardStyle : ''}" data-person-id="${person.id}">
-                            <div class="node-name">${escapeHtml(person.fullName || 'غير معروف')}</div>
-                            <div class="node-details">
-                                ${birthDate ? '📅 ' + birthDate + '<br>' : ''}
-                                ${city ? '🏠 ' + escapeHtml(city) + '<br>' : ''}
-                                ${occupationName ? '💼 ' + escapeHtml(occupationName) : ''}
-                            </div>
-                        </div>
-                    `;
-
-                    generationDiv.append(nodeContent);
-                });
-
-                container.append(generationDiv);
-            }
-
-            container.find('.leaf-node').on('click', function() {
-                const personId = $(this).data('person-id');
-                const person = treeData.find(p => p.id == personId);
-                if (person) showPersonDetails(person);
-            });
-
-            console.log('✅ تم رسم شكل ورقة الشجرة');
-        }
-
-        function drawSimpleLayout() {
-            const container = $('#family-tree');
-            console.log('📊 رسم الشكل المبسط');
-
-            if (treeData.length === 0) {
-                container.html('<div class="alert alert-warning text-center">لا توجد بيانات لعرضها</div>');
-                return;
-            }
-
-            container.addClass('simple-layout');
-
-            treeData.forEach((person) => {
+            function createPersonNode(person, x, y, container) {
                 const birthDate = formatDate(person.birthDate);
+                const city = person.city || '';
+                const occupationName = person.occupationName || '';
                 const gender = person.gender || 'Male';
 
                 const nodeContent = `
-                    <div class="simple-node ${gender === 'Male' ? 'male' : 'female'} ${currentCardStyle !== 'default' ? currentCardStyle : ''}" data-person-id="${person.id}">
+                    <div class="tree-node ${gender === 'Male' ? 'male' : 'female'} ${currentCardStyle !== 'default' ? currentCardStyle : ''}"
+                         data-person-id="${person.id}"
+                         style="left: ${x}px; top: ${y}px;">
                         <div class="node-name">${escapeHtml(person.fullName || 'غير معروف')}</div>
                         <div class="node-details">
-                            ${birthDate ? '📅 ' + birthDate : ''}
+                            ${birthDate ? '📅 ' + birthDate + '<br>' : ''}
+                            ${city ? '🏠 ' + escapeHtml(city) + '<br>' : ''}
+                            ${occupationName ? '💼 ' + escapeHtml(occupationName) : ''}
                         </div>
                     </div>
                 `;
 
                 container.append(nodeContent);
-            });
 
-            container.find('.simple-node').on('click', function() {
-                const personId = $(this).data('person-id');
-                const person = treeData.find(p => p.id == personId);
-                if (person) showPersonDetails(person);
-            });
-
-            console.log('✅ تم رسم الشكل المبسط');
-        }
-
-        function showPersonDetails(person) {
-            const birthDate = formatDate(person.birthDate);
-            const city = person.city || '';
-            const occupationName = person.occupationName || '';
-
-            let details = '';
-            if (birthDate) details += `الميلاد: ${birthDate}<br>`;
-            if (city) details += `المدينة: ${escapeHtml(city)}<br>`;
-            if (occupationName) details += `المهنة: ${escapeHtml(occupationName)}<br>`;
-            if (!details) details = 'لا توجد معلومات إضافية';
-
-            const infoContent = `
-                <div class="card-body">
-                    <h5>${escapeHtml(person.fullName || 'غير معروف')}</h5>
-                    <p>${details}</p>
-                    <div class="mt-2">
-                        <a href="/Person/Details/${person.id}" class="btn btn-info btn-sm">
-                            <i class="fas fa-eye"></i> تفاصيل
-                        </a>
-                        <a href="/Person/Edit/${person.id}" class="btn btn-warning btn-sm">
-                            <i class="fas fa-edit"></i> تعديل
-                        </a>
-                        <a href="/Person/Create?familyTreeId=${familyTreeId}&fatherId=${person.id}" class="btn btn-success btn-sm">
-                            <i class="fas fa-plus"></i> إضافة ابن
-                        </a>
-                    </div>
-                </div>
-            `;
-
-            $('#node-info').html(infoContent).show();
-        }
-
-        // دوال محسنة لإدارة الأشكال
-        function changeCardStyle(style) {
-            console.log('تغيير شكل البطاقة إلى:', style);
-            currentCardStyle = style;
-
-            // إزالة جميع كلاسات الأشكال السابقة
-            $('.tree-node, .leaf-node, .simple-node').removeClass('modern elegant minimal colorful');
-
-            if (style !== 'default') {
-                $('.tree-node, .leaf-node, .simple-node').addClass(style);
-            }
-
-            // إعادة تطبيق الأنيميشن
-            $('.tree-node, .leaf-node, .simple-node').css('animation', 'none');
-            setTimeout(() => {
-                $('.tree-node, .leaf-node, .simple-node').css('animation', 'fadeInUp 0.5s ease-out');
-            }, 10);
-
-            showNotification(`تم تغيير شكل البطاقة إلى: ${getStyleName(style)}`, 'success');
-        }
-
-        function changeLayout(layout) {
-            console.log('تغيير شكل العرض إلى:', layout);
-            currentLayout = layout;
-
-            const container = $('#family-tree');
-            container.empty().css('transform', `scale(${zoomLevel})`);
-            container.removeClass('leaf-layout simple-layout');
-
-            // إعادة تعيين نمط البطاقة قبل التغيير
-            $('.tree-node, .leaf-node, .simple-node').removeClass('modern elegant minimal colorful');
-
-            if (currentCardStyle !== 'default') {
-                setTimeout(() => {
-                    $('.tree-node, .leaf-node, .simple-node').addClass(currentCardStyle);
-                }, 100);
-            }
-
-            if (layout === 'leaf') {
-                drawLeafLayout();
-            } else if (layout === 'simple') {
-                drawSimpleLayout();
-            } else {
-                drawHierarchicalTree();
-            }
-
-            showNotification(`تم تغيير شكل العرض إلى: ${getLayoutName(layout)}`, 'success');
-        }
-
-        // دوال مساعدة للحصول على الأسماء المعروضة
-        function getStyleName(style) {
-            const styles = {
-                'default': 'افتراضي',
-                'modern': 'حديث',
-                'elegant': 'أنيق',
-                'minimal': 'بسيط',
-                'colorful': 'ملون'
-            };
-            return styles[style] || style;
-        }
-
-        function getLayoutName(layout) {
-            const layouts = {
-                'hierarchical': 'هرمي',
-                'leaf': 'ورقة شجرة',
-                'simple': 'مبسط'
-            };
-            return layouts[layout] || layout;
-        }
-
-        // الطباعة
-        function printToPdf() {
-            showNotification('جاري إعداد PDF...', 'info');
-
-            if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
-                showNotification('المكتبات المطلوبة غير محملة', 'danger');
-                return;
-            }
-
-            const element = document.getElementById('tree-container');
-
-            html2canvas(element).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jspdf.jsPDF({
-                    orientation: 'landscape',
-                    unit: 'mm',
-                    format: 'a4'
+                // إضافة حدث النقر
+                $(`[data-person-id="${person.id}"]`).on('click', function() {
+                    showPersonDetails(person);
                 });
+            }
 
-                const imgWidth = 280;
-                const imgHeight = canvas.height * imgWidth / canvas.width;
-
-                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-                pdf.save('شجرة_عائلية.pdf');
-
-                showNotification('تم إنشاء PDF بنجاح', 'success');
-            }).catch(error => {
-                console.error('خطأ في إنشاء PDF:', error);
-                showNotification('حدث خطأ في إنشاء PDF', 'danger');
-            });
-        }
-
-        function showNotification(message, type = 'info') {
-            $('.alert-notification').remove();
-
-            const alertClass = {
-                'info': 'alert-info',
-                'success': 'alert-success',
-                'danger': 'alert-danger',
-                'warning': 'alert-warning'
-            }[type] || 'alert-info';
-
-            const icon = {
-                'info': 'fa-info-circle',
-                'success': 'fa-check-circle',
-                'danger': 'fa-exclamation-circle',
-                'warning': 'fa-exclamation-triangle'
-            }[type] || 'fa-info-circle';
-
-            const notification = $(`
-                <div class="alert ${alertClass} alert-dismissible fade show position-fixed alert-notification">
-                    <div class="d-flex align-items-center">
-                        <i class="fas ${icon} me-2"></i>
-                        <div>${message}</div>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `);
-
-            $('body').append(notification);
-
-            setTimeout(() => {
-                notification.alert('close');
-            }, 5000);
-        }
-
-        // إعداد الأحداث المحسن
-        function setupEventHandlers() {
-            // أحداث التكبير والتصغير
-            $('#zoomIn').on('click', function() {
-                zoomLevel = Math.min(zoomLevel + 0.1, 2.0);
-                $('#family-tree').css('transform', `scale(${zoomLevel})`);
-            });
-
-            $('#zoomOut').on('click', function() {
-                zoomLevel = Math.max(zoomLevel - 0.1, 0.3);
-                $('#family-tree').css('transform', `scale(${zoomLevel})`);
-            });
-
-            $('#resetView').on('click', function() {
-                zoomLevel = 1.0;
-                $('#family-tree').css('transform', 'scale(1)');
-                $('#tree-container').scrollLeft(0).scrollTop(0);
-            });
-
-            // أحداث القوائم المنسدلة - تم التحديث هنا
-            $('.card-style').on('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const style = $(this).data('style');
-                console.log('تغيير شكل البطاقة إلى:', style);
-                changeCardStyle(style);
-
-                // إغلاق القائمة المنسدلة
-                $(this).closest('.dropdown-menu').prev('.dropdown-toggle').dropdown('hide');
-            });
-
-            $('.layout-style').on('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                const layout = $(this).data('layout');
-                console.log('تغيير شكل العرض إلى:', layout);
-                changeLayout(layout);
-
-                // إغلاق القائمة المنسدلة
-                $(this).closest('.dropdown-menu').prev('.dropdown-toggle').dropdown('hide');
-            });
-
-            // منع إغلاق القائمة عند النقر داخلها
-            $('.dropdown-menu').on('click', function(e) {
-                e.stopPropagation();
-            });
-
-            // أحداث أخرى
-            $('#printPdf').on('click', printToPdf);
-
-            $('#debugData').on('click', function() {
-                console.log('فحص البيانات:');
-                console.log('عدد الأفراد:', personsCount);
-                console.log('بيانات JSON:', personsJson);
-                console.log('بيانات محللة:', treeData);
-                console.log('الشكل الحالي:', currentLayout);
-                console.log('نمط البطاقة الحالي:', currentCardStyle);
-                alert('افتح console لمشاهدة تفاصيل البيانات');
-            });
-
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('#node-info').length &&
-                    !$(e.target).closest('.tree-node').length) {
-                    $('#node-info').hide();
-                }
-            });
-
-            // تمكين السحب والتحريك
-            let isDragging = false;
-            let startX, startY, scrollLeft, scrollTop;
-
-            $('#tree-container').on('mousedown', function(e) {
-                isDragging = true;
-                startX = e.pageX - $(this).offset().left;
-                startY = e.pageY - $(this).offset().top;
-                scrollLeft = $(this).scrollLeft();
-                scrollTop = $(this).scrollTop();
-                $(this).css('cursor', 'grabbing');
-            });
-
-            $(document).on('mousemove', function(e) {
-                if (!isDragging) return;
-                e.preventDefault();
-                const x = e.pageX - $('#tree-container').offset().left;
-                const y = e.pageY - $('#tree-container').offset().top;
-                const walkX = (x - startX) * 2;
-                const walkY = (y - startY) * 2;
-                $('#tree-container').scrollLeft(scrollLeft - walkX);
-                $('#tree-container').scrollTop(scrollTop - walkY);
-            });
-
-            $(document).on('mouseup', function() {
-                isDragging = false;
-                $('#tree-container').css('cursor', 'grab');
-            });
-        }
-
-        // التهيئة الرئيسية
-        function initializeTree() {
-            console.log('🌳 بدء تحميل الشجرة...');
-
-            if (loadTreeData() && treeData.length > 0) {
-                console.log(`✅ تم تحميل ${treeData.length} فرد`);
+            function drawConnections() {
+                const svg = $('#connections-svg');
+                svg.find('path').remove();
 
                 treeData.forEach(person => {
                     if (person.fatherId) {
                         const father = treeData.find(p => p.id === person.fatherId);
-                        console.log(`   - ${person.fullName} ← ${father ? father.fullName : 'أب غير معروف'}`);
+                        if (father) {
+                            drawConnection(father, person);
+                        }
+                    }
+                });
+            }
+
+            function drawConnection(fromPerson, toPerson) {
+                const fromElement = $(`[data-person-id="${fromPerson.id}"]`);
+                const toElement = $(`[data-person-id="${toPerson.id}"]`);
+
+                if (fromElement.length === 0 || toElement.length === 0) return;
+
+                const fromRect = fromElement[0].getBoundingClientRect();
+                const toRect = toElement[0].getBoundingClientRect();
+                const container = $('#family-tree')[0].getBoundingClientRect();
+
+                const fromX = fromRect.left - container.left + fromRect.width / 2;
+                const fromY = fromRect.bottom - container.top;
+                const toX = toRect.left - container.left + toRect.width / 2;
+                const toY = toRect.top - container.top;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const gender = toPerson.gender || 'Male';
+                const arrowhead = gender === 'Male' ? 'url(#arrowhead-male)' : 'url(#arrowhead-female)';
+
+                // مسار منحني
+                const controlY = fromY + (toY - fromY) / 2;
+                const pathData = `
+                    M ${fromX} ${fromY}
+                    C ${fromX} ${controlY}, ${toX} ${controlY}, ${toX} ${toY}
+                `;
+
+                path.setAttribute('d', pathData);
+                path.setAttribute('class', `connection-line ${gender}`);
+                path.setAttribute('marker-end', arrowhead);
+                path.setAttribute('stroke-dasharray', '1000');
+                path.setAttribute('stroke-dashoffset', '1000');
+
+                $('#connections-svg').append(path);
+
+                // أنيميشن رسم الخط
+                setTimeout(() => {
+                    path.style.animation = 'drawLine 1.5s ease-out forwards';
+                }, 100);
+            }
+
+            // ========== أشكال العرض ==========
+
+            function drawHierarchicalTree() {
+                const container = $('#family-tree');
+                container.empty().css({
+                    'min-width': '2000px',
+                    'min-height': '1000px',
+                    'padding': '50px'
+                });
+
+                if (treeData.length === 0) {
+                    container.html('<div class="alert alert-warning text-center">لا توجد بيانات لعرضها</div>');
+                    return;
+                }
+
+                const generations = organizeByGenerations(treeData);
+                const horizontalSpacing = 300;
+                const verticalSpacing = 200;
+                let startY = 100;
+
+                generations.forEach((generation, genIndex) => {
+                    const generationY = startY + (genIndex * verticalSpacing);
+                    const totalWidth = generation.length * horizontalSpacing;
+                    const startX = (2000 - totalWidth) / 2;
+
+                    generation.forEach((person, personIndex) => {
+                        const personX = startX + (personIndex * horizontalSpacing);
+                        createPersonNode(person, personX, generationY, container);
+                    });
+                });
+
+                setTimeout(drawConnections, 100);
+            }
+
+            function drawLeafLayout() {
+                const container = $('#family-tree');
+                container.empty();
+
+                treeData.forEach((person, index) => {
+                    const row = Math.floor(index / 4);
+                    const col = index % 4;
+                    const x = 100 + (col * 300);
+                    const y = 100 + (row * 150);
+                    createPersonNode(person, x, y, container);
+                });
+            }
+
+            function drawSimpleLayout() {
+                const container = $('#family-tree');
+                container.empty();
+
+                treeData.forEach((person, index) => {
+                    const x = 100 + (index % 6) * 250;
+                    const y = 100 + Math.floor(index / 6) * 120;
+                    createPersonNode(person, x, y, container);
+                });
+            }
+
+            // ========== إدارة الأشكال ==========
+
+            function changeCardStyle(style) {
+                console.log('🎨 تغيير شكل البطاقة إلى:', style);
+                currentCardStyle = style;
+
+                $('.tree-node').removeClass('modern elegant minimal colorful');
+
+                if (style !== 'default') {
+                    $('.tree-node').addClass(style);
+                }
+
+                showNotification(`تم تغيير شكل البطاقة إلى: ${getStyleName(style)}`, 'success');
+            }
+
+            function changeLayout(layout) {
+                console.log('🌳 تغيير شكل العرض إلى:', layout);
+                currentLayout = layout;
+                const container = $('#family-tree');
+                container.empty();
+
+                if (layout === 'leaf') {
+                    drawLeafLayout();
+                } else if (layout === 'simple') {
+                    drawSimpleLayout();
+                } else {
+                    drawHierarchicalTree();
+                }
+
+                showNotification(`تم تغيير شكل العرض إلى: ${getLayoutName(layout)}`, 'success');
+            }
+
+            // ========== التفاعل ==========
+
+            function showPersonDetails(person) {
+                const birthDate = formatDate(person.birthDate);
+                const city = person.city || '';
+                const occupationName = person.occupationName || '';
+
+                let details = '';
+                if (birthDate) details += `الميلاد: ${birthDate}<br>`;
+                if (city) details += `المدينة: ${escapeHtml(city)}<br>`;
+                if (occupationName) details += `المهنة: ${escapeHtml(occupationName)}<br>`;
+                if (!details) details = 'لا توجد معلومات إضافية';
+
+                $('#info-name').text(person.fullName || 'غير معروف');
+                $('#info-details').html(details);
+                $('#node-info').show();
+            }
+
+            function printToPdf() {
+                showNotification('جاري إعداد PDF...', 'info');
+
+                if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
+                    showNotification('المكتبات المطلوبة غير محملة', 'danger');
+                    return;
+                }
+
+                const element = document.getElementById('tree-container');
+
+                html2canvas(element).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jspdf.jsPDF({
+                        orientation: 'landscape',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+
+                    const imgWidth = 280;
+                    const imgHeight = canvas.height * imgWidth / canvas.width;
+
+                    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                    pdf.save('شجرة_عائلية.pdf');
+
+                    showNotification('تم إنشاء PDF بنجاح', 'success');
+                }).catch(error => {
+                    console.error('خطأ في إنشاء PDF:', error);
+                    showNotification('حدث خطأ في إنشاء PDF', 'danger');
+                });
+            }
+
+            // ========== إعداد الأحداث ==========
+
+            function setupEventHandlers() {
+                console.log('🔧 إعداد الأحداث...');
+
+                // التكبير والتصغير
+                $('#zoomIn').on('click', function() {
+                    zoomLevel = Math.min(zoomLevel + 0.1, 2.0);
+                    $('#family-tree').css('transform', `scale(${zoomLevel})`);
+                });
+
+                $('#zoomOut').on('click', function() {
+                    zoomLevel = Math.max(zoomLevel - 0.1, 0.5);
+                    $('#family-tree').css('transform', `scale(${zoomLevel})`);
+                });
+
+                $('#resetView').on('click', function() {
+                    zoomLevel = 1.0;
+                    $('#family-tree').css('transform', 'scale(1)');
+                    $('#tree-container').scrollLeft(0).scrollTop(0);
+                });
+
+                // القوائم المنسدلة - الحل الجذري
+                $('.card-style').on('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const style = $(this).data('style');
+                    changeCardStyle(style);
+                    $(this).closest('.dropdown-menu').prev('.dropdown-toggle').dropdown('hide');
+                });
+
+                $('.layout-style').on('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const layout = $(this).data('layout');
+                    changeLayout(layout);
+                    $(this).closest('.dropdown-menu').prev('.dropdown-toggle').dropdown('hide');
+                });
+
+                // منع إغلاق القوائم عند النقر داخلها
+                $('.dropdown-menu').on('click', function(e) {
+                    e.stopPropagation();
+                });
+
+                // أحداث أخرى
+                $('#printPdf').on('click', printToPdf);
+
+                $('#debugData').on('click', function() {
+                    console.log('🔍 فحص البيانات:');
+                    console.log('عدد الأفراد:', treeData.length);
+                    console.log('البيانات:', treeData);
+                    console.log('التخطيط الحالي:', currentLayout);
+                    console.log('نمط البطاقة:', currentCardStyle);
+                    alert('افتح نافذة Console لمشاهدة تفاصيل البيانات');
+                });
+
+                // إغلاق معلومات العقدة
+                $(document).on('click', function(e) {
+                    if (!$(e.target).closest('#node-info').length &&
+                        !$(e.target).closest('.tree-node').length) {
+                        $('#node-info').hide();
                     }
                 });
 
-                drawHierarchicalTree();
-                setupEventHandlers();
-                showNotification(`تم تحميل ${treeData.length} فرد بنجاح`, 'success');
-            } else {
-                console.error('❌ فشل في تحميل البيانات');
-                $('#family-tree').html(`
-                    <div class="alert alert-danger text-center" style="margin: 50px;">
-                        <h4>❌ خطأ في تحميل البيانات</h4>
-                        <p>تعذر تحميل بيانات الشجرة. تأكد من وجود أفراد في الشجرة.</p>
-                        <a href="/Person/Create?familyTreeId=${familyTreeId}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> إضافة أول فرد
-                        </a>
-                    </div>
-                `);
+                // السحب والتحريك
+                let isDragging = false;
+                let startX, startY, scrollLeft, scrollTop;
+
+                $('#tree-container').on('mousedown', function(e) {
+                    isDragging = true;
+                    startX = e.pageX - $(this).offset().left;
+                    startY = e.pageY - $(this).offset().top;
+                    scrollLeft = $(this).scrollLeft();
+                    scrollTop = $(this).scrollTop();
+                    $(this).css('cursor', 'grabbing');
+                });
+
+                $(document).on('mousemove', function(e) {
+                    if (!isDragging) return;
+                    e.preventDefault();
+                    const x = e.pageX - $('#tree-container').offset().left;
+                    const y = e.pageY - $('#tree-container').offset().top;
+                    const walkX = (x - startX) * 2;
+                    const walkY = (y - startY) * 2;
+                    $('#tree-container').scrollLeft(scrollLeft - walkX);
+                    $('#tree-container').scrollTop(scrollTop - walkY);
+                });
+
+                $(document).on('mouseup', function() {
+                    isDragging = false;
+                    $('#tree-container').css('cursor', 'grab');
+                });
             }
+
+            // ========== التهيئة الرئيسية ==========
+
+            function initializeTree() {
+                console.log('🌳 بدء تحميل الشجرة...');
+
+                if (loadTreeData() && treeData.length > 0) {
+                    console.log(`✅ تم تحميل ${treeData.length} فرد`);
+                    initializeSVG();
+                    drawHierarchicalTree();
+                    setupEventHandlers();
+                    showNotification(`تم تحميل ${treeData.length} فرد بنجاح`, 'success');
+                } else {
+                    console.error('❌ فشل في تحميل البيانات');
+                    $('#family-tree').html(`
+                        <div class="alert alert-danger text-center" style="margin: 50px;">
+                            <h4>❌ خطأ في تحميل البيانات</h4>
+                            <p>تعذر تحميل بيانات الشجرة. تأكد من وجود أفراد في الشجرة.</p>
+                            <a href="/Person/Create?familyTreeId=${familyTreeId}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> إضافة أول فرد
+                            </a>
+                        </div>
+                    `);
+                }
+            }
+
+            // بدء التطبيق
+            initializeTree();
         }
 
-        // بدء التشغيل
+        // بدء التطبيق بعد تحميل الصفحة
         $(document).ready(function() {
-            console.log('📄 الصفحة محملة، بدء التطبيق...');
-            initializeTree();
+            console.log('📄 الصفحة محملة، انتظار المكتبات...');
+            waitForLibraries();
         });
+
+        // بديل إذا فشل تحميل jQuery
+        if (typeof jQuery === 'undefined') {
+            console.error('❌ jQuery غير محمل!');
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('family-tree').innerHTML = `
+                    <div class="alert alert-danger text-center" style="margin: 50px;">
+                        <h4>❌ خطأ في تحميل المكتبات</h4>
+                        <p>لم يتم تحميل مكتبة jQuery المطلوبة. يرجى تحديث الصفحة.</p>
+                        <button onclick="location.reload()" class="btn btn-primary">
+                            <i class="fas fa-redo"></i> إعادة تحميل الصفحة
+                        </button>
+                    </div>
+                `;
+            });
+        }
     </script>
-}
+</body>
+</html>
