@@ -589,6 +589,7 @@ namespace FamilyTreePro.Controllers
         // الشجرة العائلية المتقدمة
         // الشجرة العائلية المتقدمة
         // الشجرة العائلية المتقدمة
+        // في PersonController
         public async Task<IActionResult> ProfessionalTree(int familyTreeId)
         {
             var userId = GetCurrentUserId();
@@ -608,14 +609,14 @@ namespace FamilyTreePro.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
-                // جلب البيانات الأساسية أولاً
+                // جلب البيانات الأساسية
                 var persons = await _context.Persons
                     .Include(p => p.Occupation)
                     .Include(p => p.Country)
                     .Where(p => p.FamilyTreeId == familyTreeId)
                     .ToListAsync();
 
-                // تحويل البيانات إلى شكل مناسب مع الاسم الكامل
+                // تحويل البيانات
                 var personData = persons.Select(p => new
                 {
                     Id = p.Id,
@@ -640,13 +641,13 @@ namespace FamilyTreePro.Controllers
                 ViewBag.FamilyTreeName = tree.Name;
                 ViewBag.PersonsCount = personData.Count;
 
-                // استخدام JsonSerializer بشكل آمن
+                // إعداد JSON
                 var jsonOptions = new JsonSerializerOptions
                 {
                     ReferenceHandler = ReferenceHandler.IgnoreCycles,
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                     DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                    WriteIndented = false // مهم: تجنب الأسطر الجديدة
+                    WriteIndented = false
                 };
 
                 ViewBag.PersonsJson = System.Text.Json.JsonSerializer.Serialize(personData, jsonOptions);
