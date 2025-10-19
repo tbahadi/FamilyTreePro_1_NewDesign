@@ -1,0 +1,561 @@
+﻿/**
+ * Family Tree Pro - Advanced Family Tree Styles
+ * تنسيقات متقدمة للشجرة العائلية
+ */
+
+/* الأنيميشن الأساسية */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+
+    70% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ========== الأشكال الهرمية المحسنة ========== */
+.tree-node {
+    position: absolute;
+    min-width: 180px;
+    max-width: 250px;
+    padding: 12px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+    background: white;
+    word-wrap: break-word;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+    .tree-node.male {
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        border: 2px solid #1976d2;
+    }
+
+    .tree-node.female {
+        background: linear-gradient(135deg, #fce4ec, #f8bbd9);
+        border: 2px solid #c2185b;
+    }
+
+    .tree-node.connected {
+        background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+        border: 2px solid #388e3c;
+    }
+
+    /* أشكال البطاقات الإضافية */
+    .tree-node.modern {
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border: none;
+        background: white;
+        animation: slideInRight 0.5s ease-out;
+    }
+
+        .tree-node.modern.male {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tree-node.modern.female {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .tree-node.modern .node-details {
+            color: rgba(255,255,255,0.9);
+        }
+
+    .tree-node.elegant {
+        border-radius: 8px;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        border: 1px solid #e0e0e0;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+        .tree-node.elegant.male {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+        }
+
+        .tree-node.elegant.female {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+            border: none;
+        }
+
+    .tree-node.minimal {
+        border-radius: 5px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border: 1px solid #ddd;
+        background: white;
+        animation: fadeInUp 0.4s ease-out;
+    }
+
+        .tree-node.minimal.male {
+            border-left: 4px solid #1976d2;
+            background: #f8fbff;
+        }
+
+        .tree-node.minimal.female {
+            border-left: 4px solid #c2185b;
+            background: #fff8fb;
+        }
+
+    .tree-node.colorful {
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        border: none;
+        color: white;
+        animation: bounceIn 0.6s ease-out;
+    }
+
+        .tree-node.colorful.male {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        }
+
+        .tree-node.colorful.female {
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            color: #333;
+        }
+
+    /* تأثيرات مشتركة */
+    .tree-node:hover {
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        z-index: 100;
+        animation: pulse 1s infinite;
+    }
+
+.node-name {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 5px;
+    line-height: 1.3;
+}
+
+.node-details {
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+/* ========== خطوط الوصل المحسنة ========== */
+.tree-connector {
+    position: absolute;
+    background: #666;
+    z-index: 1;
+    pointer-events: none;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.connector-horizontal {
+    height: 2px;
+}
+
+.connector-vertical {
+    width: 2px;
+}
+
+.connector-curved {
+    background: transparent;
+    border: 2px solid #666;
+    border-radius: 50px;
+}
+
+.connector-arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* ========== الشكل العمودي ========== */
+.vertical-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px;
+    min-height: 600px;
+    background: linear-gradient(135deg, #f0f8ff, #e6f3ff);
+}
+
+.vertical-generation {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+    position: relative;
+    width: 100%;
+}
+
+.vertical-node {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 0 15px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    border: 2px solid #4CAF50;
+    text-align: center;
+    min-width: 180px;
+    max-width: 220px;
+    transition: all 0.3s ease;
+    position: relative;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+    .vertical-node.male {
+        border-color: #1976d2;
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    }
+
+    .vertical-node.female {
+        border-color: #c2185b;
+        background: linear-gradient(135deg, #fce4ec, #f8bbd9);
+    }
+
+    .vertical-node:hover {
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+
+/* ========== الشكل الدائري ========== */
+.radial-layout {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    background: radial-gradient(circle, #f8f9fa, #e9ecef);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.radial-node {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: 3px solid #4CAF50;
+    text-align: center;
+    transition: all 0.3s ease;
+    animation: bounceIn 0.6s ease-out;
+    padding: 10px;
+}
+
+    .radial-node.male {
+        border-color: #1976d2;
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    }
+
+    .radial-node.female {
+        border-color: #c2185b;
+        background: linear-gradient(135deg, #fce4ec, #f8bbd9);
+    }
+
+    .radial-node:hover {
+        transform: scale(1.1);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        z-index: 100;
+    }
+
+.radial-content {
+    font-size: 12px;
+    line-height: 1.3;
+    word-wrap: break-word;
+}
+
+/* ========== شكل ورقة الشجرة ========== */
+.leaf-layout {
+    background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+    border-radius: 20px;
+    padding: 30px;
+    min-height: 600px;
+    border: 3px solid #4CAF50;
+    text-align: center;
+    width: 100%;
+    display: block;
+}
+
+.leaf-node {
+    background: white;
+    border-radius: 15px;
+    padding: 15px;
+    margin: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border: 2px solid #4CAF50;
+    text-align: center;
+    display: inline-block;
+    min-width: 180px;
+    max-width: 220px;
+    transition: all 0.3s ease;
+    position: relative;
+    animation: fadeInUp 0.5s ease-out;
+    vertical-align: top;
+}
+
+    .leaf-node.male {
+        border-color: #1976d2;
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    }
+
+    .leaf-node.female {
+        border-color: #c2185b;
+        background: linear-gradient(135deg, #fce4ec, #f8bbd9);
+    }
+
+    .leaf-node:hover {
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        animation: pulse 0.8s infinite;
+    }
+
+.leaf-generation {
+    text-align: center;
+    margin: 20px 0;
+    position: relative;
+    padding: 15px 0;
+    animation: slideInRight 0.6s ease-out;
+    border-bottom: 2px dashed #4CAF50;
+}
+
+    .leaf-generation:last-child {
+        border-bottom: none;
+    }
+
+.generation-title {
+    background: #4CAF50;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 25px;
+    display: inline-block;
+    margin-bottom: 15px;
+    font-weight: bold;
+    box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
+    animation: bounceIn 0.5s ease-out;
+}
+
+/* ========== شكل مبسط ========== */
+.simple-layout {
+    background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+    padding: 20px;
+    text-align: center;
+    min-height: 600px;
+}
+
+.simple-node {
+    background: white;
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #ddd;
+    display: inline-block;
+    text-align: center;
+    min-width: 160px;
+    transition: all 0.3s ease;
+    animation: fadeInUp 0.4s ease-out;
+}
+
+    .simple-node.male {
+        border-left: 4px solid #1976d2;
+        background: #f8fbff;
+    }
+
+    .simple-node.female {
+        border-left: 4px solid #c2185b;
+        background: #fff8fb;
+    }
+
+    .simple-node:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+/* ========== عناصر مشتركة ========== */
+.children-container {
+    position: relative;
+    margin-top: 60px;
+}
+
+.generation-line {
+    position: absolute;
+    height: 2px;
+    background: #999;
+    top: -30px;
+    z-index: 1;
+}
+
+#tree-container {
+    cursor: grab;
+}
+
+    #tree-container:active {
+        cursor: grabbing;
+    }
+
+.loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+/* إضافة كلاس للإخفاء أثناء الطباعة */
+.no-print {
+    display: block;
+}
+
+.pdf-loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 9999;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 18px;
+}
+
+/* ستايلات خاصة للطباعة */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    #tree-container {
+        height: auto !important;
+        overflow: visible !important;
+        border: none !important;
+        background: white !important;
+    }
+
+    .tree-node {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+        break-inside: avoid;
+    }
+}
+
+/* إشعارات */
+.alert-notification {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    z-index: 9999 !important;
+    min-width: 300px !important;
+    animation: slideInRight 0.5s ease-out !important;
+}
+
+/* تأثيرات إضافية */
+.fade-in {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.bounce-in {
+    animation: bounceIn 0.6s ease-out;
+}
+
+.slide-in {
+    animation: slideInRight 0.5s ease-out;
+}
+
+.pulse-effect {
+    animation: pulse 2s infinite;
+}
+
+/* تحسينات للطباعة عالية الجودة */
+.high-quality-print {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+}
+
+.print-optimized {
+    image-rendering: -webkit-optimize-contrast !important;
+    image-rendering: crisp-edges !important;
+}
+
+/* تحسينات التجاوب */
+@media (max-width: 768px) {
+    .tree-node {
+        min-width: 150px;
+        max-width: 200px;
+        padding: 8px;
+    }
+
+    .node-name {
+        font-size: 12px;
+    }
+
+    .node-details {
+        font-size: 10px;
+    }
+
+    .vertical-node, .leaf-node, .simple-node {
+        min-width: 140px;
+        padding: 10px;
+    }
+}

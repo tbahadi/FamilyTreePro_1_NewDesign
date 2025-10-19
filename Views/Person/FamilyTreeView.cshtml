@@ -1,7 +1,7 @@
-﻿@{
+﻿@model FamilyTreePro.ViewModels.FamilyTreeViewViewModel
+
+@{
     ViewData["Title"] = "الشجرة الهرمية";
-    var rootPersons = ViewBag.RootPersons as List<FamilyTreePro.Models.Person>;
-    var allPersons = ViewBag.AllPersons as List<FamilyTreePro.Models.Person>;
 }
 
 <div class="container mt-4 content-container" dir="rtl">
@@ -12,20 +12,20 @@
     <div class="star star-4"></div>
 
     <div class="text-center mb-4">
-        <h2 class="page-title">@ViewBag.FamilyTreeName - الشجرة الهرمية</h2>
+        <h2 class="page-title">@Model.FamilyTreeName - الشجرة الهرمية</h2>
         <p class="page-subtitle">عرض هرمي لجميع أفراد العائلة وتفرعاتها</p>
     </div>
 
     <div class="d-flex justify-content-between mb-4">
-        <a href="@Url.Action("Index", "Person", new { familyTreeId = ViewBag.FamilyTreeId })" class="btn btn-view-normal">
+        <a href="@Url.Action("Index", "Person", new { familyTreeId = Model.FamilyTreeId })" class="btn btn-view-normal">
             <i class="fas fa-list me-2"></i> العرض العادي
         </a>
-        <a href="@Url.Action("Create", "Person", new { familyTreeId = ViewBag.FamilyTreeId })" class="btn btn-primary">
+        <a href="@Url.Action("Create", "Person", new { familyTreeId = Model.FamilyTreeId })" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i> إضافة فرد جديد
         </a>
     </div>
 
-    @if (rootPersons != null && rootPersons.Any())
+    @if (Model.RootPersons != null && Model.RootPersons.Any())
     {
         <!-- إحصائيات سريعة -->
         <div class="tree-stats mb-4">
@@ -36,7 +36,7 @@
                             <i class="fas fa-users"></i>
                         </div>
                         <div class="stat-content">
-                            <h3>@(allPersons?.Count ?? 0)</h3>
+                            <h3>@Model.AllPersons.Count</h3>
                             <span>إجمالي الأفراد</span>
                         </div>
                     </div>
@@ -47,7 +47,7 @@
                             <i class="fas fa-venus"></i>
                         </div>
                         <div class="stat-content">
-                            <h3>@(allPersons?.Count(p => p.Gender == "Female") ?? 0)</h3>
+                            <h3>@Model.AllPersons.Count(p => p.Gender == "Female")</h3>
                             <span>الإناث</span>
                         </div>
                     </div>
@@ -58,7 +58,7 @@
                             <i class="fas fa-mars"></i>
                         </div>
                         <div class="stat-content">
-                            <h3>@(allPersons?.Count(p => p.Gender == "Male") ?? 0)</h3>
+                            <h3>@Model.AllPersons.Count(p => p.Gender == "Male")</h3>
                             <span>الذكور</span>
                         </div>
                     </div>
@@ -69,7 +69,7 @@
                             <i class="fas fa-layer-group"></i>
                         </div>
                         <div class="stat-content">
-                            <h3>@(rootPersons?.Count ?? 0)</h3>
+                            <h3>@Model.RootPersons.Count</h3>
                             <span>الجذور</span>
                         </div>
                     </div>
@@ -78,10 +78,121 @@
         </div>
 
         <div class="family-tree">
-            @foreach (var rootPerson in rootPersons)
+            @foreach (var rootPerson in Model.RootPersons)
             {
+                var children = Model.AllPersons.Where(p => p.FatherId == rootPerson.Id).ToList();
+
                 <div class="root-person">
-                    @await Html.PartialAsync("_PersonNode", new { Person = rootPerson, AllPersons = allPersons, Level = 0 })
+                    <!-- عرض الشخص الجذر -->
+                    <div class="person-card @rootPerson.Gender.ToLower() level-0 connector">
+                        <div class="person-name">
+                            @rootPerson.FirstName
+                            @rootPerson.FatherName
+                            @rootPerson.GrandFatherName
+                            @rootPerson.LastName
+                        </div>
+                        <div class="person-details">
+                            @if (rootPerson.BirthDate.HasValue)
+                            {
+                                <div>📅 @rootPerson.BirthDate.Value.ToShortDateString()</div>
+                            }
+                            @if (!string.IsNullOrEmpty(rootPerson.City))
+                            {
+                                <div>🏠 @rootPerson.City</div>
+                            }
+                        </div>
+                        <div class="person-actions">
+                            <a href="@Url.Action("Details", "Person", new { id = rootPerson.Id })" class="btn btn-info btn-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="@Url.Action("Edit", "Person", new { id = rootPerson.Id })" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="@Url.Action("Create", "Person", new { familyTreeId = rootPerson.FamilyTreeId, fatherId = rootPerson.Id })" class="btn btn-success btn-sm">
+                                <i class="fas fa-plus"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- عرض الأطفال -->
+                    @if (children.Any())
+                    {
+                        <div class="children-container">
+                            @foreach (var child in children)
+                            {
+                                var grandchildren = Model.AllPersons.Where(p => p.FatherId == child.Id).ToList();
+
+                                <div class="person-card @child.Gender.ToLower() level-1 connector">
+                                    <div class="person-name">
+                                        @child.FirstName
+                                        @child.FatherName
+                                        @child.GrandFatherName
+                                        @child.LastName
+                                    </div>
+                                    <div class="person-details">
+                                        @if (child.BirthDate.HasValue)
+                                        {
+                                            <div>📅 @child.BirthDate.Value.ToShortDateString()</div>
+                                        }
+                                        @if (!string.IsNullOrEmpty(child.City))
+                                        {
+                                            <div>🏠 @child.City</div>
+                                        }
+                                    </div>
+                                    <div class="person-actions">
+                                        <a href="@Url.Action("Details", "Person", new { id = child.Id })" class="btn btn-info btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="@Url.Action("Edit", "Person", new { id = child.Id })" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="@Url.Action("Create", "Person", new { familyTreeId = child.FamilyTreeId, fatherId = child.Id })" class="btn btn-success btn-sm">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
+                                    </div>
+
+                                    <!-- عرض الأحفاد -->
+                                    @if (grandchildren.Any())
+                                    {
+                                        <div class="children-container">
+                                            @foreach (var grandchild in grandchildren)
+                                            {
+                                                <div class="person-card @grandchild.Gender.ToLower() level-2 connector">
+                                                    <div class="person-name">
+                                                        @grandchild.FirstName
+                                                        @grandchild.FatherName
+                                                        @grandchild.GrandFatherName
+                                                        @grandchild.LastName
+                                                    </div>
+                                                    <div class="person-details">
+                                                        @if (grandchild.BirthDate.HasValue)
+                                                        {
+                                                            <div>📅 @grandchild.BirthDate.Value.ToShortDateString()</div>
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(grandchild.City))
+                                                        {
+                                                            <div>🏠 @grandchild.City</div>
+                                                        }
+                                                    </div>
+                                                    <div class="person-actions">
+                                                        <a href="@Url.Action("Details", "Person", new { id = grandchild.Id })" class="btn btn-info btn-sm">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        <a href="@Url.Action("Edit", "Person", new { id = grandchild.Id })" class="btn btn-warning btn-sm">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <a href="@Url.Action("Create", "Person", new { familyTreeId = grandchild.FamilyTreeId, fatherId = grandchild.Id })" class="btn btn-success btn-sm">
+                                                            <i class="fas fa-plus"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
                 </div>
             }
         </div>
@@ -94,7 +205,7 @@
             </div>
             <h4 class="mb-3">لا توجد بيانات للعرض</h4>
             <p class="text-muted mb-4">لم يتم إضافة أي أفراد إلى هذه الشجرة بعد، أو لا توجد أشخاص بدون أب (جذور).</p>
-            <a href="@Url.Action("Create", "Person", new { familyTreeId = ViewBag.FamilyTreeId })" class="btn btn-primary btn-lg">
+            <a href="@Url.Action("Create", "Person", new { familyTreeId = Model.FamilyTreeId })" class="btn btn-primary btn-lg">
                 <i class="fas fa-plus me-2"></i> إضافة أول فرد
             </a>
         </div>
@@ -102,7 +213,6 @@
 </div>
 
 <style>
-    /* التنسيقات الأساسية التي كانت تعمل */
     .family-tree {
         padding: 20px;
         background: #f8f9fa;
@@ -124,21 +234,22 @@
         transition: all 0.3s ease;
         min-width: 200px;
         text-align: center;
+        position: relative;
     }
-
-        .person-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
 
         .person-card.male {
             border-color: #007bff;
-            background: #e3f2fd;
+            background: linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%);
         }
 
         .person-card.female {
             border-color: #e91e63;
-            background: #fce4ec;
+            background: linear-gradient(135deg, #ffffff 0%, #fce4ec 100%);
+        }
+
+        .person-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
     .children-container {
@@ -147,39 +258,34 @@
         justify-content: center;
         margin-top: 20px;
         padding-top: 20px;
-        border-top: 2px dashed #ccc;
         position: relative;
     }
 
     .level-0 {
         margin-left: 0;
+        border: 3px solid #28a745;
     }
 
     .level-1 {
         margin-left: 40px;
+        border: 2px solid #007bff;
     }
 
     .level-2 {
         margin-left: 80px;
-    }
-
-    .level-3 {
-        margin-left: 120px;
-    }
-
-    .level-4 {
-        margin-left: 160px;
+        border: 1px solid #6c757d;
     }
 
     .person-name {
         font-weight: bold;
         font-size: 14px;
         margin-bottom: 5px;
+        color: #000000;
     }
 
     .person-details {
         font-size: 12px;
-        color: #666;
+        color: #424242;
     }
 
     .person-actions {
@@ -190,7 +296,6 @@
         position: relative;
     }
 
-        /* السهم المعدل - من الأعلى إلى الأسفل (من الأب إلى الابن) */
         .connector::before {
             content: '';
             position: absolute;
@@ -199,9 +304,9 @@
             width: 2px;
             height: 20px;
             background: #007bff;
+            transform: translateX(-50%);
         }
 
-        /* رأس السهم في الأسفل يشير إلى الابن */
         .connector::after {
             content: '';
             position: absolute;
@@ -215,389 +320,9 @@
             border-top: 8px solid #007bff;
         }
 
-    /* زر العرض العادي المحسّن */
-    .btn-view-normal {
-        background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
-        color: white !important;
-        border: 2px solid #495057 !important;
-        border-radius: 8px !important;
-        padding: 10px 20px !important;
-        font-weight: 600 !important;
-        font-size: 1rem !important;
-        transition: all 0.3s ease !important;
-        text-decoration: none !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        box-shadow: 0 3px 10px rgba(108, 117, 125, 0.3) !important;
-    }
-
-        .btn-view-normal:hover {
-            background: linear-gradient(135deg, #495057 0%, #343a40 100%) !important;
-            color: white !important;
-            transform: translateY(-2px) !important;
-            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4) !important;
-            border-color: #343a40 !important;
-        }
-
-        .btn-view-normal:active {
-            transform: translateY(0) !important;
-            box-shadow: 0 2px 5px rgba(108, 117, 125, 0.3) !important;
-        }
-
-    /* زر الإضافة الأساسي محسّن أيضاً */
-    .btn-primary {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
-        border: 2px solid #0056b3 !important;
-        border-radius: 8px !important;
-        padding: 10px 20px !important;
-        font-weight: 600 !important;
-        font-size: 1rem !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 3px 10px rgba(0, 123, 255, 0.3) !important;
-    }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #0056b3 0%, #004085 100%) !important;
-            transform: translateY(-2px) !important;
-            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4) !important;
-            border-color: #004085 !important;
-        }
-
-    /* النصوص مائلة للسواد */
-    .page-title {
-        color: #000000 !important;
-        font-weight: 800 !important;
-        margin-bottom: 0.5rem;
-        position: relative;
-        font-size: 2.2rem !important;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
-    }
-
-    .page-subtitle {
-        color: #333333 !important;
-        font-weight: 600 !important;
-        font-size: 1.2rem !important;
-        margin-bottom: 1rem;
-    }
-
-    .page-title:after {
-        content: '';
-        position: absolute;
-        bottom: -10px;
-        right: 50%;
-        transform: translateX(50%);
-        width: 100px;
-        height: 4px;
-        background: linear-gradient(135deg, #000000 0%, #333333 100%);
-        border-radius: 2px;
-    }
-
-    /* نظام البطاقات الإحصائية مع التدرج اللوني */
-    .tree-stats {
-        margin-bottom: 25px;
-    }
-
-    .stat-card {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        text-align: center;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-        border: none;
-        margin-bottom: 15px;
-    }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        }
-
-    /* التدرجات اللونية للبطاقات الإحصائية */
-    .stat-total {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        color: white;
-    }
-
-    .stat-female {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
-        color: white;
-    }
-
-    .stat-male {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
-        color: white;
-    }
-
-    .stat-roots {
-        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
-        color: white;
-    }
-
-    .stat-icon {
-        font-size: 2.5rem;
-        margin-bottom: 10px;
-        opacity: 0.9;
-    }
-
-    .stat-content h3 {
-        font-size: 2.2rem;
-        font-weight: 700;
-        margin-bottom: 5px;
-        color: white;
-    }
-
-    .stat-content span {
-        font-size: 0.95rem;
-        font-weight: 500;
-        opacity: 0.9;
-        color: white;
-    }
-
-    .empty-state {
-        background: white;
-        border-radius: 15px;
-        padding: 60px 20px;
-        border: 2px dashed #dee2e6;
-    }
-
-    .empty-icon {
-        font-size: 4rem;
-        color: #000000;
-        opacity: 0.7;
-    }
-
-    /* تحسينات إضافية للبطاقات */
-    .person-card {
-        background: white !important;
-        position: relative;
-        z-index: 2;
-    }
-
-        .person-card.male {
-            border-color: #007bff;
-            background: linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%) !important;
-            border-width: 2.5px;
-        }
-
-        .person-card.female {
-            border-color: #e91e63;
-            background: linear-gradient(135deg, #ffffff 0%, #fce4ec 100%) !important;
-            border-width: 2.5px;
-        }
-
-    .person-name {
-        color: #000000 !important;
-        font-size: 15px;
-        font-weight: 700 !important;
-    }
-
-    .person-details {
-        color: #424242 !important;
-        font-size: 13px;
-        font-weight: 500;
-    }
-
-    /* النجوم المتحركة */
-    .star {
-        position: fixed;
-        background-color: #000000;
-        border-radius: 50%;
-        animation: twinkle 3s infinite alternate;
-        z-index: -1;
-    }
-
-    .star-1 {
-        top: 10%;
-        right: 5%;
-        width: 3px;
-        height: 3px;
-        animation-delay: 0s;
-    }
-
-    .star-2 {
-        top: 20%;
-        right: 15%;
-        width: 2px;
-        height: 2px;
-        animation-delay: 1s;
-    }
-
-    .star-3 {
-        top: 15%;
-        right: 25%;
-        width: 4px;
-        height: 4px;
-        animation-delay: 2s;
-    }
-
-    .star-4 {
-        top: 25%;
-        right: 10%;
-        width: 2px;
-        height: 2px;
-        animation-delay: 1.5s;
-    }
-
-    @@keyframes twinkle {
-        from {
-            opacity: 0.3;
-            transform: scale(1);
-        }
-
-        to {
-            opacity: 1;
-            transform: scale(1.2);
-        }
-    }
-
-    /* تحسينات التجاوب */
-    @@media (max-width: 768px) {
-        .family-tree {
-            padding: 15px;
-        }
-
-        .person-card {
-            min-width: 180px;
-            padding: 12px;
-        }
-
-        .level-1 {
-            margin-left: 20px;
-        }
-
-        .level-2 {
-            margin-left: 40px;
-        }
-
-        .level-3 {
-            margin-left: 60px;
-        }
-
-        .level-4 {
-            margin-left: 80px;
-        }
-
-        .person-name {
-            font-size: 14px;
-        }
-
-        .person-details {
-            font-size: 12px;
-        }
-
-        .page-title {
-            font-size: 1.8rem !important;
-        }
-
-        .page-subtitle {
-            font-size: 1.1rem !important;
-        }
-
-        .stat-content h3 {
-            font-size: 1.8rem;
-        }
-
-        .stat-icon {
-            font-size: 2rem;
-        }
-
-        .btn-view-normal,
-        .btn-primary {
-            padding: 8px 16px !important;
-            font-size: 0.9rem !important;
-        }
-    }
-
-    @@media (max-width: 576px) {
-        .person-card {
-            min-width: 160px;
-            padding: 10px;
-        }
-
-        .level-1 {
-            margin-left: 15px;
-        }
-
-        .level-2 {
-            margin-left: 30px;
-        }
-
-        .level-3 {
-            margin-left: 45px;
-        }
-
-        .level-4 {
-            margin-left: 60px;
-        }
-
-        .person-name {
-            font-size: 13px;
-        }
-
-        .person-details {
-            font-size: 11px;
-        }
-
-        .page-title {
-            font-size: 1.6rem !important;
-        }
-
-        .page-subtitle {
-            font-size: 1rem !important;
-        }
-
-        .stat-card {
-            padding: 15px;
-        }
-
-        .stat-content h3 {
-            font-size: 1.6rem;
-        }
-
-        .stat-icon {
-            font-size: 1.8rem;
-        }
-
-        .stat-content span {
-            font-size: 0.85rem;
-        }
-
-        .btn-view-normal,
-        .btn-primary {
-            padding: 6px 12px !important;
-            font-size: 0.85rem !important;
-            margin-bottom: 10px;
-        }
-
-        .d-flex.justify-content-between {
-            flex-direction: column;
-            gap: 10px;
-        }
+    /* تحسينات للعرض */
+    .root-person > .person-card {
+        background: linear-gradient(135deg, #ffffff 0%, #d4edda 100%);
+        font-weight: bold;
     }
 </style>
-
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('تم تحميل الشجرة الهرمية مع التحسينات');
-
-            // تأثيرات hover محسنة
-            const personCards = document.querySelectorAll('.person-card');
-
-            personCards.forEach(card => {
-                card.addEventListener('mouseenter', function() {
-                    this.style.zIndex = '10';
-                });
-
-                card.addEventListener('mouseleave', function() {
-                    this.style.zIndex = '2';
-                });
-            });
-
-            // التحقق من التوصيلات
-            const connectors = document.querySelectorAll('.connector');
-            console.log('عدد التوصيلات:', connectors.length);
-        });
-    </script>
-}

@@ -1,6 +1,17 @@
 ﻿@model FamilyTreePro.ViewModels.EditPersonViewModel
 @{
     ViewData["Title"] = "تعديل فرد";
+
+    // تحديد الألوان بناءً على الجنس
+    var headerBackground = Model.Gender == "Male"
+        ? "background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);"
+        : "background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);";
+
+    var headerIcon = Model.Gender == "Male"
+        ? "fas fa-mars"
+        : "fas fa-venus";
+
+    var genderText = Model.Gender == "Male" ? "ذكر" : "أنثى";
 }
 
 <style>
@@ -77,11 +88,19 @@
     }
 
     .form-header {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         color: white;
         padding: 20px;
         border-radius: 10px 10px 0 0;
         margin: -30px -30px 30px -30px;
+        transition: all 0.3s ease;
+    }
+
+    .male-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    }
+
+    .female-header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     }
 
     .required-field::after {
@@ -126,11 +145,15 @@
 
 <div class="container mt-4" dir="rtl">
     <div class="form-container">
-        <div class="form-header">
+        <!-- الهيدر الديناميكي -->
+        <div class="form-header @(Model.Gender == "Male" ? "male-header" : "female-header")">
             <h2 class="text-center mb-0">
-                <i class="fas fa-edit me-2"></i>تعديل فرد
+                <i class="@headerIcon me-2"></i>تعديل فرد
             </h2>
-            <p class="text-center mb-0 mt-2 opacity-75">@Model.FullName</p>
+            <p class="text-center mb-0 mt-2 opacity-75">
+                @Model.FullName
+                <span class="badge bg-light text-dark ms-2">@genderText</span>
+            </p>
         </div>
 
         @if (TempData["ErrorMessage"] != null)
@@ -193,7 +216,7 @@
                 <span asp-validation-for="Nickname" class="text-danger small"></span>
             </div>
 
-            <!-- حقل الجنس الجديد - Radio Buttons -->
+            <!-- حقل الجنس -->
             <div class="col-12">
                 <div class="gender-selection">
                     <label class="form-label fw-bold required-field">الجنس</label>
@@ -234,6 +257,12 @@
                 <label asp-for="BirthDate" class="form-label">تاريخ الميلاد</label>
                 <input asp-for="BirthDate" type="date" class="form-control" />
                 <span asp-validation-for="BirthDate" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="DeathDate" class="form-label">تاريخ الوفاة</label>
+                <input asp-for="DeathDate" type="date" class="form-control" />
+                <span asp-validation-for="DeathDate" class="text-danger small"></span>
             </div>
 
             <div class="col-md-6">
@@ -296,6 +325,22 @@
                 <span asp-validation-for="FatherId" class="text-danger small"></span>
             </div>
 
+            <div class="col-12">
+                <label asp-for="MotherId" class="form-label">الأم (من أفراد هذه الشجرة)</label>
+                <select asp-for="MotherId" class="form-select">
+                    <option value="">-- اختر الأم --</option>
+                    @if (ViewBag.PotentialMothers != null)
+                    {
+                        foreach (var mother in ViewBag.PotentialMothers)
+                        {
+                            <option value="@mother.Id" selected="@(Model.MotherId == mother.Id)">@mother.FullName</option>
+                        }
+                    }
+                </select>
+                <small class="form-text text-muted">اترك هذا الحقل فارغاً إذا كانت الأم غير معروفة</small>
+                <span asp-validation-for="MotherId" class="text-danger small"></span>
+            </div>
+
             <!-- معلومات إضافية -->
             <div class="col-12 mt-4">
                 <h5 class="border-bottom pb-2 mb-4">
@@ -307,6 +352,30 @@
                 <label asp-for="Notes" class="form-label">ملاحظات</label>
                 <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
                 <span asp-validation-for="Notes" class="text-danger small"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="AdditionReason" class="form-label">سبب الإضافة</label>
+                <textarea asp-for="AdditionReason" class="form-control" rows="2" placeholder="سبب إضافة هذا الفرد..."></textarea>
+                <span asp-validation-for="AdditionReason" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="IsOriginalRecord" class="form-label">هل هو سجل أصلي؟</label>
+                <div class="form-check form-switch">
+                    <input asp-for="IsOriginalRecord" class="form-check-input" type="checkbox" role="switch">
+                    <label class="form-check-label" for="IsOriginalRecord">سجل أصلي</label>
+                </div>
+                <span asp-validation-for="IsOriginalRecord" class="text-danger small"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="IsConnectionPoint" class="form-label">نقطة اتصال؟</label>
+                <div class="form-check form-switch">
+                    <input asp-for="IsConnectionPoint" class="form-check-input" type="checkbox" role="switch">
+                    <label class="form-check-label" for="IsConnectionPoint">نقطة اتصال مع شجرة أخرى</label>
+                </div>
+                <span asp-validation-for="IsConnectionPoint" class="text-danger small"></span>
             </div>
 
             <!-- أزرار الإجراءات -->
@@ -343,6 +412,37 @@
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('editForm');
             const genderInputs = document.querySelectorAll('input[name="Gender"]');
+            const formHeader = document.querySelector('.form-header');
+
+            // تحديث اللون عند تغيير الجنس
+            genderInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    const isMale = this.value === 'Male';
+
+                    // تحديث كلاس الهيدر
+                    if (isMale) {
+                        formHeader.classList.remove('female-header');
+                        formHeader.classList.add('male-header');
+                    } else {
+                        formHeader.classList.remove('male-header');
+                        formHeader.classList.add('female-header');
+                    }
+
+                    // تحديث الأيقونة في الهيدر
+                    const headerIcon = formHeader.querySelector('i');
+                    if (isMale) {
+                        headerIcon.className = 'fas fa-mars me-2';
+                    } else {
+                        headerIcon.className = 'fas fa-venus me-2';
+                    }
+
+                    // تحديث نص الجنس في الهيدر
+                    const genderBadge = formHeader.querySelector('.badge');
+                    if (genderBadge) {
+                        genderBadge.textContent = isMale ? 'ذكر' : 'أنثى';
+                    }
+                });
+            });
 
             // التحقق من الحقول الإلزامية
             form.addEventListener('submit', function(e) {
@@ -385,10 +485,6 @@
                     alert('يرجى تصحيح الأخطاء التالية:\n\n' + errorMessage);
                     return false;
                 }
-
-                // إظهار رسالة تأكيد
-                const genderText = genderSelected.value === 'Male' ? 'ذكر' : 'أنثى';
-                console.log(`جاري تحديث بيانات: ${firstName} - الجنس: ${genderText}`);
             });
 
             // تأثيرات تفاعلية للـ Radio Buttons
@@ -410,6 +506,7 @@
             const occupationSelect = document.querySelector('#OccupationId');
             const countrySelect = document.querySelector('#CountryId');
             const fatherSelect = document.querySelector('#FatherId');
+            const motherSelect = document.querySelector('#MotherId');
 
             if (occupationSelect && '@Model.OccupationId' > 0) {
                 occupationSelect.value = '@Model.OccupationId';
@@ -421,6 +518,10 @@
 
             if (fatherSelect && '@Model.FatherId' > 0) {
                 fatherSelect.value = '@Model.FatherId';
+            }
+
+            if (motherSelect && '@Model.MotherId' > 0) {
+                motherSelect.value = '@Model.MotherId';
             }
 
             // التركيز التلقائي على أول حقل
@@ -460,12 +561,20 @@
             }
 
             .form-control:focus, .form-select:focus {
-                border-color: #f5576c;
-                box-shadow: 0 0 0 0.2rem rgba(245, 87, 108, 0.25);
+                border-color: #667eea;
+                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
             }
 
             .btn-check:focus + .gender-btn {
-                box-shadow: 0 0 0 0.2rem rgba(245, 87, 108, 0.25);
+                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            }
+
+            .male-header .btn-check:focus + .gender-btn {
+                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            }
+
+            .female-header .btn-check:focus + .gender-btn {
+                box-shadow: 0 0 0 0.2rem rgba(233, 30, 99, 0.25);
             }
         `;
         document.head.appendChild(style);

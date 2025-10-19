@@ -1,0 +1,60 @@
+﻿@model dynamic
+
+@{
+    var person = Model.Person as FamilyTreePro.Models.Person;
+    var allPersons = Model.AllPersons as List<FamilyTreePro.Models.Person>;
+    var level = Model.Level;
+
+    var children = allPersons?.Where(p => p.FatherId == person?.Id).ToList();
+}
+
+@functions {
+    string GetFullName(FamilyTreePro.Models.Person person)
+    {
+        if (person == null) return "غير معروف";
+        var names = new List<string>();
+        if (!string.IsNullOrEmpty(person.FirstName)) names.Add(person.FirstName);
+        if (!string.IsNullOrEmpty(person.FatherName)) names.Add(person.FatherName);
+        if (!string.IsNullOrEmpty(person.GrandFatherName)) names.Add(person.GrandFatherName);
+        if (!string.IsNullOrEmpty(person.LastName)) names.Add(person.LastName);
+        return string.Join(" ", names);
+    }
+}
+
+@if (person != null)
+{
+    <div class="person-card @person.Gender.ToLower() level-@level connector">
+        <div class="person-name">@GetFullName(person)</div>
+        <div class="person-details">
+            @if (person.BirthDate.HasValue)
+            {
+                <div>📅 @person.BirthDate.Value.ToShortDateString()</div>
+            }
+            @if (!string.IsNullOrEmpty(person.City))
+            {
+                <div>🏠 @person.City</div>
+            }
+        </div>
+        <div class="person-actions">
+            <a href="@Url.Action("Details", "Person", new { id = person.Id })" class="btn btn-info btn-sm">
+                <i class="fas fa-eye"></i>
+            </a>
+            <a href="@Url.Action("Edit", "Person", new { id = person.Id })" class="btn btn-warning btn-sm">
+                <i class="fas fa-edit"></i>
+            </a>
+            <a href="@Url.Action("Create", "Person", new { familyTreeId = person.FamilyTreeId, fatherId = person.Id })" class="btn btn-success btn-sm">
+                <i class="fas fa-plus"></i>
+            </a>
+        </div>
+    </div>
+
+    @if (children?.Any() == true)
+    {
+        <div class="children-container">
+            @foreach (var child in children)
+            {
+                @await Html.PartialAsync("_PersonNode", new { Person = child, AllPersons = allPersons, Level = level + 1 })
+            }
+        </div>
+    }
+}

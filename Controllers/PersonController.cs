@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
+
 namespace FamilyTreePro.Controllers
 {
     public class PersonController : Controller
@@ -29,6 +30,7 @@ namespace FamilyTreePro.Controllers
         }
 
         // دالة مساعدة لبناء الاسم الكامل
+        // دالة مساعدة لبناء الاسم الكامل
         private string GetFullName(Person person)
         {
             if (person == null) return "غير معروف";
@@ -36,23 +38,23 @@ namespace FamilyTreePro.Controllers
             var names = new List<string>();
 
             if (!string.IsNullOrEmpty(person.FirstName))
-                names.Add(person.FirstName);
+                names.Add(person.FirstName.Trim());
 
             if (!string.IsNullOrEmpty(person.FatherName))
-                names.Add(person.FatherName);
+                names.Add(person.FatherName.Trim());
 
             if (!string.IsNullOrEmpty(person.GrandFatherName))
-                names.Add(person.GrandFatherName);
+                names.Add(person.GrandFatherName.Trim());
 
             if (!string.IsNullOrEmpty(person.LastName))
-                names.Add(person.LastName);
+                names.Add(person.LastName.Trim());
 
-            return string.Join(" ", names);
+            return names.Any() ? string.Join(" ", names) : "غير معروف";
         }
 
         // GET: إضافة فرد جديد
         [HttpGet]
-        public IActionResult Create(int familyTreeId, int? fatherId = null, int? motherId = null)
+        public async Task<IActionResult> Create(int familyTreeId, int? fatherId = null, int? motherId = null)
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -74,7 +76,7 @@ namespace FamilyTreePro.Controllers
                 MotherId = motherId
             };
 
-            RepopulateViewBags(familyTreeId).Wait();
+            await RepopulateViewBags(familyTreeId);
 
             if (fatherId.HasValue)
             {
@@ -103,15 +105,66 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            _logger.LogInformation($"🔍 بيانات النموذج المستلمة:");
-            _logger.LogInformation($"   - الاسم: {viewModel.FirstName}");
-            _logger.LogInformation($"   - اسم الأب: {viewModel.FatherName}");
-            _logger.LogInformation($"   - اسم الجد: {viewModel.GrandFatherName}");
-            _logger.LogInformation($"   - العائلة: {viewModel.LastName}");
-            _logger.LogInformation($"   - الجنس: {viewModel.Gender}");
+            // تنظيف البيانات من المسافات الزائدة
+            if (!string.IsNullOrEmpty(viewModel.FirstName))
+                viewModel.FirstName = viewModel.FirstName.Trim();
+            if (!string.IsNullOrEmpty(viewModel.FatherName))
+                viewModel.FatherName = viewModel.FatherName.Trim();
+            if (!string.IsNullOrEmpty(viewModel.GrandFatherName))
+                viewModel.GrandFatherName = viewModel.GrandFatherName.Trim();
+            if (!string.IsNullOrEmpty(viewModel.LastName))
+                viewModel.LastName = viewModel.LastName.Trim();
+            if (!string.IsNullOrEmpty(viewModel.Nickname))
+                viewModel.Nickname = viewModel.Nickname.Trim();
+            if (!string.IsNullOrEmpty(viewModel.City))
+                viewModel.City = viewModel.City.Trim();
+            if (!string.IsNullOrEmpty(viewModel.Notes))
+                viewModel.Notes = viewModel.Notes.Trim();
+            if (!string.IsNullOrEmpty(viewModel.AdditionReason))
+                viewModel.AdditionReason = viewModel.AdditionReason.Trim();
+
+            _logger.LogInformation($"🔍 بيانات النموذج المستلمة بعد التنظيف:");
+            _logger.LogInformation($"   - الاسم: '{viewModel.FirstName}'");
+            _logger.LogInformation($"   - اسم الأب: '{viewModel.FatherName}'");
+            _logger.LogInformation($"   - اسم الجد: '{viewModel.GrandFatherName}'");
+            _logger.LogInformation($"   - العائلة: '{viewModel.LastName}'");
+            _logger.LogInformation($"   - الجنس: '{viewModel.Gender}'");
             _logger.LogInformation($"   - الشجرة: {viewModel.FamilyTreeId}");
 
-            if (!ModelState.IsValid)
+            // التحقق اليدوي من الحقول المطلوبة
+            bool hasErrors = false;
+
+            if (string.IsNullOrWhiteSpace(viewModel.FirstName))
+            {
+                ModelState.AddModelError("FirstName", "الاسم الأول مطلوب");
+                hasErrors = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(viewModel.FatherName))
+            {
+                ModelState.AddModelError("FatherName", "اسم الأب مطلوب");
+                hasErrors = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(viewModel.GrandFatherName))
+            {
+                ModelState.AddModelError("GrandFatherName", "اسم الجد مطلوب");
+                hasErrors = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(viewModel.LastName))
+            {
+                ModelState.AddModelError("LastName", "اسم العائلة مطلوب");
+                hasErrors = true;
+            }
+
+            if (string.IsNullOrWhiteSpace(viewModel.Gender))
+            {
+                ModelState.AddModelError("Gender", "الجنس مطلوب");
+                hasErrors = true;
+            }
+
+            if (!ModelState.IsValid || hasErrors)
             {
                 var errors = ModelState.Values
                     .SelectMany(v => v.Errors)
@@ -119,6 +172,17 @@ namespace FamilyTreePro.Controllers
                     .ToList();
 
                 _logger.LogWarning($"❌ أخطاء التحقق: {string.Join(", ", errors)}");
+
+                // تسجيل تفاصيل أكثر عن أخطاء التحقق
+                foreach (var key in ModelState.Keys)
+                {
+                    var state = ModelState[key];
+                    if (state.Errors.Any())
+                    {
+                        _logger.LogWarning($"   - {key}: {string.Join(", ", state.Errors.Select(e => e.ErrorMessage))}");
+                    }
+                }
+
                 TempData["ErrorMessage"] = "البيانات غير صالحة. يرجى تصحيح الأخطاء أدناه.";
 
                 await RepopulateViewBags(viewModel.FamilyTreeId);
@@ -411,6 +475,32 @@ namespace FamilyTreePro.Controllers
             }
         }
 
+        // أكشن للتحقق من البيانات (للت debug فقط)
+        public async Task<IActionResult> DebugTreeData(int familyTreeId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null) return Json(new { error = "غير مسجل" });
+
+            var tree = await _context.FamilyTrees
+                .FirstOrDefaultAsync(ft => ft.Id == familyTreeId && ft.UserId == userId);
+
+            if (tree == null) return Json(new { error = "شجرة غير موجودة" });
+
+            var persons = await _context.Persons
+                .Where(p => p.FamilyTreeId == familyTreeId)
+                .ToListAsync();
+
+            return Json(new
+            {
+                treeName = tree.Name,
+                personsCount = persons.Count,
+                persons = persons.Select(p => new {
+                    id = p.Id,
+                    name = GetFullName(p),
+                    fatherId = p.FatherId
+                })
+            });
+        }
         // أكشن لعرض قائمة الأشخاص في شجرة معينة
         public async Task<IActionResult> Index(int familyTreeId)
         {
@@ -496,6 +586,9 @@ namespace FamilyTreePro.Controllers
         }
 
         // الشجرة الهرمية المتقدمة
+        // الشجرة العائلية المتقدمة
+        // الشجرة العائلية المتقدمة
+        // الشجرة العائلية المتقدمة
         public async Task<IActionResult> ProfessionalTree(int familyTreeId)
         {
             var userId = GetCurrentUserId();
@@ -515,44 +608,48 @@ namespace FamilyTreePro.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
-                // جلب البيانات مع تضمين العلاقات
+                // جلب البيانات الأساسية أولاً
                 var persons = await _context.Persons
+                    .Include(p => p.Occupation)
+                    .Include(p => p.Country)
                     .Where(p => p.FamilyTreeId == familyTreeId)
-                    .Select(p => new
-                    {
-                        Id = p.Id,
-                        FirstName = p.FirstName,
-                        FatherName = p.FatherName,
-                        GrandFatherName = p.GrandFatherName,
-                        LastName = p.LastName,
-                        Nickname = p.Nickname,
-                        FullName = GetFullName(p),
-                        Gender = p.Gender,
-                        BirthDate = p.BirthDate,
-                        City = p.City,
-                        FatherId = p.FatherId,
-                        IsConnectionPoint = p.IsConnectionPoint,
-                        OccupationName = p.Occupation != null ? p.Occupation.Name : null,
-                        OccupationId = p.OccupationId,
-                        CountryName = p.Country != null ? p.Country.Name : null,
-                        CountryId = p.CountryId
-                    })
                     .ToListAsync();
 
-                _logger.LogInformation($"🔍 بيانات الشجرة المتقدمة: {persons.Count} فرد");
+                // تحويل البيانات إلى شكل مناسب مع الاسم الكامل
+                var personData = persons.Select(p => new
+                {
+                    Id = p.Id,
+                    FirstName = p.FirstName ?? "",
+                    FatherName = p.FatherName ?? "",
+                    GrandFatherName = p.GrandFatherName ?? "",
+                    LastName = p.LastName ?? "",
+                    Nickname = p.Nickname ?? "",
+                    FullName = GetFullName(p),
+                    Gender = p.Gender ?? "Male",
+                    BirthDate = p.BirthDate.HasValue ? p.BirthDate.Value.ToString("yyyy-MM-dd") : null,
+                    City = p.City ?? "",
+                    FatherId = p.FatherId,
+                    IsConnectionPoint = p.IsConnectionPoint,
+                    OccupationName = p.Occupation?.Name ?? "",
+                    CountryName = p.Country?.Name ?? ""
+                }).ToList();
+
+                _logger.LogInformation($"🔍 بيانات الشجرة المتقدمة: {personData.Count} فرد");
 
                 ViewBag.FamilyTreeId = familyTreeId;
                 ViewBag.FamilyTreeName = tree.Name;
-                ViewBag.PersonsCount = persons.Count;
+                ViewBag.PersonsCount = personData.Count;
 
+                // استخدام JsonSerializer بشكل آمن
                 var jsonOptions = new JsonSerializerOptions
                 {
                     ReferenceHandler = ReferenceHandler.IgnoreCycles,
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    WriteIndented = false // مهم: تجنب الأسطر الجديدة
                 };
 
-                ViewBag.PersonsJson = JsonSerializer.Serialize(persons, jsonOptions);
+                ViewBag.PersonsJson = System.Text.Json.JsonSerializer.Serialize(personData, jsonOptions);
 
                 return View();
             }
@@ -564,6 +661,9 @@ namespace FamilyTreePro.Controllers
             }
         }
 
+        // عرض الشجرة الهرمية
+        // عرض الشجرة الهرمية
+        // عرض الشجرة الهرمية
         // عرض الشجرة الهرمية
         public async Task<IActionResult> FamilyTreeView(int familyTreeId)
         {
@@ -584,22 +684,27 @@ namespace FamilyTreePro.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
+                // جلب جميع الأشخاص في الشجرة
                 var persons = await _context.Persons
-                    .Include(p => p.Father)
-                    .Include(p => p.Children)
                     .Where(p => p.FamilyTreeId == familyTreeId)
                     .ToListAsync();
 
+                // العثور على الأشخاص الجذر (بدون أب)
                 var rootPersons = persons.Where(p => p.FatherId == null).ToList();
 
-                ViewBag.FamilyTreeId = familyTreeId;
-                ViewBag.FamilyTreeName = tree.Name;
-                ViewBag.RootPersons = rootPersons;
-                ViewBag.AllPersons = persons;
+                // إنشاء الـ ViewModel
+                var viewModel = new FamilyTreeViewViewModel
+                {
+                    FamilyTreeId = familyTreeId,
+                    FamilyTreeName = tree.Name,
+                    RootPersons = rootPersons,
+                    AllPersons = persons
+                };
 
                 _logger.LogInformation($"تم تحميل {persons.Count} فرد للشجرة الهرمية، منهم {rootPersons.Count} جذر");
 
-                return View();
+                // إرسال الـ ViewModel إلى الـ View
+                return View(viewModel);
             }
             catch (Exception ex)
             {
@@ -609,31 +714,96 @@ namespace FamilyTreePro.Controllers
             }
         }
 
-        // دالة مساعدة لإعادة تعبئة ViewBags
+        // دالة مساعدة لإعادة تعبئة ViewBags - التحديث المهم هنا
         private async Task RepopulateViewBags(int familyTreeId, int? currentPersonId = null)
         {
-            ViewBag.Occupations = await _context.Occupations.ToListAsync();
-            ViewBag.Countries = await _context.Countries.ToListAsync();
-
-            var potentialFathersQuery = _context.Persons
-                .Where(p => p.FamilyTreeId == familyTreeId && p.Gender == "Male");
-
-            if (currentPersonId.HasValue)
+            try
             {
-                potentialFathersQuery = potentialFathersQuery.Where(p => p.Id != currentPersonId.Value);
+                _logger.LogInformation("🔍 جاري تحميل قوائم المهن والدول...");
+
+                // تحميل المهن
+                var occupations = await _context.Occupations.ToListAsync();
+                ViewBag.Occupations = occupations;
+                _logger.LogInformation($"✅ تم تحميل {occupations.Count} مهنة");
+
+                // تحميل الدول
+                var countries = await _context.Countries.ToListAsync();
+                ViewBag.Countries = countries;
+                _logger.LogInformation($"✅ تم تحميل {countries.Count} دولة");
+
+                // تحميل الآباء المحتملين
+                var potentialFathersQuery = _context.Persons
+                    .Where(p => p.FamilyTreeId == familyTreeId && p.Gender == "Male");
+
+                if (currentPersonId.HasValue)
+                {
+                    potentialFathersQuery = potentialFathersQuery.Where(p => p.Id != currentPersonId.Value);
+                }
+
+                var potentialFathers = await potentialFathersQuery.ToListAsync();
+                ViewBag.PotentialFathers = potentialFathers;
+                _logger.LogInformation($"✅ تم تحميل {potentialFathers.Count} أب محتمل");
+
+                // تحميل الأمهات المحتملات
+                var potentialMothersQuery = _context.Persons
+                    .Where(p => p.FamilyTreeId == familyTreeId && p.Gender == "Female");
+
+                if (currentPersonId.HasValue)
+                {
+                    potentialMothersQuery = potentialMothersQuery.Where(p => p.Id != currentPersonId.Value);
+                }
+
+                var potentialMothers = await potentialMothersQuery.ToListAsync();
+                ViewBag.PotentialMothers = potentialMothers;
+                _logger.LogInformation($"✅ تم تحميل {potentialMothers.Count} أم محتملة");
+
+                _logger.LogInformation("🎯 تم تحميل جميع البيانات بنجاح");
             }
-
-            ViewBag.PotentialFathers = await potentialFathersQuery.ToListAsync();
-
-            var potentialMothersQuery = _context.Persons
-                .Where(p => p.FamilyTreeId == familyTreeId && p.Gender == "Female");
-
-            if (currentPersonId.HasValue)
+            catch (Exception ex)
             {
-                potentialMothersQuery = potentialMothersQuery.Where(p => p.Id != currentPersonId.Value);
+                _logger.LogError(ex, "❌ خطأ في تحميل البيانات للعرض");
+                // تعيين قيم افتراضية فارغة لتجنب الأخطاء
+                ViewBag.Occupations = new List<Occupation>();
+                ViewBag.Countries = new List<Country>();
+                ViewBag.PotentialFathers = new List<Person>();
+                ViewBag.PotentialMothers = new List<Person>();
             }
+        }
 
-            ViewBag.PotentialMothers = await potentialMothersQuery.ToListAsync();
+        // أكشن للتحقق من البيانات في قاعدة البيانات (للت debug فقط)
+        public async Task<IActionResult> CheckDatabaseData()
+        {
+            try
+            {
+                var occupations = await _context.Occupations.ToListAsync();
+                var countries = await _context.Countries.ToListAsync();
+
+                _logger.LogInformation($"🔍 عدد المهن في قاعدة البيانات: {occupations.Count}");
+                _logger.LogInformation($"🔍 عدد الدول في قاعدة البيانات: {countries.Count}");
+
+                foreach (var occupation in occupations)
+                {
+                    _logger.LogInformation($"   - مهنة: {occupation.Name} (ID: {occupation.Id})");
+                }
+
+                foreach (var country in countries)
+                {
+                    _logger.LogInformation($"   - دولة: {country.Name} (ID: {country.Id})");
+                }
+
+                return Json(new
+                {
+                    OccupationsCount = occupations.Count,
+                    CountriesCount = countries.Count,
+                    Occupations = occupations,
+                    Countries = countries
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ خطأ في التحقق من البيانات");
+                return Json(new { error = ex.Message });
+            }
         }
     }
 }

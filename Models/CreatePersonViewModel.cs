@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace FamilyTreePro.ViewModels
@@ -29,8 +30,19 @@ namespace FamilyTreePro.ViewModels
         [StringLength(50, ErrorMessage = "اللقب يجب ألا يتجاوز 50 حرفاً")]
         public string Nickname { get; set; }
 
-        [Display(Name = "الاسم الكامل")]
-        public string FullName => $"{FirstName} {FatherName} {GrandFatherName} {LastName} {(!string.IsNullOrEmpty(Nickname) ? "(" + Nickname + ")" : "")}".Trim();
+        // خاصية محسوبة للاسم الكامل
+        public string FullName
+        {
+            get
+            {
+                var names = new List<string>();
+                if (!string.IsNullOrEmpty(FirstName)) names.Add(FirstName);
+                if (!string.IsNullOrEmpty(FatherName)) names.Add(FatherName);
+                if (!string.IsNullOrEmpty(GrandFatherName)) names.Add(GrandFatherName);
+                if (!string.IsNullOrEmpty(LastName)) names.Add(LastName);
+                return string.Join(" ", names);
+            }
+        }
 
         [Display(Name = "تاريخ الميلاد")]
         [DataType(DataType.Date)]
@@ -42,7 +54,6 @@ namespace FamilyTreePro.ViewModels
 
         [Required(ErrorMessage = "حقل الجنس مطلوب")]
         [Display(Name = "الجنس")]
-        [RegularExpression("^(Male|Female)$", ErrorMessage = "الجنس يجب أن يكون إما ذكر أو أنثى")]
         public string Gender { get; set; }
 
         [Display(Name = "المدينة")]
@@ -50,7 +61,6 @@ namespace FamilyTreePro.ViewModels
         public string City { get; set; }
 
         [Display(Name = "صورة")]
-        [Url(ErrorMessage = "يرجى إدخال رابط صحيح للصورة")]
         [StringLength(500, ErrorMessage = "رابط الصورة يجب ألا يتجاوز 500 حرف")]
         public string Photo { get; set; }
 
@@ -80,8 +90,9 @@ namespace FamilyTreePro.ViewModels
 
         public CreatePersonViewModel()
         {
-            Photo = string.Empty;
+            // قيم افتراضية
             City = string.Empty;
+            Photo = string.Empty;
             Notes = string.Empty;
             Nickname = string.Empty;
             AdditionReason = string.Empty;
