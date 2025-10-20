@@ -39,12 +39,19 @@
                     <a href="@Url.Action("FamilyTreeView", "Person", new { familyTreeId = familyTreeId })" class="hilal-btn btn-info">
                         <i class="fas fa-project-diagram"></i> الشجرة البسيطة
                     </a>
+                    <!-- زر الشجرة المحسنة الجديد -->
+                    <a href="@Url.Action("EnhancedTree", "Person", new { familyTreeId = familyTreeId })" class="hilal-btn btn-warning">
+                        <i class="fas fa-tree"></i> الشجرة المحسنة
+                    </a>
+                    <a href="@Url.Action("CompareTrees", "Person", new { familyTreeId = familyTreeId })" class="hilal-btn btn-secondary">
+                        <i class="fas fa-balance-scale"></i> مقارنة الأشجار
+                    </a>
                 </div>
                 <div class="responsive-actions">
                     <a href="@Url.Action("Create", "Person", new { familyTreeId = familyTreeId })" class="hilal-btn btn-primary">
                         <i class="fas fa-plus"></i> إضافة فرد جديد
                     </a>
-                    <a href="@Url.Action("Index", "Home")" class="hilal-btn btn-secondary">
+                    <a href="@Url.Action("Index", "Home")" class="hilal-btn btn-light">
                         <i class="fas fa-arrow-right"></i> العودة للشجرات
                     </a>
                 </div>
@@ -171,6 +178,25 @@
         border: none;
     }
 
+    /* ألوان الأزرار الجديدة */
+    .btn-warning {
+        background: linear-gradient(135deg, #ff9a00, #ff6a00) !important;
+        border: none;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+        border: none;
+        color: white;
+    }
+
+    .btn-light {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef) !important;
+        border: 1px solid #dee2e6;
+        color: #495057;
+    }
+
     /* تحسين الاستجابة */
     @@media (max-width: 768px) {
         .main-actions {
@@ -186,6 +212,7 @@
             .responsive-actions .hilal-btn {
                 width: 100%;
                 justify-content: center;
+                margin-bottom: 5px;
             }
 
         .table-responsive {
@@ -201,5 +228,16 @@
                 width: 100%;
                 justify-content: center;
             }
+    }
+
+    @@media (max-width: 576px) {
+        .responsive-actions {
+            gap: 5px;
+        }
+
+        .hilal-btn {
+            padding: 10px 15px;
+            font-size: 14px;
+        }
     }
 </style>

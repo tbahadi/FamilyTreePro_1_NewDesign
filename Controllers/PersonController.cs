@@ -584,7 +584,66 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction("Index", "Home");
             }
         }
+        public async Task<IActionResult> EnhancedTree(int familyTreeId)
+        {
+            var familyTree = await _context.FamilyTrees
+                .FirstOrDefaultAsync(ft => ft.Id == familyTreeId);
 
+            if (familyTree == null)
+            {
+                return NotFound();
+            }
+
+            var allPersons = await _context.Persons
+                .Include(p => p.Father)
+                .Include(p => p.Mother)
+                .Include(p => p.Country)
+                .Include(p => p.Occupation)
+                .Where(p => p.FamilyTreeId == familyTreeId)
+                .ToListAsync();
+
+            var rootPersons = allPersons.Where(p => p.FatherId == null).ToList();
+
+            var viewModel = new FamilyTreeViewViewModel
+            {
+                FamilyTreeId = familyTreeId,
+                FamilyTreeName = familyTree.Name,
+                AllPersons = allPersons,
+                RootPersons = rootPersons
+            };
+
+            return View(viewModel);
+        }
+        public async Task<IActionResult> CompareTrees(int familyTreeId)
+        {
+            var familyTree = await _context.FamilyTrees
+                .FirstOrDefaultAsync(ft => ft.Id == familyTreeId);
+
+            if (familyTree == null)
+            {
+                return NotFound();
+            }
+
+            var allPersons = await _context.Persons
+                .Include(p => p.Father)
+                .Include(p => p.Mother)
+                .Include(p => p.Country)
+                .Include(p => p.Occupation)
+                .Where(p => p.FamilyTreeId == familyTreeId)
+                .ToListAsync();
+
+            var rootPersons = allPersons.Where(p => p.FatherId == null).ToList();
+
+            var viewModel = new FamilyTreeViewViewModel
+            {
+                FamilyTreeId = familyTreeId,
+                FamilyTreeName = familyTree.Name,
+                AllPersons = allPersons,
+                RootPersons = rootPersons
+            };
+
+            return View(viewModel);
+        }
         // الشجرة الهرمية المتقدمة
         // الشجرة العائلية المتقدمة
         // الشجرة العائلية المتقدمة

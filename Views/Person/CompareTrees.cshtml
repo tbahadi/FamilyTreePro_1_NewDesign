@@ -1,0 +1,581 @@
+﻿@model FamilyTreePro.ViewModels.FamilyTreeViewViewModel
+
+@{
+    ViewData["Title"] = "مقارنة أشجار العائلة";
+}
+
+<!-- إضافة مكتبات الطباعة -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+<div class="container mt-4 content-container" dir="rtl">
+    <div class="text-center mb-4">
+        <h2 class="page-title">@Model.FamilyTreeName - مقارنة أشجار العائلة</h2>
+        <p class="page-subtitle">مقارنة بين العرض البسيط والعرض المحسن للشجرة العائلية</p>
+    </div>
+
+    <!-- أزرار التحكم -->
+    <div class="d-flex justify-content-between mb-4 flex-wrap gap-2">
+        <div class="d-flex gap-2">
+            <a href="@Url.Action("Index", "Person", new { familyTreeId = Model.FamilyTreeId })" class="btn btn-view-normal">
+                <i class="fas fa-list me-2"></i> العودة للقائمة
+            </a>
+            <a href="@Url.Action("FamilyTreeView", "Person", new { familyTreeId = Model.FamilyTreeId })" class="btn btn-info">
+                <i class="fas fa-project-diagram me-2"></i> الشجرة البسيطة
+            </a>
+            <a href="@Url.Action("ProfessionalTree", "Person", new { familyTreeId = Model.FamilyTreeId })" class="btn btn-success">
+                <i class="fas fa-sitemap me-2"></i> الشجرة المتقدمة
+            </a>
+        </div>
+
+        <div class="d-flex gap-2 print-controls">
+            <button id="btnPrintSimple" class="btn btn-print">
+                <i class="fas fa-print me-2"></i> طباعة البسيطة
+            </button>
+            <button id="btnPrintEnhanced" class="btn btn-print">
+                <i class="fas fa-print me-2"></i> طباعة المحسنة
+            </button>
+            <button id="btnExportComparison" class="btn btn-pdf">
+                <i class="fas fa-file-pdf me-2"></i> تصدير المقارنة
+            </button>
+        </div>
+    </div>
+
+    @if (Model.RootPersons != null && Model.RootPersons.Any())
+    {
+        <!-- إحصائيات سريعة -->
+        <div class="tree-stats mb-4">
+            <div class="row text-center">
+                <div class="col-md-2 col-6">
+                    <div class="stat-card stat-total">
+                        <div class="stat-content">
+                            <h3>@Model.AllPersons.Count</h3>
+                            <span>إجمالي الأفراد</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6">
+                    <div class="stat-card stat-female">
+                        <div class="stat-content">
+                            <h3>@Model.AllPersons.Count(p => p.Gender == "Female")</h3>
+                            <span>الإناث</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6">
+                    <div class="stat-card stat-male">
+                        <div class="stat-content">
+                            <h3>@Model.AllPersons.Count(p => p.Gender == "Male")</h3>
+                            <span>الذكور</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6">
+                    <div class="stat-card stat-roots">
+                        <div class="stat-content">
+                            <h3>@Model.RootPersons.Count</h3>
+                            <span>الجذور</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6">
+                    <div class="stat-card stat-levels">
+                        <div class="stat-content">
+                            <h3>@CalculateMaxLevel(Model)</h3>
+                            <span>أقصى عمق</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6">
+                    <div class="stat-card stat-branches">
+                        <div class="stat-content">
+                            <h3>@CalculateTotalBranches(Model)</h3>
+                            <span>الفروع</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- مقارنة الأشجار -->
+        <div class="comparison-container">
+            <div class="row">
+                <!-- الشجرة البسيطة -->
+                <div class="col-md-6 mb-4">
+                    <div class="comparison-card">
+                        <div class="comparison-header simple-tree">
+                            <h4><i class="fas fa-project-diagram me-2"></i>الشجرة البسيطة</h4>
+                            <span class="badge bg-info">الأساسية</span>
+                        </div>
+                        <div class="comparison-body">
+                            <div id="simpleTree" class="family-tree-simple">
+                                @await Html.PartialAsync("_SimpleTreeView", Model)
+                            </div>
+                            <div class="comparison-features">
+                                <h6>المميزات:</h6>
+                                <ul>
+                                    <li><i class="fas fa-check text-success"></i> عرض أساسي وسريع</li>
+                                    <li><i class="fas fa-check text-success"></i> مناسبة للشجرات الصغيرة</li>
+                                    <li><i class="fas fa-check text-success"></i> سهلة القراءة</li>
+                                    <li><i class="fas fa-times text-danger"></i> محدودة في الفروع المتعددة</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- الشجرة المحسنة -->
+                <div class="col-md-6 mb-4">
+                    <div class="comparison-card">
+                        <div class="comparison-header enhanced-tree">
+                            <h4><i class="fas fa-sitemap me-2"></i>الشجرة المحسنة</h4>
+                            <span class="badge bg-success">المتقدمة</span>
+                        </div>
+                        <div class="comparison-body">
+                            <div id="enhancedTree" class="family-tree-enhanced">
+                                @await Html.PartialAsync("_EnhancedTreeView", Model)
+                            </div>
+                            <div class="comparison-features">
+                                <h6>المميزات:</h6>
+                                <ul>
+                                    <li><i class="fas fa-check text-success"></i> دعم الفروع المتعددة</li>
+                                    <li><i class="fas fa-check text-success"></i> مسافات بين الإخوة</li>
+                                    <li><i class="fas fa-check text-success"></i> أسهم توضيحية</li>
+                                    <li><i class="fas fa-check text-success"></i> مناسبة للشجرات الكبيرة</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- جدول المقارنة -->
+        <div class="comparison-table mt-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-balance-scale me-2"></i>جدول المقارنة التفصيلي</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>الميزة</th>
+                                    <th>الشجرة البسيطة</th>
+                                    <th>الشجرة المحسنة</th>
+                                    <th>التوصية</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>سرعة التحميل</td>
+                                    <td><span class="badge bg-success">سريعة</span></td>
+                                    <td><span class="badge bg-warning">متوسطة</span></td>
+                                    <td>البسيطة للشجرات الصغيرة</td>
+                                </tr>
+                                <tr>
+                                    <td>دعم الفروع المتعددة</td>
+                                    <td><span class="badge bg-danger">محدود</span></td>
+                                    <td><span class="badge bg-success">ممتاز</span></td>
+                                    <td>المحسنة للشجرات الكبيرة</td>
+                                </tr>
+                                <tr>
+                                    <td>سهولة القراءة</td>
+                                    <td><span class="badge bg-success">سهلة</span></td>
+                                    <td><span class="badge bg-success">سهلة</span></td>
+                                    <td>متساويتان</td>
+                                </tr>
+                                <tr>
+                                    <td>الطباعة والتصدير</td>
+                                    <td><span class="badge bg-warning">أساسي</span></td>
+                                    <td><span class="badge bg-success">متقدم</span></td>
+                                    <td>المحسنة للتقارير</td>
+                                </tr>
+                                <tr>
+                                    <td>التفاعلية</td>
+                                    <td><span class="badge bg-warning">محدودة</span></td>
+                                    <td><span class="badge bg-success">متقدمة</span></td>
+                                    <td>المحسنة للتجربة</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- رسالة التحميل -->
+        <div id="loadingMessage" class="alert alert-info text-center" style="display: none;">
+            <i class="fas fa-spinner fa-spin me-2"></i>
+            جاري تجهيز الملف للتحميل...
+        </div>
+    }
+    else
+    {
+        <div class="empty-state text-center py-5">
+            <div class="empty-icon mb-4">
+                <i class="fas fa-balance-scale"></i>
+            </div>
+            <h4 class="mb-3">لا توجد بيانات للمقارنة</h4>
+            <p class="text-muted mb-4">لم يتم إضافة أي أفراد إلى هذه الشجرة بعد.</p>
+            <a href="@Url.Action("Create", "Person", new { familyTreeId = Model.FamilyTreeId })" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i> إضافة أول فرد
+            </a>
+        </div>
+    }
+</div>
+
+@functions {
+    // دالة لحساب أقصى عمق للشجرة
+    int CalculateMaxLevel(FamilyTreePro.ViewModels.FamilyTreeViewViewModel model)
+    {
+        int maxLevel = 0;
+        foreach (var root in model.RootPersons)
+        {
+            maxLevel = Math.Max(maxLevel, CalculatePersonDepth(root, model.AllPersons, 1));
+        }
+        return maxLevel;
+    }
+
+    int CalculatePersonDepth(FamilyTreePro.Models.Person person, List<FamilyTreePro.Models.Person> allPersons, int currentDepth)
+    {
+        int maxDepth = currentDepth;
+        var children = allPersons.Where(p => p.FatherId == person.Id).ToList();
+
+        foreach (var child in children)
+        {
+            maxDepth = Math.Max(maxDepth, CalculatePersonDepth(child, allPersons, currentDepth + 1));
+        }
+
+        return maxDepth;
+    }
+
+    // دالة لحساب عدد الفروع
+    int CalculateTotalBranches(FamilyTreePro.ViewModels.FamilyTreeViewViewModel model)
+    {
+        int branches = 0;
+        foreach (var root in model.RootPersons)
+        {
+            branches += CountBranches(root, model.AllPersons);
+        }
+        return branches;
+    }
+
+    int CountBranches(FamilyTreePro.Models.Person person, List<FamilyTreePro.Models.Person> allPersons)
+    {
+        var children = allPersons.Where(p => p.FatherId == person.Id).ToList();
+        if (children.Count == 0) return 1;
+
+        int total = 0;
+        foreach (var child in children)
+        {
+            total += CountBranches(child, allPersons);
+        }
+        return total;
+    }
+}
+
+<style>
+    .comparison-container {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 20px;
+    }
+
+    .comparison-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        height: 100%;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+        .comparison-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+    .comparison-header {
+        padding: 15px 20px;
+        border-bottom: 2px solid #e9ecef;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+
+    .simple-tree .comparison-header {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        color: white;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .enhanced-tree .comparison-header {
+        background: linear-gradient(135deg, #28a745, #1e7e34);
+        color: white;
+        border-radius: 10px 10px 0 0;
+    }
+
+    .comparison-header h4 {
+        margin: 0;
+        flex: 1;
+    }
+
+    .comparison-body {
+        padding: 20px;
+    }
+
+    .family-tree-simple,
+    .family-tree-enhanced {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        background: white;
+        margin-bottom: 15px;
+    }
+
+    .comparison-features ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .comparison-features li {
+        padding: 5px 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .comparison-table .card {
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        text-align: center;
+        border-left: 4px solid #007bff;
+    }
+
+    .stat-total {
+        border-left-color: #007bff;
+    }
+
+    .stat-female {
+        border-left-color: #e83e8c;
+    }
+
+    .stat-male {
+        border-left-color: #28a745;
+    }
+
+    .stat-roots {
+        border-left-color: #ffc107;
+    }
+
+    .stat-levels {
+        border-left-color: #6f42c1;
+    }
+
+    .stat-branches {
+        border-left-color: #fd7e14;
+    }
+
+    .stat-card h3 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .stat-card span {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .btn-view-normal {
+        background: linear-gradient(135deg, #a8edea, #fed6e3);
+        color: #2c3e50;
+        border: none;
+    }
+
+    .btn-print {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+    }
+
+    .btn-pdf {
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+        color: white;
+        border: none;
+    }
+
+    @@media (max-width: 768px) {
+        .comparison-container {
+            padding: 10px;
+        }
+
+        .comparison-card {
+            margin-bottom: 20px;
+        }
+
+        .family-tree-simple,
+        .family-tree-enhanced {
+            max-height: 300px;
+        }
+
+        .print-controls {
+            flex-direction: column;
+            width: 100%;
+        }
+
+            .print-controls .btn {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+    }
+</style>
+
+<script>
+    // تهيئة مكتبة jsPDF
+    const { jsPDF } = window.jspdf;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnPrintSimple = document.getElementById('btnPrintSimple');
+        const btnPrintEnhanced = document.getElementById('btnPrintEnhanced');
+        const btnExportComparison = document.getElementById('btnExportComparison');
+        const loadingMessage = document.getElementById('loadingMessage');
+
+        // طباعة الشجرة البسيطة
+        btnPrintSimple.addEventListener('click', function() {
+            const simpleTree = document.getElementById('simpleTree');
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html dir="rtl">
+                <head>
+                    <title>الشجرة البسيطة - @Model.FamilyTreeName</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        .person-card { border: 1px solid #ccc; padding: 10px; margin: 5px; border-radius: 5px; }
+                    </style>
+                </head>
+                <body>
+                    <h2>الشجرة البسيطة - @Model.FamilyTreeName</h2>
+                    ${simpleTree.innerHTML}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        });
+
+        // طباعة الشجرة المحسنة
+        btnPrintEnhanced.addEventListener('click', function() {
+            const enhancedTree = document.getElementById('enhancedTree');
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html dir="rtl">
+                <head>
+                    <title>الشجرة المحسنة - @Model.FamilyTreeName</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        .person-card { border: 1px solid #ccc; padding: 10px; margin: 5px; border-radius: 5px; }
+                    </style>
+                </head>
+                <body>
+                    <h2>الشجرة المحسنة - @Model.FamilyTreeName</h2>
+                    ${enhancedTree.innerHTML}
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        });
+
+        // تصدير المقارنة كـ PDF
+        btnExportComparison.addEventListener('click', async function() {
+            showLoading();
+
+            try {
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = pdf.internal.pageSize.getWidth();
+
+                // إضافة عنوان
+                pdf.setFontSize(20);
+                pdf.setTextColor(40, 40, 40);
+                pdf.text('مقارنة أشجار العائلة - ' + '@Model.FamilyTreeName', pageWidth / 2, 20, { align: 'center' });
+
+                // إضافة تاريخ
+                pdf.setFontSize(10);
+                pdf.setTextColor(100, 100, 100);
+                pdf.text('تم الإنشاء في: ' + new Date().toLocaleDateString('ar-EG'), pageWidth / 2, 30, { align: 'center' });
+
+                // إضافة إحصائيات
+                pdf.setFontSize(12);
+                pdf.setTextColor(0, 0, 0);
+                pdf.text('الإحصائيات:', 20, 50);
+
+                const stats = [
+                    `إجمالي الأفراد: ${@Model.AllPersons.Count}`,
+                    `الإناث: ${@Model.AllPersons.Count(p => p.Gender == "Female")}`,
+                    `الذكور: ${@Model.AllPersons.Count(p => p.Gender == "Male")}`,
+                    `الجذور: ${@Model.RootPersons.Count}`,
+                    `أقصى عمق: ${CalculateMaxLevel(Model)}`,
+                    `عدد الفروع: ${CalculateTotalBranches(Model)}`
+                ];
+
+                stats.forEach((stat, index) => {
+                    pdf.text(stat, 20, 65 + (index * 8));
+                });
+
+                // إضافة جدول المقارنة
+                pdf.text('جدول المقارنة:', 20, 120);
+                const comparisonData = [
+                    ['الميزة', 'الشجرة البسيطة', 'الشجرة المحسنة', 'التوصية'],
+                    ['سرعة التحميل', 'سريعة', 'متوسطة', 'البسيطة للشجرات الصغيرة'],
+                    ['دعم الفروع المتعددة', 'محدود', 'ممتاز', 'المحسنة للشجرات الكبيرة'],
+                    ['سهولة القراءة', 'سهلة', 'سهلة', 'متساويتان'],
+                    ['الطباعة والتصدير', 'أساسي', 'متقدم', 'المحسنة للتقارير'],
+                    ['التفاعلية', 'محدودة', 'متقدمة', 'المحسنة للتجربة']
+                ];
+
+                let yPosition = 135;
+                comparisonData.forEach((row, rowIndex) => {
+                    let xPosition = 20;
+                    row.forEach((cell, cellIndex) => {
+                        pdf.setFontSize(8);
+                        if (rowIndex === 0) {
+                            pdf.setFont(undefined, 'bold');
+                        }
+                        pdf.text(cell, xPosition, yPosition);
+                        xPosition += 45;
+                    });
+                    yPosition += 8;
+                });
+
+                pdf.save('مقارنة_شجرة_العائلة_' + '@Model.FamilyTreeName' + '.pdf');
+
+            } catch (error) {
+                console.error('Error exporting comparison:', error);
+                alert('حدث خطأ أثناء تصدير المقارنة');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        function showLoading() {
+            loadingMessage.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loadingMessage.style.display = 'none';
+        }
+    });
+</script>

@@ -1,0 +1,66 @@
+﻿@model FamilyTreePro.ViewModels.FamilyTreeViewViewModel
+
+<div class="simple-tree-view">
+    @foreach (var rootPerson in Model.RootPersons)
+    {
+        <div class="simple-person-card @rootPerson.Gender.ToLower()">
+            <div class="simple-person-name">@rootPerson.FullName</div>
+            @{
+                RenderSimpleChildren(rootPerson, Model.AllPersons, 1);
+            }
+        </div>
+    }
+</div>
+
+@functions {
+    void RenderSimpleChildren(FamilyTreePro.Models.Person person, List<FamilyTreePro.Models.Person> allPersons, int level)
+    {
+        var children = allPersons.Where(p => p.FatherId == person.Id).ToList();
+        if (children.Any())
+        {
+            <div class="simple-children level-@level">
+                @foreach (var child in children)
+                {
+                    <div class="simple-person-card @child.Gender.ToLower()">
+                        <div class="simple-person-name">@child.FullName</div>
+                        @{
+                            RenderSimpleChildren(child, allPersons, level + 1);
+                        }
+                    </div>
+                }
+            </div>
+        }
+    }
+}
+
+<style>
+    .simple-tree-view {
+        padding: 10px;
+    }
+
+    .simple-person-card {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 8px;
+        margin: 5px 0;
+    }
+
+        .simple-person-card.male {
+            border-left: 3px solid #007bff;
+        }
+
+        .simple-person-card.female {
+            border-left: 3px solid #e83e8c;
+        }
+
+    .simple-person-name {
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    .simple-children {
+        margin-right: 20px;
+        border-right: 2px dashed #6c757d;
+    }
+</style>
