@@ -103,168 +103,93 @@
         <!-- منطقة الشجرة الرئيسية -->
         <div id="familyTreeContainer" class="family-tree-container">
             <div class="family-tree" id="familyTree">
+                <!-- عرض كل فرع عائلي بشكل منفصل -->
                 @foreach (var rootPerson in Model.RootPersons)
                 {
-                    var children = Model.AllPersons.Where(p => p.FatherId == rootPerson.Id).ToList();
+                    <div class="family-branch">
+                        @{
+                            // دالة مساعدة لعرض الشخص وجميع أحفاده بشكل متكرر
+                            void RenderPersonWithDescendants(FamilyTreePro.Models.Person person, int level)
+                            {
+                                var children = Model.AllPersons.Where(p => p.FatherId == person.Id).ToList();
 
-                    <div class="root-person">
-                        <!-- عرض الشخص الجذر -->
-                        <div class="person-card @rootPerson.Gender.ToLower() level-0 connector">
-                            <div class="person-avatar">
-                                @if (rootPerson.Gender == "Male")
-                                {
-                                    <i class="fas fa-male"></i>
-                                }
-                                else
-                                {
-                                    <i class="fas fa-female"></i>
-                                }
-                            </div>
-                            <div class="person-name">
-                                @rootPerson.FirstName
-                                @rootPerson.FatherName
-                                @rootPerson.GrandFatherName
-                                @rootPerson.LastName
-                            </div>
-                            <div class="person-details">
-                                @if (rootPerson.BirthDate.HasValue)
-                                {
-                                    <div class="detail-item">
-                                        <i class="fas fa-birthday-cake"></i>
-                                        @rootPerson.BirthDate.Value.ToShortDateString()
-                                    </div>
-                                }
-                                @if (!string.IsNullOrEmpty(rootPerson.City))
-                                {
-                                    <div class="detail-item">
-                                        <i class="fas fa-city"></i>
-                                        @rootPerson.City
-                                    </div>
-                                }
-                            </div>
-                            <div class="person-actions">
-                                <a href="@Url.Action("Details", "Person", new { id = rootPerson.Id })" class="btn btn-info btn-sm" title="عرض التفاصيل">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="@Url.Action("Edit", "Person", new { id = rootPerson.Id })" class="btn btn-warning btn-sm" title="تعديل">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <a href="@Url.Action("Create", "Person", new { familyTreeId = rootPerson.FamilyTreeId, fatherId = rootPerson.Id })" class="btn btn-success btn-sm" title="إضافة ابن">
-                                    <i class="fas fa-plus"></i>
-                                </a>
-                            </div>
-                        </div>
-
-                        <!-- عرض الأطفال -->
-                        @if (children.Any())
-                        {
-                            <div class="children-container">
-                                @foreach (var child in children)
-                                {
-                                    var grandchildren = Model.AllPersons.Where(p => p.FatherId == child.Id).ToList();
-
-                                    <div class="person-card @child.Gender.ToLower() level-1 connector">
-                                        <div class="person-avatar">
-                                            @if (child.Gender == "Male")
-                                            {
-                                                <i class="fas fa-male"></i>
-                                            }
-                                            else
-                                            {
-                                                <i class="fas fa-female"></i>
-                                            }
-                                        </div>
-                                        <div class="person-name">
-                                            @child.FirstName
-                                            @child.FatherName
-                                            @child.GrandFatherName
-                                            @child.LastName
-                                        </div>
-                                        <div class="person-details">
-                                            @if (child.BirthDate.HasValue)
-                                            {
-                                                <div class="detail-item">
-                                                    <i class="fas fa-birthday-cake"></i>
-                                                    @child.BirthDate.Value.ToShortDateString()
-                                                </div>
-                                            }
-                                            @if (!string.IsNullOrEmpty(child.City))
-                                            {
-                                                <div class="detail-item">
-                                                    <i class="fas fa-city"></i>
-                                                    @child.City
-                                                </div>
-                                            }
-                                        </div>
-                                        <div class="person-actions">
-                                            <a href="@Url.Action("Details", "Person", new { id = child.Id })" class="btn btn-info btn-sm" title="عرض التفاصيل">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="@Url.Action("Edit", "Person", new { id = child.Id })" class="btn btn-warning btn-sm" title="تعديل">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="@Url.Action("Create", "Person", new { familyTreeId = child.FamilyTreeId, fatherId = child.Id })" class="btn btn-success btn-sm" title="إضافة ابن">
-                                                <i class="fas fa-plus"></i>
-                                            </a>
-                                        </div>
-
-                                        <!-- عرض الأحفاد -->
-                                        @if (grandchildren.Any())
-                                        {
-                                            <div class="children-container">
-                                                @foreach (var grandchild in grandchildren)
+                                <div class="person-generation level-@level">
+                                    <div class="person-wrapper">
+                                        <div class="person-card @person.Gender.ToLower()">
+                                            <div class="person-avatar">
+                                                @if (person.Gender == "Male")
                                                 {
-                                                    <div class="person-card @grandchild.Gender.ToLower() level-2 connector">
-                                                        <div class="person-avatar">
-                                                            @if (grandchild.Gender == "Male")
-                                                            {
-                                                                <i class="fas fa-male"></i>
-                                                            }
-                                                            else
-                                                            {
-                                                                <i class="fas fa-female"></i>
-                                                            }
-                                                        </div>
-                                                        <div class="person-name">
-                                                            @grandchild.FirstName
-                                                            @grandchild.FatherName
-                                                            @grandchild.GrandFatherName
-                                                            @grandchild.LastName
-                                                        </div>
-                                                        <div class="person-details">
-                                                            @if (grandchild.BirthDate.HasValue)
-                                                            {
-                                                                <div class="detail-item">
-                                                                    <i class="fas fa-birthday-cake"></i>
-                                                                    @grandchild.BirthDate.Value.ToShortDateString()
-                                                                </div>
-                                                            }
-                                                            @if (!string.IsNullOrEmpty(grandchild.City))
-                                                            {
-                                                                <div class="detail-item">
-                                                                    <i class="fas fa-city"></i>
-                                                                    @grandchild.City
-                                                                </div>
-                                                            }
-                                                        </div>
-                                                        <div class="person-actions">
-                                                            <a href="@Url.Action("Details", "Person", new { id = grandchild.Id })" class="btn btn-info btn-sm" title="عرض التفاصيل">
-                                                                <i class="fas fa-eye"></i>
-                                                            </a>
-                                                            <a href="@Url.Action("Edit", "Person", new { id = grandchild.Id })" class="btn btn-warning btn-sm" title="تعديل">
-                                                                <i class="fas fa-edit"></i>
-                                                            </a>
-                                                            <a href="@Url.Action("Create", "Person", new { familyTreeId = grandchild.FamilyTreeId, fatherId = grandchild.Id })" class="btn btn-success btn-sm" title="إضافة ابن">
-                                                                <i class="fas fa-plus"></i>
-                                                            </a>
-                                                        </div>
+                                                    <i class="fas fa-male"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="fas fa-female"></i>
+                                                }
+                                            </div>
+                                            <div class="person-name">
+                                                @person.FirstName
+                                                @person.FatherName
+                                                @person.GrandFatherName
+                                                @person.LastName
+                                            </div>
+                                            <div class="person-details">
+                                                @if (person.BirthDate.HasValue)
+                                                {
+                                                    <div class="detail-item">
+                                                        <i class="fas fa-birthday-cake"></i>
+                                                        @person.BirthDate.Value.ToShortDateString()
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrEmpty(person.City))
+                                                {
+                                                    <div class="detail-item">
+                                                        <i class="fas fa-city"></i>
+                                                        @person.City
                                                     </div>
                                                 }
                                             </div>
+                                            <div class="person-actions">
+                                                <a href="@Url.Action("Details", "Person", new { id = person.Id })" class="btn btn-info btn-sm" title="عرض التفاصيل">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="@Url.Action("Edit", "Person", new { id = person.Id })" class="btn btn-warning btn-sm" title="تعديل">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="@Url.Action("Create", "Person", new { familyTreeId = person.FamilyTreeId, fatherId = person.Id })" class="btn btn-success btn-sm" title="إضافة ابن">
+                                                    <i class="fas fa-plus"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <!-- سهم يوضح العلاقة مع الأبناء -->
+                                        @if (children.Any())
+                                        {
+                                            <div class="connection-arrow">
+                                                <i class="fas fa-arrow-down"></i>
+                                                <span class="generation-label">الجيل @(level + 2)</span>
+                                            </div>
                                         }
                                     </div>
-                                }
-                            </div>
+
+                                    <!-- عرض الأطفال بشكل أفقي -->
+                                    @if (children.Any())
+                                    {
+                                        <div class="children-generation">
+                                            @foreach (var child in children)
+                                            {
+                                                <div class="child-branch">
+                                                    @{
+                                                        RenderPersonWithDescendants(child, level + 1);
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+
+                            // بدء عرض الفرع من الشخص الجذر
+                            RenderPersonWithDescendants(rootPerson, 0);
                         }
                     </div>
                 }
@@ -308,11 +233,39 @@
         border-radius: 10px;
         min-height: 500px;
         position: relative;
+        overflow-x: auto;
     }
 
-    .root-person {
+    /* تصميم الفروع العائلية */
+    .family-branch {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         margin-bottom: 40px;
-        text-align: center;
+    }
+
+    .person-generation {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 10px 0;
+        position: relative;
+    }
+
+    .children-generation {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 30px;
+        margin-top: 20px;
+        position: relative;
+    }
+
+    .child-branch {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
     }
 
     /* تصميم بطاقات الأشخاص */
@@ -320,15 +273,13 @@
         background: white;
         border-radius: 15px;
         padding: 20px;
-        margin: 15px;
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         transition: all 0.3s ease;
         min-width: 250px;
         text-align: center;
-        position: relative;
         border: 3px solid transparent;
-        display: inline-block;
-        vertical-align: top;
+        position: relative;
+        z-index: 2;
     }
 
         .person-card.male {
@@ -342,9 +293,32 @@
         }
 
         .person-card:hover {
-            transform: translateY(-8px) scale(1.02);
+            transform: translateY(-5px) scale(1.02);
             box-shadow: 0 15px 30px rgba(0,0,0,0.2);
         }
+
+    /* تدرج الألوان حسب المستوى */
+    .level-0 .person-card {
+        border-color: #28a745;
+        background: linear-gradient(135deg, #ffffff 0%, #d4edda 100%);
+        transform: scale(1.1);
+    }
+
+    .level-1 .person-card {
+        border-color: #17a2b8;
+    }
+
+    .level-2 .person-card {
+        border-color: #ffc107;
+    }
+
+    .level-3 .person-card {
+        border-color: #fd7e14;
+    }
+
+    .level-4 .person-card {
+        border-color: #e83e8c;
+    }
 
     .person-avatar {
         font-size: 2rem;
@@ -389,57 +363,69 @@
         gap: 5px;
     }
 
-    /* تحسينات التسلسل الهرمي */
-    .children-container {
+    /* الأسهم والوصلات */
+    .connection-arrow {
+        margin: 15px 0;
+        color: #4facfe;
+        font-size: 1.5rem;
+        animation: bounce 2s infinite;
         display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin-top: 30px;
-        padding-top: 30px;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
         position: relative;
+        z-index: 1;
     }
 
-    .level-0 {
-        border-width: 4px;
-        background: linear-gradient(135deg, #ffffff 0%, #d4edda 100%);
-        font-weight: bold;
+    .generation-label {
+        font-size: 0.8rem;
+        color: #666;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 2px 8px;
+        border-radius: 10px;
+        border: 1px solid #4facfe;
     }
 
-    .level-1 {
-        border-width: 3px;
-    }
-
-    .level-2 {
-        border-width: 2px;
-    }
-
-    /* الخطوط الواصلة المحسنة */
-    .connector {
-        position: relative;
-    }
-
-        .connector::before {
-            content: '';
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            width: 3px;
-            height: 25px;
-            background: linear-gradient(to bottom, #4facfe, #00f2fe);
-            transform: translateX(-50%);
+    @@keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
         }
 
-        .connector::after {
+        40% {
+            transform: translateY(-5px);
+        }
+
+        60% {
+            transform: translateY(-3px);
+        }
+    }
+
+    /* الخطوط الواصلة بين الفروع */
+    .children-generation::before {
+        content: '';
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        height: 2px;
+        background: linear-gradient(to right, transparent, #4facfe, transparent);
+        z-index: 1;
+    }
+
+    .child-branch {
+        position: relative;
+    }
+
+        .child-branch::before {
             content: '';
             position: absolute;
-            top: -5px;
+            top: -20px;
             left: 50%;
+            width: 2px;
+            height: 20px;
+            background: #4facfe;
             transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-top: 10px solid #4facfe;
         }
 
     /* أزرار التحكم */
@@ -481,32 +467,36 @@
 
     /* تحسينات للطباعة */
     @@media print {
-        .print-controls, .tree-stats, .btn-view-normal, .btn-primary
+        .print-controls,
+        .tree-stats,
+        .btn-view-normal,
+        .btn-primary {
+            display: none !important;
+        }
 
-    {
-        display: none !important;
-    }
+        .family-tree-container {
+            background: white !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+        }
 
-    .family-tree-container {
-        background: white !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-    }
+        .family-tree {
+            background: white !important;
+            padding: 10px !important;
+        }
 
-    .family-tree {
-        background: white !important;
-        padding: 10px !important;
-    }
+        .person-card {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+            break-inside: avoid;
+        }
 
-    .person-card {
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-        break-inside: avoid;
-    }
+        .person-actions {
+            display: none !important;
+        }
 
-    .person-actions {
-        display: none !important;
-    }
-
+        .connection-arrow {
+            display: none !important;
+        }
     }
 
     /* وضع ملء الشاشة */
@@ -577,6 +567,26 @@
             opacity: 1;
         }
     }
+
+    /* تحسينات للشاشات الصغيرة */
+    @@media (max-width: 768px) {
+        .children-generation {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .person-card {
+            min-width: 200px;
+        }
+
+        .print-controls {
+            flex-direction: column;
+        }
+
+        .family-tree {
+            overflow-x: auto;
+        }
+    }
 </style>
 
 <script>
@@ -634,7 +644,7 @@
                 const imgHeight = canvas.height;
                 const ratio = imgWidth / imgHeight;
 
-                let width = pageWidth - 20; // هامش 10mm من كل جانب
+                let width = pageWidth - 20;
                 let height = width / ratio;
 
                 if (height > pageHeight - 20) {
