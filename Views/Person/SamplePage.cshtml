@@ -1,5 +1,5 @@
 ﻿@{
-    ViewData["Title"] = "الشجرة العائلية - شكل أوراق الشجرة";
+    ViewData["Title"] = "الشجرة العائلية المتقدمة";
     var familyTreeId = ViewBag.FamilyTreeId;
     var familyTreeName = ViewBag.FamilyTreeName ?? "شجرة عائلية";
     var personsCount = ViewBag.PersonsCount ?? 0;
@@ -21,23 +21,19 @@
 }
 
 <div class="container-fluid mt-4" dir="rtl">
-    <div class="text-center mb-4">
-        <h2>@familyTreeName</h2>
-        <p class="text-muted">عدد الأفراد: @personsCount</p>
-    </div>
+    <h2 class="text-center mb-4">@familyTreeName - الشجرة العائلية</h2>
 
-    <div class="text-center mb-3">
-        <button id="printPdf" class="btn btn-success">
+    <div class="d-flex justify-content-center mb-3">
+        <button id="printPdf" class="btn btn-success btn-lg">
             <i class="fas fa-file-pdf me-2"></i> طباعة PDF
         </button>
-        <button id="toggleColor" class="btn btn-outline-primary ms-2">
-            <i class="fas fa-palette me-2"></i> تبديل الألوان
-        </button>
     </div>
 
-    <div id="tree-container" style="width: 100%; height: 700px; border: 1px solid #ddd; border-radius: 10px; background: linear-gradient(#f8fdf9, #ffffff); overflow: auto; position: relative;">
-        <canvas id="tree-canvas" width="2500" height="1200" style="position: absolute; top: 0; left: 0;"></canvas>
-        <div id="clickable-areas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+    <div id="tree-container" style="width: 100%; height: 700px; border: 1px solid #ddd; border-radius: 10px; background: #f8f9fa; overflow: auto; position: relative;">
+        <div id="family-tree" style="position: relative;">
+            <!-- سيتم رسم الشجرة هنا بالJavaScript -->
+        </div>
+        <svg id="connections-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
     </div>
 
     <!-- معلومات عند التمرير -->
@@ -50,55 +46,72 @@
 </div>
 
 <style>
-    .leaf-node {
+    .tree-node {
         position: absolute;
-        width: 160px;
-        height: 160px;
-        cursor: pointer;
-        z-index: 10;
-        transition: transform 0.3s ease;
-    }
-
-    .leaf-node:hover {
-        transform: scale(1.05);
-    }
-
-    .leaf-content {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        min-width: 180px;
+        max-width: 250px;
+        padding: 12px;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.2);
         text-align: center;
-        color: #2c3e50;
-        font-weight: bold;
-        width: 140px;
-        z-index: 20;
-        pointer-events: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10;
+        background: white;
+        word-wrap: break-word;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
+
+        .tree-node.male {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border: 2px solid #1976d2;
+        }
+
+        .tree-node.female {
+            background: linear-gradient(135deg, #fce4ec, #f8bbd9);
+            border: 2px solid #c2185b;
+        }
+
+        .tree-node:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            z-index: 100;
+        }
 
     .node-name {
-        font-size: 16px;
+        font-weight: bold;
+        font-size: 14px;
+        margin-bottom: 5px;
         line-height: 1.3;
-        margin-bottom: 6px;
-        font-weight: 700;
     }
 
     .node-details {
-        font-size: 12px;
-        color: #7f8c8d;
-        line-height: 1.2;
+        font-size: 11px;
+        line-height: 1.3;
     }
 
     .connection-line {
-        stroke: #34495e;
+        stroke: #666;
         stroke-width: 2;
         fill: none;
     }
+
+        .connection-line.male {
+            stroke: #1976d2;
+        }
+
+        .connection-line.female {
+            stroke: #c2185b;
+        }
 
     .pyramid-container {
         position: relative;
         width: 100%;
         height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
         padding: 20px;
     }
 
@@ -106,20 +119,19 @@
         position: absolute;
         left: 10px;
         background: rgba(0,0,0,0.1);
-        padding: 6px 12px;
-        border-radius: 4px;
+        padding: 5px 10px;
+        border-radius: 5px;
         font-size: 12px;
         font-weight: bold;
-        color: #2c3e50;
     }
 
     #tree-container {
         cursor: grab;
     }
 
-    #tree-container:active {
-        cursor: grabbing;
-    }
+        #tree-container:active {
+            cursor: grabbing;
+        }
 
     .loading-spinner {
         position: absolute;
@@ -127,7 +139,29 @@
         left: 50%;
         transform: translate(-50%, -50%);
         text-align: center;
-        z-index: 100;
+    }
+
+    .pdf-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        z-index: 9999;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 18px;
+    }
+
+    .alert-notification {
+        position: fixed !important;
+        top: 20px !important;
+        right: 20px !important;
+        z-index: 9999 !important;
+        min-width: 300px !important;
     }
 </style>
 
@@ -139,21 +173,19 @@
         // بيانات الشجرة من قاعدة البيانات
         const personsJson = '@Html.Raw(personsJson)';
         const familyTreeId = @familyTreeId;
+        const familyTreeName = '@familyTreeName';
         const personsCount = @personsCount;
 
         let treeData = [];
         let panning = false;
         let startX, startY, scrollLeft, scrollTop;
-        let coloredMode = false; // الوضع الافتراضي بدون ألوان
-        const canvas = document.getElementById('tree-canvas');
-        const ctx = canvas.getContext('2d');
 
-        // تحميل البيانات الحقيقية
+        // دالة تحميل البيانات الحقيقية
         function loadRealData() {
             try {
                 if (personsJson && personsJson !== '[]') {
                     treeData = JSON.parse(personsJson);
-                    console.log('تم تحميل البيانات:', treeData.length, 'فرد');
+                    console.log('تم تحميل البيانات الحقيقية:', treeData.length, 'فرد');
                     return true;
                 }
                 return false;
@@ -163,103 +195,21 @@
             }
         }
 
-        // رسم ورقة الشجرة
-        function drawLeaf(x, y, scale, name, details, gender) {
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.scale(scale, scale);
+        function initializeSVG() {
+            const svg = $('#connections-svg');
+            svg.empty();
 
-            // حجم الورقة الأكبر
-            const leafWidth = 80;
-            const leafHeight = 60;
-
-            // شكل الورقة
-            ctx.beginPath();
-            ctx.moveTo(leafWidth, 0);
-            ctx.bezierCurveTo(leafWidth * 0.6, -leafHeight, -leafWidth * 0.6, -leafHeight, -leafWidth, 0);
-            ctx.bezierCurveTo(-leafWidth * 0.6, leafHeight, leafWidth * 0.6, leafHeight, leafWidth, 0);
-            ctx.closePath();
-
-            if (coloredMode) {
-                // وضع ملون
-                let color1, color2;
-                if (gender === 'Male') {
-                    color1 = '#e3f2fd';
-                    color2 = '#bbdefb';
-                } else {
-                    color1 = '#fce4ec';
-                    color2 = '#f8bbd9';
-                }
-
-                // تدرج تعبئة
-                const grad = ctx.createLinearGradient(-leafWidth, -leafHeight, leafWidth, leafHeight);
-                grad.addColorStop(0, color1);
-                grad.addColorStop(1, color2);
-                ctx.fillStyle = grad;
-                ctx.fill();
-            } else {
-                // وضع بدون ألوان - خلفية بيضاء
-                ctx.fillStyle = '#ffffff';
-                ctx.fill();
-            }
-
-            // حد الورقة
-            ctx.strokeStyle = coloredMode ? '#2c3e50' : '#000000';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-
-            // كتابة الاسم
-            ctx.fillStyle = coloredMode ? '#2c3e50' : '#000000';
-            ctx.font = 'bold 14px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            // تقسيم النص لأسطر متعددة
-            const maxCharsPerLine = 12;
-            const nameLines = splitTextIntoLines(name || 'غير معروف', maxCharsPerLine);
-            
-            // رسم الأسطر
-            nameLines.forEach((line, index) => {
-                ctx.fillText(line, 0, -10 + (index * 14));
-            });
-
-            // رسم التفاصيل إذا كانت موجودة
-            if (details) {
-                ctx.font = '11px Arial';
-                ctx.fillStyle = coloredMode ? '#7f8c8d' : '#666666';
-                ctx.fillText(details, 0, 15);
-            }
-
-            ctx.restore();
-        }
-
-        // دالة لتقسيم النص إلى أسطر
-        function splitTextIntoLines(text, maxChars) {
-            const words = text.split(' ');
-            const lines = [];
-            let currentLine = '';
-
-            words.forEach(word => {
-                if ((currentLine + ' ' + word).length <= maxChars) {
-                    currentLine += (currentLine ? ' ' : '') + word;
-                } else {
-                    if (currentLine) lines.push(currentLine);
-                    currentLine = word;
-                }
-            });
-
-            if (currentLine) lines.push(currentLine);
-            return lines;
-        }
-
-        // رسم الاتصال بين الورقتين (غصن)
-        function drawBranch(x1, y1, x2, y2) {
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.bezierCurveTo(x1 + 25, y1 + 10, x2 - 25, y2 - 10, x2, y2);
-            ctx.strokeStyle = coloredMode ? '#34495e' : '#000000';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            const defs = $(`
+                <defs>
+                    <marker id="arrowhead-male" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#1976d2"/>
+                    </marker>
+                    <marker id="arrowhead-female" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#c2185b"/>
+                    </marker>
+                </defs>
+            `);
+            svg.append(defs);
         }
 
         function organizeByGenerations(persons) {
@@ -284,103 +234,135 @@
         }
 
         function drawConnections() {
+            const svg = $('#connections-svg');
+            svg.find('path').remove();
+
             treeData.forEach(person => {
                 if (person.fatherId) {
                     const father = treeData.find(p => p.id === person.fatherId);
-                    if (father && father.canvasX && father.canvasY && person.canvasX && person.canvasY) {
-                        drawBranch(father.canvasX, father.canvasY + 40, person.canvasX, person.canvasY - 40);
+                    if (father) {
+                        drawConnection(father, person);
                     }
                 }
             });
         }
 
-        function drawTree() {
-            // مسح Canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            const container = $('#clickable-areas');
+        function drawConnection(fromPerson, toPerson) {
+            const fromElement = $(`[data-person-id="${fromPerson.id}"]`);
+            const toElement = $(`[data-person-id="${toPerson.id}"]`);
+
+            if (fromElement.length === 0 || toElement.length === 0) return;
+
+            const fromRect = fromElement[0].getBoundingClientRect();
+            const toRect = toElement[0].getBoundingClientRect();
+            const container = $('#family-tree')[0].getBoundingClientRect();
+
+            const fromX = fromRect.left - container.left + fromRect.width / 2;
+            const fromY = fromRect.bottom - container.top;
+            const toX = toRect.left - container.left + toRect.width / 2;
+            const toY = toRect.top - container.top;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const gender = toPerson.gender || 'Male';
+            const arrowhead = gender === 'Male' ? 'url(#arrowhead-male)' : 'url(#arrowhead-female)';
+
+            const controlY = fromY + (toY - fromY) / 2;
+            const pathData = `
+                M ${fromX} ${fromY}
+                C ${fromX} ${controlY}, ${toX} ${controlY}, ${toX} ${toY}
+            `;
+
+            path.setAttribute('d', pathData);
+            path.setAttribute('class', `connection-line ${gender}`);
+            path.setAttribute('marker-end', arrowhead);
+
+            $('#connections-svg').append(path);
+        }
+
+        function drawPyramidTree() {
+            const container = $('#family-tree');
             container.empty();
 
             if (treeData.length === 0) {
-                const loadingDiv = $('<div class="loading-spinner"></div>');
-                loadingDiv.html(`
-                    <div class="alert alert-warning text-center">
-                        لا توجد بيانات لعرضها
-                    </div>
-                `);
-                container.append(loadingDiv);
+                container.html('<div class="alert alert-warning text-center">لا توجد بيانات لعرضها</div>');
                 return;
             }
 
             const generations = organizeByGenerations(treeData);
-            const containerWidth = 2500;
-            const startY = 100;
-            const verticalSpacing = 180;
+            const containerWidth = 2000;
+            const startY = 50;
+            const verticalSpacing = 150;
 
-            // رسم الأجيال
             generations.forEach((generation, genIndex) => {
                 const generationY = startY + (genIndex * verticalSpacing);
                 const generationSize = generation.length;
 
-                const horizontalSpacing = Math.min(220, (containerWidth - 100) / Math.max(1, generationSize));
+                const horizontalSpacing = Math.min(300, (containerWidth - 200) / Math.max(1, generationSize));
                 const totalWidth = generationSize * horizontalSpacing;
                 const startX = (containerWidth - totalWidth) / 2;
 
-                // رسم تسمية الجيل
-                ctx.fillStyle = 'rgba(0,0,0,0.1)';
-                ctx.fillRect(10, generationY - 30, 80, 25);
-                ctx.fillStyle = coloredMode ? '#2c3e50' : '#000000';
-                ctx.font = 'bold 13px Arial';
-                ctx.textAlign = 'left';
-                ctx.fillText(`الجيل ${genIndex + 1}`, 15, generationY - 15);
+                container.append(`
+                    <div class="generation-label" style="top: ${generationY - 30}px;">
+                        الجيل ${genIndex + 1}
+                    </div>
+                `);
 
-                // رسم أفراد الجيل
                 generation.forEach((person, personIndex) => {
                     const personX = startX + (personIndex * horizontalSpacing);
-                    const personY = generationY;
-
-                    // حفظ إحداثيات الشخص للاتصالات
-                    person.canvasX = personX;
-                    person.canvasY = personY;
-
-                    // رسم الورقة
-                    const birthDate = formatDate(person.birthDate);
-                    const details = birthDate ? birthDate : '';
-                    drawLeaf(personX, personY, 1.0, person.fullName || 'غير معروف', details, person.gender);
-
-                    // إضافة منطقة نقر تفاعلية
-                    const clickableDiv = $(`
-                        <div class="leaf-node" 
-                             data-person-id="${person.id}"
-                             style="left: ${personX - 80}px; top: ${personY - 60}px; width: 160px; height: 160px;">
-                            <div class="leaf-content">
-                                <div class="node-name">${person.fullName || 'غير معروف'}</div>
-                                <div class="node-details">${details}</div>
-                            </div>
-                        </div>
-                    `);
-
-                    clickableDiv.on('click', function(e) {
-                        e.stopPropagation();
-                        showPersonDetails(person);
-                    });
-
-                    container.append(clickableDiv);
+                    createPersonNode(person, personX, generationY, container);
                 });
             });
 
-            // رسم الاتصالات بعد رسم جميع الأوراق
-            setTimeout(drawConnections, 100);
+            setTimeout(drawConnections, 200);
+        }
+
+        function createPersonNode(person, x, y, container) {
+            const birthDate = formatDate(person.birthDate);
+            const city = person.city || '';
+            const occupationName = person.occupationName || '';
+            const gender = person.gender || 'Male';
+
+            const nodeContent = `
+                <div class="tree-node ${gender === 'Male' ? 'male' : 'female'}"
+                     data-person-id="${person.id}"
+                     style="left: ${x}px; top: ${y}px;">
+                    <div class="node-name">${escapeHtml(person.fullName || 'غير معروف')}</div>
+                    <div class="node-details">
+                        ${birthDate ? '📅 ' + birthDate + '<br>' : ''}
+                        ${city ? '🏠 ' + escapeHtml(city) + '<br>' : ''}
+                        ${occupationName ? '💼 ' + escapeHtml(occupationName) : ''}
+                    </div>
+                </div>
+            `;
+
+            const node = $(nodeContent);
+            node.on('click', function(e) {
+                e.stopPropagation();
+                showPersonDetails(person);
+            });
+
+            container.append(node);
         }
 
         function formatDate(dateString) {
             try {
                 if (!dateString) return '';
                 const date = new Date(dateString);
-                return isNaN(date.getTime()) ? '' : date.toLocaleDateString('ar-EG');
+                return isNaN(date.getTime()) ? dateString : date.toLocaleDateString('ar-EG');
             } catch (e) {
-                return '';
+                return dateString;
             }
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         function showPersonDetails(person) {
@@ -390,13 +372,13 @@
 
             let details = '';
             if (birthDate) details += `الميلاد: ${birthDate}<br>`;
-            if (city) details += `المدينة: ${city}<br>`;
-            if (occupationName) details += `المهنة: ${occupationName}`;
+            if (city) details += `المدينة: ${escapeHtml(city)}<br>`;
+            if (occupationName) details += `المهنة: ${escapeHtml(occupationName)}<br>`;
             if (!details) details = 'لا توجد معلومات إضافية';
 
             const infoContent = `
                 <div class="card-body">
-                    <h5>${person.fullName || 'غير معروف'}</h5>
+                    <h5>${escapeHtml(person.fullName || 'غير معروف')}</h5>
                     <p>${details}</p>
                     <div class="mt-2">
                         <a href="/Person/Details/${person.id}" class="btn btn-info btn-sm">
@@ -415,69 +397,152 @@
             $('#node-info').html(infoContent).show();
         }
 
-        function toggleColorMode() {
-            coloredMode = !coloredMode;
-            $('#toggleColor').html(
-                coloredMode ? 
-                '<i class="fas fa-palette me-2"></i> الوضع البسيط' : 
-                '<i class="fas fa-palette me-2"></i> الوضع الملون'
-            );
-            drawTree();
+        function printToPdf() {
+            showPdfLoading(true);
+
+            setTimeout(() => {
+                try {
+                    const originalTree = $('#family-tree').clone();
+                    const originalSVG = $('#connections-svg').clone();
+
+                    const printContainer = $('<div style="background: white; position: absolute; left: 0; top: 0; z-index: 99999; width: 100%;"></div>');
+
+                    const title = $(`
+                        <div style="text-align: center; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 20px;">
+                            <h1 style="margin: 0; font-size: 32px; font-weight: bold;">الشجرة العائلية</h1>
+                            <h2 style="margin: 10px 0; font-size: 24px;">${familyTreeName}</h2>
+                            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 15px; font-size: 14px;">
+                                <span>📅 تم الإنشاء في: ${new Date().toLocaleDateString('ar-EG')}</span>
+                                <span>👥 عدد الأفراد: ${personsCount}</span>
+                            </div>
+                        </div>
+                    `);
+                    printContainer.append(title);
+                    printContainer.append(originalTree);
+                    printContainer.append(originalSVG);
+
+                    const tempContainer = $('<div style="position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: white; z-index: 99998; overflow: auto;"></div>');
+                    tempContainer.append(printContainer);
+                    $('body').append(tempContainer);
+
+                    const options = {
+                        scale: 2,
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                        width: printContainer[0].scrollWidth,
+                        height: printContainer[0].scrollHeight
+                    };
+
+                    html2canvas(printContainer[0], options).then(canvas => {
+                        tempContainer.remove();
+
+                        const imgData = canvas.toDataURL('image/png', 1.0);
+                        const pdf = new jspdf.jsPDF({
+                            orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+                            unit: 'mm',
+                            format: 'a4'
+                        });
+
+                        const pdfWidth = pdf.internal.pageSize.getWidth();
+                        const pdfHeight = pdf.internal.pageSize.getHeight();
+                        const imgWidth = canvas.width;
+                        const imgHeight = canvas.height;
+
+                        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight) * 0.95;
+                        const finalWidth = imgWidth * ratio;
+                        const finalHeight = imgHeight * ratio;
+
+                        pdf.addImage(imgData, 'PNG',
+                            (pdfWidth - finalWidth) / 2,
+                            (pdfHeight - finalHeight) / 2,
+                            finalWidth,
+                            finalHeight
+                        );
+
+                        pdf.setFontSize(10);
+                        pdf.setTextColor(100);
+                        pdf.text(`تم الإنشاء في: ${new Date().toLocaleDateString('ar-EG')}`, 10, pdfHeight - 10);
+
+                        const fileName = `شجرة_عائلية_${familyTreeName.replace(/\s+/g, '_')}.pdf`;
+                        pdf.save(fileName);
+
+                        showPdfLoading(false);
+                        showNotification('تم إنشاء PDF بنجاح', 'success');
+
+                    }).catch(error => {
+                        console.error('خطأ في إنشاء PDF:', error);
+                        tempContainer.remove();
+                        showPdfLoading(false);
+                        showNotification('حدث خطأ في إنشاء PDF', 'danger');
+                    });
+
+                } catch (error) {
+                    console.error('خطأ عام:', error);
+                    showPdfLoading(false);
+                    showNotification('حدث خطأ غير متوقع', 'danger');
+                }
+            }, 1000);
         }
 
-        function printToPdf() {
-            // إخفاء مناطق النقر مؤقتاً
-            $('#clickable-areas').hide();
-            
-            html2canvas(canvas, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#f8fdf9'
-            }).then(canvas => {
-                // إعادة إظهار مناطق النقر
-                $('#clickable-areas').show();
+        function showPdfLoading(show) {
+            let loadingDiv = $('#pdf-loading');
+            if (show) {
+                if (loadingDiv.length === 0) {
+                    loadingDiv = $(`
+                        <div id="pdf-loading" class="pdf-loading">
+                            <div class="text-center">
+                                <div class="spinner-border text-light mb-3" role="status">
+                                    <span class="sr-only">جاري التحميل...</span>
+                                </div>
+                                <div>جاري إنشاء PDF...</div>
+                            </div>
+                        </div>
+                    `);
+                    $('body').append(loadingDiv);
+                }
+                loadingDiv.show();
+            } else {
+                loadingDiv.hide();
+            }
+        }
 
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jspdf.jsPDF({
-                    orientation: 'landscape',
-                    unit: 'mm',
-                    format: 'a4'
-                });
+        function showNotification(message, type = 'info') {
+            $('.alert-notification').remove();
 
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                const imgWidth = canvas.width;
-                const imgHeight = canvas.height;
+            const alertClass = {
+                'info': 'alert-info',
+                'success': 'alert-success',
+                'danger': 'alert-danger',
+                'warning': 'alert-warning'
+            }[type] || 'alert-info';
 
-                const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight) * 0.9;
-                const finalWidth = imgWidth * ratio;
-                const finalHeight = imgHeight * ratio;
+            const icon = {
+                'info': 'fa-info-circle',
+                'success': 'fa-check-circle',
+                'danger': 'fa-exclamation-circle',
+                'warning': 'fa-exclamation-triangle'
+            }[type];
 
-                pdf.addImage(imgData, 'PNG',
-                    (pdfWidth - finalWidth) / 2,
-                    (pdfHeight - finalHeight) / 2,
-                    finalWidth,
-                    finalHeight
-                );
+            const notification = $(`
+                <div class="alert ${alertClass} alert-dismissible fade show position-fixed alert-notification">
+                    <div class="d-flex align-items-center">
+                        <i class="fas ${icon} me-2"></i>
+                        <div>${message}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `);
 
-                // إضافة عنوان
-                pdf.setFontSize(16);
-                pdf.setTextColor(40, 40, 40);
-                pdf.text('الشجرة العائلية', pdfWidth / 2, 20, { align: 'center' });
-                
-                pdf.setFontSize(10);
-                pdf.setTextColor(100);
-                pdf.text(`عدد الأفراد: ${personsCount}`, 20, pdfHeight - 10);
-                pdf.text(`تم الإنشاء في: ${new Date().toLocaleDateString('ar-EG')}`, pdfWidth - 50, pdfHeight - 10);
-
-                const fileName = `شجرة_عائلية.pdf`;
-                pdf.save(fileName);
-            });
+            $('body').append(notification);
+            setTimeout(() => {
+                notification.alert('close');
+            }, 3000);
         }
 
         function initializeTree() {
-            const container = $('#clickable-areas');
-            container.html(`
+            const container = $('#family-tree');
+            container.empty().html(`
                 <div class="loading-spinner">
                     <div class="spinner-border text-primary" role="status">
                         <span class="sr-only">جاري التحميل...</span>
@@ -488,7 +553,9 @@
 
             setTimeout(() => {
                 if (treeData.length > 0) {
-                    drawTree();
+                    container.addClass('pyramid-container');
+                    initializeSVG();
+                    drawPyramidTree();
                     $('.loading-spinner').remove();
                 }
             }, 100);
@@ -496,9 +563,9 @@
 
         function setupPan() {
             const container = $('#tree-container');
-            
+
             container.on('mousedown', function(e) {
-                if ($(e.target).closest('.leaf-node').length === 0) {
+                if ($(e.target).closest('.tree-node').length === 0) {
                     panning = true;
                     startX = e.pageX - container.offset().left;
                     startY = e.pageY - container.offset().top;
@@ -525,24 +592,28 @@
             });
 
             $('#printPdf').on('click', printToPdf);
-            $('#toggleColor').on('click', toggleColorMode);
         }
 
         $(document).ready(function () {
+            console.log('بدء تحميل البيانات الحقيقية...');
+
             if (loadRealData()) {
                 initializeTree();
                 setupPan();
             } else {
-                $('#clickable-areas').html(`
+                $('#family-tree').html(`
                     <div class="alert alert-danger text-center" style="margin: 50px;">
                         <h4>❌ خطأ في تحميل البيانات</h4>
                         <p>حدث خطأ أثناء تحميل بيانات الشجرة العائلية.</p>
+                        <button onclick="location.reload()" class="btn btn-primary">
+                            <i class="fas fa-redo"></i> إعادة تحميل
+                        </button>
                     </div>
                 `);
             }
 
             $(document).on('click', function(e) {
-                if (!$(e.target).closest('#node-info, .leaf-node').length) {
+                if (!$(e.target).closest('#node-info, .tree-node').length) {
                     $('#node-info').hide();
                 }
             });
