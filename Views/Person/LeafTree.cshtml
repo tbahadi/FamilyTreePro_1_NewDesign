@@ -30,14 +30,31 @@
         <button id="printPdf" class="btn btn-success me-2">
             <i class="fas fa-file-pdf me-2"></i> طباعة PDF
         </button>
-        <button id="toggleStyle" class="btn btn-secondary">
+        <button id="toggleStyle" class="btn btn-secondary me-2">
             <i class="fas fa-palette me-2"></i> النمط الملوّن
+        </button>
+        <!-- أزرار التحكم بالتكبير والتصغير -->
+        <div class="btn-group me-2" role="group">
+            <button id="zoomIn" class="btn btn-outline-primary" title="تكبير">
+                <i class="fas fa-search-plus"></i>
+            </button>
+            <button id="zoomOut" class="btn btn-outline-primary" title="تصغير">
+                <i class="fas fa-search-minus"></i>
+            </button>
+            <button id="resetZoom" class="btn btn-outline-secondary" title="إعادة الضبط">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+        <button id="centerTree" class="btn btn-outline-info" title="توسيط الشجرة">
+            <i class="fas fa-crosshairs"></i>
         </button>
     </div>
 
     <div id="tree-container" style="width: 100%; height: 900px; border: 1px solid #ccc; border-radius: 10px; background: linear-gradient(#eaffef, #ffffff); overflow: auto; position: relative;">
-        <canvas id="tree-canvas" width="4000" height="2000" style="position: absolute; top: 0; left: 0;"></canvas>
-        <div id="clickable-areas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+        <div id="canvas-wrapper" style="position: relative; width: 4000px; height: 2000px; transform-origin: 0 0;">
+            <canvas id="tree-canvas" width="4000" height="2000" style="position: absolute; top: 0; left: 0;"></canvas>
+            <div id="clickable-areas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
+        </div>
     </div>
 
     <!-- الكارت الجانبي -->
@@ -83,18 +100,22 @@
     }
 
     @@keyframes slideIn {
-        from
+        from {
+            opacity: 0;
+            transform: translateX(50px);
+        }
 
-    {
-        opacity: 0;
-        transform: translateX(50px);
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
     }
 
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-
+    .zoom-controls {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 100;
     }
 </style>
 
@@ -111,9 +132,13 @@
         let colorfulMode = true;
         let panning = false;
         let startX, startY, scrollLeft, scrollTop;
+        let scale = 1.0;
+        const minScale = 0.3;
+        const maxScale = 3.0;
 
         const canvas = document.getElementById('tree-canvas');
         const ctx = canvas.getContext('2d');
+        const canvasWrapper = document.getElementById('canvas-wrapper');
 
         function loadRealData() {
             try {
@@ -330,8 +355,63 @@
                 if (treeData.length > 0) {
                     drawTree();
                     $('.loading-spinner').remove();
+                    centerTree(); // توسيط الشجرة عند التحميل
                 }
             }, 200);
+        }
+
+        // وظائف التكبير والتصغير
+        function zoomIn() {
+            if (scale < maxScale) {
+                scale += 0.1;
+                applyZoom();
+            }
+        }
+
+        function zoomOut() {
+            if (scale > minScale) {
+                scale -= 0.1;
+                applyZoom();
+            }
+        }
+
+        function resetZoom() {
+            scale = 1.0;
+            applyZoom();
+        }
+
+        function applyZoom() {
+            canvasWrapper.style.transform = `scale(${scale})`;
+            // تحديث حجم العناصر القابلة للنقر لتتناسب مع التكبير
+            updateClickableAreas();
+        }
+
+        function updateClickableAreas() {
+            $('.leaf-node').each(function() {
+                const personId = $(this).data('person-id');
+                const person = treeData.find(p => p.id === personId);
+                if (person && person.canvasX && person.canvasY) {
+                    // إعادة حساب المواقع بناءً على التكبير
+                    $(this).css({
+                        left: (person.canvasX - 120) * scale,
+                        top: (person.canvasY - 85) * scale
+                    });
+                }
+            });
+        }
+
+        // وظيفة توسيط الشجرة
+        function centerTree() {
+            const container = $('#tree-container');
+            const wrapper = $('#canvas-wrapper');
+
+            // حساب المركز
+            const centerX = (wrapper.width() - container.width()) / 2;
+            const centerY = (wrapper.height() - container.height()) / 2;
+
+            // تطبيق التمركز
+            container.scrollLeft(centerX);
+            container.scrollTop(centerY);
         }
 
         function setupPan() {
@@ -361,6 +441,17 @@
                 container.scrollTop(scrollTop - (y - startY) * 2);
             });
 
+            // إضافة التحكم بالتكبير والتصغير باستخدام عجلة الماوس
+            container.on('wheel', function(e) {
+                e.preventDefault();
+                const delta = e.originalEvent.deltaY;
+                if (delta > 0) {
+                    zoomOut();
+                } else {
+                    zoomIn();
+                }
+            });
+
             $('#printPdf').on('click', printToPdf);
             $('#toggleStyle').on('click', function() {
                 colorfulMode = !colorfulMode;
@@ -369,6 +460,12 @@
                     : '<i class="fas fa-square me-2"></i> النمط الأبيض');
                 drawTree();
             });
+
+            // ربط أزرار التحكم بالتكبير والتصغير
+            $('#zoomIn').on('click', zoomIn);
+            $('#zoomOut').on('click', zoomOut);
+            $('#resetZoom').on('click', resetZoom);
+            $('#centerTree').on('click', centerTree);
         }
 
         $(document).ready(function() {
