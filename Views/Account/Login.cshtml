@@ -3,102 +3,698 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="login-page">
-    <div class="hilal-container">
-        <div class="hilal-card">
-            <div class="hilal-header">
-                <!-- هلال جميل -->
-                <div class="crescent-design"></div>
+<div class="family-login-page">
+    <!-- خلفية العائلة -->
+    <div class="family-background">
+        <div class="generation-lines">
+            <div class="gen-line gen-1"></div>
+            <div class="gen-line gen-2"></div>
+            <div class="gen-line gen-3"></div>
+            <div class="gen-line gen-4"></div>
+        </div>
 
-                <div class="hilal-logo">
-                    <div class="logo-icon">
-                        <i class="fas fa-tree"></i>
+        <div class="generation-marks">
+            <div class="gen-mark mark-1" data-gen="الجذور"></div>
+            <div class="gen-mark mark-2" data-gen="الأجداد"></div>
+            <div class="gen-mark mark-3" data-gen="الآباء"></div>
+            <div class="gen-mark mark-4" data-gen="الأبناء"></div>
+        </div>
+    </div>
+
+    <div class="login-container">
+        <div class="family-login-card">
+            <!-- الهيدر مع شجرة العائلة المصغرة -->
+            <div class="family-card-header">
+                <div class="family-tree-preview">
+                    <div class="mini-family-tree">
+                        <!-- الجذور -->
+                        <div class="family-generation gen-roots">
+                            <div class="gen-node">
+                                <div class="node-dot"></div>
+                                <div class="gen-label">الجذور</div>
+                            </div>
+                        </div>
+
+                        <!-- التوصيلات -->
+                        <div class="family-connections">
+                            <div class="connection-line"></div>
+                            <div class="connection-line"></div>
+                            <div class="connection-line"></div>
+                        </div>
+
+                        <!-- الأجداد -->
+                        <div class="family-generation gen-grandparents">
+                            <div class="gen-node">
+                                <div class="node-dot"></div>
+                                <div class="gen-label">الأجداد</div>
+                            </div>
+                        </div>
+
+                        <!-- الآباء -->
+                        <div class="family-generation gen-parents">
+                            <div class="gen-node">
+                                <div class="node-dot"></div>
+                                <div class="gen-label">الآباء</div>
+                            </div>
+                        </div>
+
+                        <!-- الأبناء -->
+                        <div class="family-generation gen-children">
+                            <div class="gen-node">
+                                <div class="node-dot"></div>
+                                <div class="gen-label">الأبناء</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="logo-text">شجرة العائلة</div>
                 </div>
-                <div class="hilal-subtitle">ارتباط • أصالة • استمرار</div>
-                <div class="hilal-title">تسجيل الدخول</div>
+
+                <div class="header-content">
+                    <h1>شجرة العائلة</h1>
+                    <p class="tagline">حيث تلتقي الأجيال وتتواصل القلوب</p>
+                </div>
             </div>
 
-            <div class="hilal-body">
+            <div class="card-body">
                 @if (ViewBag.Error != null)
                 {
-                    <div class="alert-message alert-danger">
+                    <div class="error-message">
                         <i class="fas fa-exclamation-circle"></i>
                         <span>@ViewBag.Error</span>
                     </div>
                 }
 
-                <form asp-action="Login" method="post">
-                    <div class="form-group">
-                        <div class="input-group">
-                            <i class="fas fa-user input-icon"></i>
-                            <input type="text" id="username" name="username" class="hilal-input" required
+                <form asp-action="Login" method="post" class="login-form">
+                    <div class="input-field">
+                        <div class="input-wrapper">
+                            <i class="fas fa-user icon"></i>
+                            <input type="text" id="username" name="username" required
                                    placeholder="اسم المستخدم">
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <div class="input-group">
-                            <i class="fas fa-lock input-icon"></i>
-                            <input type="password" id="password" name="password" class="hilal-input" required
+                    <div class="input-field">
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock icon"></i>
+                            <input type="password" id="password" name="password" required
                                    placeholder="كلمة المرور">
-                            <button type="button" class="password-toggle" id="togglePassword">
+                            <button type="button" class="toggle-password" id="togglePassword">
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
                     </div>
 
-                    <div class="form-options">
-                        <label class="remember-me">
+                    <div class="form-actions">
+                        <label class="checkbox-wrapper">
                             <input type="checkbox" id="rememberMe">
+                            <span class="checkmark"></span>
                             تذكر دخولي
                         </label>
+                        <a href="#" class="forgot-link">نسيت كلمة المرور؟</a>
                     </div>
 
-                    <button type="submit" class="hilal-btn btn-primary login-btn">
-                        <i class="fas fa-sign-in-alt"></i>
-                        دخول إلى الشجرة
+                    <button type="submit" class="submit-btn">
+                        <span>دخول إلى الشجرة</span>
+                        <i class="fas fa-arrow-left"></i>
                     </button>
                 </form>
 
-                <div class="links-section">
-                    <a asp-action="Register" asp-controller="Account" class="hilal-btn btn-secondary register-link">
-                        <i class="fas fa-user-plus"></i>
-                        إنشاء حساب جديد
-                    </a>
-                    <a href="#" class="hilal-btn btn-outline forgot-password-link">
-                        <i class="fas fa-key"></i>
-                        نسيت كلمة المرور؟
-                    </a>
+                <div class="family-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-users"></i>
+                        <div class="stat-info">
+                            <span class="stat-number">+١٠٠٠</span>
+                            <span class="stat-label">عائلة</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-network-wired"></i>
+                        <div class="stat-info">
+                            <span class="stat-number">+٥٠٠٠</span>
+                            <span class="stat-label">ترابط</span>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-history"></i>
+                        <div class="stat-info">
+                            <span class="stat-number">+١٠٠</span>
+                            <span class="stat-label">سنة</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alternative-actions">
+                    <p>جديد معنا؟ <a asp-action="Register" asp-controller="Account" class="register-link">ابدأ شجرتك الآن</a></p>
                 </div>
             </div>
         </div>
-
-        <!-- تم إزالة الفوتر من هنا -->
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // إظهار/إخفاء كلمة المرور
-            const togglePassword = document.getElementById('togglePassword');
-            const password = document.getElementById('password');
+<style>
+    /* الأساسيات */
+    .family-login-page {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+    }
 
-            if (togglePassword && password) {
-                togglePassword.addEventListener('click', function() {
-                    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-                    password.setAttribute('type', type);
-                    this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
-                });
+    /* خلفية الأجيال */
+    .family-background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+
+    .generation-lines {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: space-around;
+        opacity: 0.1;
+    }
+
+    .gen-line {
+        width: 2px;
+        height: 100%;
+        background: linear-gradient(to bottom, transparent, #fff, transparent);
+        position: relative;
+    }
+
+        .gen-line::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 6px;
+            background: #fff;
+            border-radius: 50%;
+        }
+
+    .gen-1::before {
+        top: 20%;
+    }
+
+    .gen-2::before {
+        top: 40%;
+    }
+
+    .gen-3::before {
+        top: 60%;
+    }
+
+    .gen-4::before {
+        top: 80%;
+    }
+
+    .generation-marks {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 60px;
+    }
+
+    .gen-mark {
+        color: rgba(255,255,255,0.6);
+        font-size: 14px;
+        text-align: right;
+        position: relative;
+        padding-right: 25px;
+    }
+
+        .gen-mark::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.6);
+        }
+
+    /* الحاوية الرئيسية */
+    .login-container {
+        width: 100%;
+        max-width: 450px;
+        z-index: 2;
+    }
+
+    /* الكارت */
+    .family-login-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        overflow: hidden;
+    }
+
+    /* الهيدر مع شجرة العائلة */
+    .family-card-header {
+        background: linear-gradient(135deg, #4a69bd, #1e3799);
+        padding: 30px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .family-tree-preview {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        width: 120px;
+        height: 120px;
+        opacity: 0.3;
+    }
+
+    .mini-family-tree {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+
+    .family-generation {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .gen-roots {
+        bottom: 5px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .gen-grandparents {
+        bottom: 35px;
+        left: 25%;
+    }
+
+    .gen-parents {
+        bottom: 65px;
+        right: 25%;
+    }
+
+    .gen-children {
+        top: 5px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .gen-node {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .node-dot {
+        width: 8px;
+        height: 8px;
+        background: rgba(255,255,255,0.8);
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.5);
+    }
+
+    .gen-label {
+        color: rgba(255,255,255,0.7);
+        font-size: 8px;
+        white-space: nowrap;
+    }
+
+    .family-connections {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+
+    .connection-line {
+        position: absolute;
+        background: rgba(255,255,255,0.2);
+        height: 2px;
+        transform-origin: left center;
+    }
+
+        .connection-line:nth-child(1) {
+            width: 40px;
+            bottom: 35px;
+            left: 50%;
+            transform: rotate(-30deg) translateX(-20px);
+        }
+
+        .connection-line:nth-child(2) {
+            width: 40px;
+            bottom: 35px;
+            right: 50%;
+            transform: rotate(30deg) translateX(20px);
+        }
+
+        .connection-line:nth-child(3) {
+            width: 30px;
+            bottom: 65px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+    .header-content {
+        text-align: center;
+        color: white;
+        position: relative;
+        z-index: 2;
+    }
+
+        .header-content h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 10px;
+        }
+
+    .tagline {
+        opacity: 0.9;
+        margin: 0;
+        font-size: 14px;
+    }
+
+    /* الجسم */
+    .card-body {
+        padding: 40px 30px;
+    }
+
+    /* رسالة الخطأ */
+    .error-message {
+        background: #ffe6e6;
+        border: 1px solid #ffcccc;
+        color: #d63031;
+        padding: 12px 15px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 25px;
+        font-size: 14px;
+    }
+
+    /* النموذج */
+    .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .input-field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+        .input-wrapper .icon {
+            position: absolute;
+            right: 15px;
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 15px 45px 15px 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+            .input-wrapper input:focus {
+                outline: none;
+                border-color: #4a69bd;
+                background: white;
+                box-shadow: 0 0 0 3px rgba(74, 105, 189, 0.1);
             }
 
-            // تركيز على حقل اسم المستخدم
-            const usernameInput = document.getElementById('username');
-            if (usernameInput) {
-                usernameInput.focus();
-            }
+    .toggle-password {
+        position: absolute;
+        left: 15px;
+        background: none;
+        border: none;
+        color: #7f8c8d;
+        cursor: pointer;
+        padding: 5px;
+    }
+
+    /* خيارات النموذج */
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 10px 0 20px;
+    }
+
+    .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #2c3e50;
+    }
+
+        .checkbox-wrapper input {
+            display: none;
+        }
+
+    .checkmark {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #bdc3c7;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .checkbox-wrapper input:checked + .checkmark {
+        background: #4a69bd;
+        border-color: #4a69bd;
+    }
+
+        .checkbox-wrapper input:checked + .checkmark::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+        }
+
+    .forgot-link {
+        color: #4a69bd;
+        text-decoration: none;
+        font-size: 14px;
+        transition: color 0.3s ease;
+    }
+
+        .forgot-link:hover {
+            color: #1e3799;
+        }
+
+    /* زر التسجيل */
+    .submit-btn {
+        background: linear-gradient(135deg, #4a69bd, #1e3799);
+        color: white;
+        border: none;
+        padding: 15px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(74, 105, 189, 0.3);
+        }
+
+    /* إحصائيات العائلة */
+    .family-stats {
+        display: flex;
+        justify-content: space-around;
+        margin: 30px 0;
+        padding: 20px 0;
+        border-top: 1px solid #ecf0f1;
+        border-bottom: 1px solid #ecf0f1;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-align: center;
+    }
+
+        .stat-item i {
+            width: 40px;
+            height: 40px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4a69bd;
+            font-size: 16px;
+        }
+
+    .stat-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .stat-number {
+        font-weight: 700;
+        color: #2c3e50;
+        font-size: 14px;
+    }
+
+    .stat-label {
+        color: #7f8c8d;
+        font-size: 12px;
+    }
+
+    /* الإجراءات البديلة */
+    .alternative-actions {
+        text-align: center;
+    }
+
+        .alternative-actions p {
+            color: #7f8c8d;
+            margin: 0;
+        }
+
+    .register-link {
+        color: #4a69bd;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+        .register-link:hover {
+            text-decoration: underline;
+        }
+
+    /* الاستجابة للشاشات الصغيرة */
+    @@media (max-width: 480px) {
+        .family-login-page {
+            padding: 15px;
+        }
+
+        .family-card-header {
+            padding: 25px 20px;
+        }
+
+        .family-tree-preview {
+            display: none;
+        }
+
+        .card-body {
+            padding: 30px 20px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .forgot-link {
+            align-self: flex-end;
+        }
+
+        .family-stats {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .stat-item {
+            justify-content: center;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // إظهار/إخفاء كلمة المرور
+        const togglePassword = document.getElementById('togglePassword');
+        const password = document.getElementById('password');
+
+        if (togglePassword && password) {
+            togglePassword.addEventListener('click', function() {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+            });
+        }
+
+        // تفاعل مع علامات الأجيال
+        const genMarks = document.querySelectorAll('.gen-mark');
+        genMarks.forEach(mark => {
+            mark.addEventListener('mouseenter', function() {
+                const generation = this.getAttribute('data-gen');
+                // يمكن إضافة تأثيرات إضافية هنا
+            });
         });
-    </script>
-}
+
+        // تأثيرات بسيطة للحقول
+        const inputs = document.querySelectorAll('.input-wrapper input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'translateY(-2px)';
+            });
+
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = 'translateY(0)';
+            });
+        });
+
+        // تأثير عند التحميل
+        setTimeout(function() {
+            document.querySelector('.family-login-card').style.opacity = '1';
+            document.querySelector('.family-login-card').style.transform = 'translateY(0)';
+        }, 100);
+
+        // تركيز على حقل المستخدم
+        const usernameInput = document.getElementById('username');
+        if (usernameInput) {
+            setTimeout(() => {
+                usernameInput.focus();
+            }, 600);
+        }
+    });
+</script>
