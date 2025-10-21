@@ -39,9 +39,13 @@
                     <a href="@Url.Action("FamilyTreeView", "Person", new { familyTreeId = familyTreeId })" class="hilal-btn btn-info">
                         <i class="fas fa-project-diagram"></i> الشجرة البسيطة
                     </a>
-                    <!-- زر الشجرة المحسنة الجديد -->
+                    <!-- رابط الشجرة المحسنة الجديد -->
                     <a href="@Url.Action("EnhancedTree", "Person", new { familyTreeId = familyTreeId })" class="hilal-btn btn-warning">
                         <i class="fas fa-tree"></i> الشجرة المحسنة
+                    </a>
+                    <!-- رابط الشجرة المبسطة الجديدة -->
+                    <a href="@Url.Action("SamplePage", "Person", new { familyTreeId = familyTreeId })" class="hilal-btn btn-primary">
+                        <i class="fas fa-tree"></i> الشجرة المبسطة الجديدة
                     </a>
                     <a href="@Url.Action("CompareTrees", "Person", new { familyTreeId = familyTreeId })" class="hilal-btn btn-secondary">
                         <i class="fas fa-balance-scale"></i> مقارنة الأشجار
@@ -57,6 +61,7 @@
                 </div>
             </div>
 
+            <!-- باقي المحتوى الأصلي -->
             @if (Model != null && Model.Any())
             {
                 <div class="table-container">

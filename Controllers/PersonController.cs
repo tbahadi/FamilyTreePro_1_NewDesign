@@ -644,6 +644,77 @@ namespace FamilyTreePro.Controllers
 
             return View(viewModel);
         }
+        public async Task<IActionResult> SamplePage(int familyTreeId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                var tree = await _context.FamilyTrees
+                    .FirstOrDefaultAsync(ft => ft.Id == familyTreeId && ft.UserId == userId);
+
+                if (tree == null)
+                {
+                    TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
+                    return RedirectToAction("Index", "Home");
+                }
+
+                // جلب البيانات الأساسية
+                var persons = await _context.Persons
+                    .Include(p => p.Occupation)
+                    .Include(p => p.Country)
+                    .Where(p => p.FamilyTreeId == familyTreeId)
+                    .ToListAsync();
+
+                // تحويل البيانات
+                var personData = persons.Select(p => new
+                {
+                    Id = p.Id,
+                    FirstName = p.FirstName ?? "",
+                    FatherName = p.FatherName ?? "",
+                    GrandFatherName = p.GrandFatherName ?? "",
+                    LastName = p.LastName ?? "",
+                    Nickname = p.Nickname ?? "",
+                    FullName = GetFullName(p),
+                    Gender = p.Gender ?? "Male",
+                    BirthDate = p.BirthDate.HasValue ? p.BirthDate.Value.ToString("yyyy-MM-dd") : null,
+                    City = p.City ?? "",
+                    FatherId = p.FatherId,
+                    IsConnectionPoint = p.IsConnectionPoint,
+                    OccupationName = p.Occupation?.Name ?? "",
+                    CountryName = p.Country?.Name ?? ""
+                }).ToList();
+
+                _logger.LogInformation($"🔍 بيانات الشجرة البسيطة الجديدة: {personData.Count} فرد");
+
+                ViewBag.FamilyTreeId = familyTreeId;
+                ViewBag.FamilyTreeName = tree.Name;
+                ViewBag.PersonsCount = personData.Count;
+
+                // إعداد JSON
+                var jsonOptions = new JsonSerializerOptions
+                {
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    WriteIndented = false
+                };
+
+                ViewBag.PersonsJson = System.Text.Json.JsonSerializer.Serialize(personData, jsonOptions);
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطأ في تحميل بيانات الشجرة البسيطة الجديدة: ");
+                TempData["ErrorMessage"] = "حدث خطأ في تحميل بيانات الشجرة البسيطة الجديدة: ";
+                return RedirectToAction("Index", "Home");
+            }
+        }
         // الشجرة الهرمية المتقدمة
         // الشجرة العائلية المتقدمة
         // الشجرة العائلية المتقدمة
