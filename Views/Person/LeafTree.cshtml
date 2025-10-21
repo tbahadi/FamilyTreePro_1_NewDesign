@@ -59,9 +59,9 @@
         transition: transform 0.3s ease;
     }
 
-    .leaf-node:hover {
-        transform: scale(1.05);
-    }
+        .leaf-node:hover {
+            transform: scale(1.05);
+        }
 
     .leaf-content {
         position: absolute;
@@ -117,9 +117,9 @@
         cursor: grab;
     }
 
-    #tree-container:active {
-        cursor: grabbing;
-    }
+        #tree-container:active {
+            cursor: grabbing;
+        }
 
     .loading-spinner {
         position: absolute;
@@ -213,11 +213,11 @@
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            
+
             // تقسيم النص لأسطر متعددة
             const maxCharsPerLine = 12;
             const nameLines = splitTextIntoLines(name || 'غير معروف', maxCharsPerLine);
-            
+
             // رسم الأسطر
             nameLines.forEach((line, index) => {
                 ctx.fillText(line, 0, -10 + (index * 14));
@@ -297,7 +297,7 @@
         function drawTree() {
             // مسح Canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
+
             const container = $('#clickable-areas');
             container.empty();
 
@@ -350,7 +350,7 @@
 
                     // إضافة منطقة نقر تفاعلية
                     const clickableDiv = $(`
-                        <div class="leaf-node" 
+                        <div class="leaf-node"
                              data-person-id="${person.id}"
                              style="left: ${personX - 80}px; top: ${personY - 60}px; width: 160px; height: 160px;">
                             <div class="leaf-content">
@@ -418,8 +418,8 @@
         function toggleColorMode() {
             coloredMode = !coloredMode;
             $('#toggleColor').html(
-                coloredMode ? 
-                '<i class="fas fa-palette me-2"></i> الوضع البسيط' : 
+                coloredMode ?
+                '<i class="fas fa-palette me-2"></i> الوضع البسيط' :
                 '<i class="fas fa-palette me-2"></i> الوضع الملون'
             );
             drawTree();
@@ -428,7 +428,7 @@
         function printToPdf() {
             // إخفاء مناطق النقر مؤقتاً
             $('#clickable-areas').hide();
-            
+
             html2canvas(canvas, {
                 scale: 2,
                 useCORS: true,
@@ -464,7 +464,7 @@
                 pdf.setFontSize(16);
                 pdf.setTextColor(40, 40, 40);
                 pdf.text('الشجرة العائلية', pdfWidth / 2, 20, { align: 'center' });
-                
+
                 pdf.setFontSize(10);
                 pdf.setTextColor(100);
                 pdf.text(`عدد الأفراد: ${personsCount}`, 20, pdfHeight - 10);
@@ -496,7 +496,7 @@
 
         function setupPan() {
             const container = $('#tree-container');
-            
+
             container.on('mousedown', function(e) {
                 if ($(e.target).closest('.leaf-node').length === 0) {
                     panning = true;

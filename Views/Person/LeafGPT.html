@@ -1,0 +1,135 @@
+﻿<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>ورقتا شجرة - أب وابن</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #eefdf4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+            direction: rtl;
+        }
+
+        canvas {
+            background: linear-gradient(#eaffef, #ffffff);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .inputs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        input {
+            padding: 8px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #a8dbc0;
+            width: 160px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: #2c9a6a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>ارسم ورقتين مترابطتين (أب وابن)</h2>
+
+    <div class="inputs">
+        <input id="fatherName" placeholder="اسم الأب" value="الأب">
+        <input id="sonName" placeholder="اسم الابن" value="الابن">
+        <button onclick="drawLeaves()">ارسم</button>
+    </div>
+
+    <canvas id="canvas" width="700" height="400"></canvas>
+
+    <script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// رسم ورقة الشجرة
+function drawLeaf(x, y, scale, name, color1, color2) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+
+  // شكل الورقة
+  ctx.beginPath();
+  ctx.moveTo(100, 0);
+  ctx.bezierCurveTo(60, -60, -60, -60, -100, 0);
+  ctx.bezierCurveTo(-60, 60, 60, 60, 100, 0);
+  ctx.closePath();
+
+  // تدرج تعبئة
+  const grad = ctx.createLinearGradient(-100, -60, 100, 60);
+  grad.addColorStop(0, color1);
+  grad.addColorStop(1, color2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // حد الورقة
+  ctx.strokeStyle = '#2a5c3a';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // كتابة الاسم
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 20px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(name, 0, 0);
+
+  ctx.restore();
+}
+
+// رسم الاتصال بين الورقتين (غصن)
+function drawBranch(x1, y1, x2, y2) {
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.bezierCurveTo(x1 + 30, y1 + 10, x2 - 30, y2 - 10, x2, y2);
+  ctx.strokeStyle = '#5a7b4f';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+}
+
+function drawLeaves() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const father = document.getElementById('fatherName').value || "الأب";
+  const son = document.getElementById('sonName').value || "الابن";
+
+  // إحداثيات الورقتين
+  const x1 = 250, y1 = 200; // الأب
+  const x2 = 450, y2 = 260; // الابن
+
+  // غصن يصل بينهما
+  drawBranch(x1 + 60, y1, x2 - 60, y2);
+
+  // الورقة الأولى (الأب)
+  drawLeaf(x1, y1, 1.2, father, '#9ee6a3', '#48b266');
+
+  // الورقة الثانية (الابن)
+  drawLeaf(x2, y2, 0.9, son, '#c1f0c4', '#5cd47d');
+}
+
+// أول رسم تلقائي
+drawLeaves();
+    </script>
+
+</body>
+</html>
