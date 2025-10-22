@@ -4,322 +4,680 @@
 }
 
 <style>
-    .gender-selection {
-        margin: 20px 0;
-    }
-
-    .gender-option {
-        text-align: center;
-        margin-bottom: 10px;
-    }
-
-    .gender-btn {
-        width: 100%;
-        height: 120px;
-        border: 3px solid #dee2e6;
-        border-radius: 15px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 1.1rem;
-        transition: all 0.3s ease;
-        padding: 20px;
-        cursor: pointer;
-    }
-
-    .male-btn {
-        color: #007bff;
-        border-color: #007bff;
-    }
-
-    .female-btn {
-        color: #e91e63;
-        border-color: #e91e63;
-    }
-
-    .btn-check:checked + .male-btn {
-        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-        color: white;
-        border-color: #0056b3;
-        transform: scale(1.05);
-        box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
-    }
-
-    .btn-check:checked + .female-btn {
-        background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
-        color: white;
-        border-color: #c2185b;
-        transform: scale(1.05);
-        box-shadow: 0 5px 15px rgba(233, 30, 99, 0.3);
-    }
-
-    .gender-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-
-    .gender-btn i {
-        transition: all 0.3s ease;
-    }
-
-    .btn-check:checked + .gender-btn i {
-        transform: scale(1.2);
-    }
-
     .form-container {
         background: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+        padding: 40px;
         margin-bottom: 30px;
+        border: 1px solid #e9ecef;
     }
 
     .form-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 20px;
-        border-radius: 10px 10px 0 0;
-        margin: -30px -30px 30px -30px;
+        padding: 25px;
+        border-radius: 15px 15px 0 0;
+        margin: -40px -40px 40px -40px;
+        text-align: center;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #2d3748;
+        font-size: 0.95rem;
     }
 
     .required-field::after {
         content: " *";
-        color: #dc3545;
+        color: #e53e3e;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #fff;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: #fafbff;
+        }
+
+    .gender-section {
+        grid-column: 1 / -1;
+        background: #f7fafc;
+        padding: 25px;
+        border-radius: 15px;
+        border: 2px solid #e2e8f0;
+        margin: 10px 0;
+    }
+
+    .gender-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .gender-btn {
+        padding: 20px;
+        border: 3px solid #e2e8f0;
+        border-radius: 15px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 140px;
+    }
+
+        .gender-btn.male {
+            border-color: #4299e1;
+            color: #4299e1;
+        }
+
+        .gender-btn.female {
+            border-color: #ed64a6;
+            color: #ed64a6;
+        }
+
+    .btn-check:checked + .gender-btn.male {
+        background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+        color: white;
+        border-color: #3182ce;
+        transform: scale(1.05);
+        box-shadow: 0 10px 25px rgba(66, 153, 225, 0.3);
+    }
+
+    .btn-check:checked + .gender-btn.female {
+        background: linear-gradient(135deg, #ed64a6 0%, #d53f8c 100%);
+        color: white;
+        border-color: #d53f8c;
+        transform: scale(1.05);
+        box-shadow: 0 10px 25px rgba(237, 100, 166, 0.3);
+    }
+
+    .gender-icon {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    .date-section {
+        grid-column: 1 / -1;
+        background: #fffaf0;
+        padding: 25px;
+        border-radius: 15px;
+        border: 2px dashed #f6ad55;
+        margin: 10px 0;
+    }
+
+    .date-main-input {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        border: 2px solid #4299e1;
+        margin-bottom: 20px;
+    }
+
+    .quick-options-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 25px;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-top: 15px;
+    }
+
+        .quick-options-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+    .advanced-options {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-top: 20px;
+        border: 2px solid #e2e8f0;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        display: none;
+    }
+
+    .option-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 25px;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .option-tab {
+        padding: 12px 20px;
+        border: none;
+        background: #f7fafc;
+        color: #4a5568;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        flex: 1;
+        min-width: 120px;
+    }
+
+        .option-tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+    .tab-panel {
+        display: none;
+    }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+    .age-input-group, .hijri-input-group {
+        background: #f0fff4;
+        padding: 20px;
+        border-radius: 12px;
+        border-left: 4px solid #48bb78;
+        margin-bottom: 20px;
+    }
+
+    .hijri-input-group {
+        background: #fffaf0;
+        border-left-color: #ed8936;
+    }
+
+    .century-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 12px;
+        margin: 20px 0;
+    }
+
+    .century-btn {
+        padding: 15px 10px;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        background: white;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+        .century-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+    .smart-field {
+        background: #f0fff4;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #48bb78;
+        margin-bottom: 15px;
+    }
+
+    .smart-note {
+        font-size: 0.85rem;
+        color: #38a169;
+        margin-top: 5px;
+        font-style: italic;
+    }
+
+    .actions-section {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 30px 0 10px;
+        border-top: 2px solid #e2e8f0;
+        margin-top: 20px;
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(72, 187, 120, 0.4);
+        }
+
+    .btn-reset {
+        background: #718096;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        margin: 0 10px;
+    }
+
+    .btn-back {
+        background: #4a5568;
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .input-group {
+        margin-bottom: 15px;
+    }
+
+    .input-group-text {
+        background: #edf2f7;
+        border: 2px solid #e2e8f0;
+        border-left: none;
+    }
+
+    .text-danger {
+        font-size: 0.85rem;
+        margin-top: 5px;
     }
 
     /* تحسينات للشاشات الصغيرة */
     @@media (max-width: 768px) {
-        .gender-btn {
-            height: 100px;
-            padding: 15px;
-            font-size: 1rem;
-        }
-
-            .gender-btn i {
-                font-size: 1.5rem;
-            }
-
         .form-container {
             padding: 20px;
+            margin: 10px;
         }
 
         .form-header {
-            margin: -20px -20px 20px -20px;
-            padding: 15px;
+            margin: -20px -20px 30px -20px;
+            padding: 20px;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .gender-options {
+            grid-template-columns: 1fr;
+        }
+
+        .century-grid {
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        }
+
+        .option-tabs {
+            flex-direction: column;
+        }
+
+        .option-tab {
+            min-width: auto;
         }
     }
 
-    @@media (max-width: 576px) {
-        .gender-btn {
-            height: 90px;
-            padding: 12px;
-            font-size: 0.9rem;
+    @@media (max-width: 480px) {
+        .form-container {
+            padding: 15px;
         }
 
-            .gender-btn i {
-                font-size: 1.3rem;
-            }
+        .form-header {
+            margin: -15px -15px 25px -15px;
+            padding: 15px;
+        }
+
+        .century-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 </style>
 
 <div class="container mt-4" dir="rtl">
     <div class="form-container">
         <div class="form-header">
-            <h2 class="text-center mb-0">
-                <i class="fas fa-user-plus me-2"></i>إضافة فرد جديد
-            </h2>
+            <h1 class="mb-3">
+                <i class="fas fa-user-plus me-3"></i>إضافة فرد جديد للشجرة العائلية
+            </h1>
+            <p class="mb-0 opacity-90">املأ البيانات الأساسية أدناه ثم اضغط حفظ لإضافة الفرد الجديد</p>
         </div>
 
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        }
-
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        }
-
-        <form asp-action="Create" method="post" class="row g-3" id="personForm">
+        <form asp-action="Create" method="post" id="personForm">
             @Html.AntiForgeryToken()
-
-            <!-- حقل مخفي لـ FamilyTreeId -->
             <input type="hidden" asp-for="FamilyTreeId" />
 
-            <!-- المعلومات الأساسية -->
-            <div class="col-12">
-                <h5 class="border-bottom pb-2 mb-4">
-                    <i class="fas fa-info-circle me-2 text-primary"></i>المعلومات الأساسية
-                </h5>
-            </div>
+            <div class="form-grid">
+                <!-- المعلومات الشخصية الأساسية -->
+                <div class="form-group">
+                    <label asp-for="FirstName" class="form-label required-field">الاسم الأول</label>
+                    <input asp-for="FirstName" class="form-control" placeholder="أدخل الاسم الأول" required />
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
 
-            <div class="col-md-6">
-                <label asp-for="FirstName" class="form-label required-field">الاسم الأول</label>
-                <input asp-for="FirstName" class="form-control" placeholder="أدخل الاسم الأول" required />
-                <span asp-validation-for="FirstName" class="text-danger small"></span>
-            </div>
+                <div class="form-group">
+                    <label asp-for="FatherName" class="form-label required-field">اسم الأب</label>
+                    <input asp-for="FatherName" class="form-control" placeholder="اسم الأب" required />
+                    <span asp-validation-for="FatherName" class="text-danger"></span>
+                </div>
 
-            <div class="col-md-6">
-                <label asp-for="FatherName" class="form-label required-field">اسم الأب</label>
-                <input asp-for="FatherName" class="form-control" placeholder="اسم الأب" required />
-                <span asp-validation-for="FatherName" class="text-danger small"></span>
-            </div>
+                <div class="form-group">
+                    <label asp-for="GrandFatherName" class="form-label required-field">اسم الجد</label>
+                    <input asp-for="GrandFatherName" class="form-control" placeholder="اسم الجد" required />
+                    <span asp-validation-for="GrandFatherName" class="text-danger"></span>
+                </div>
 
-            <div class="col-md-6">
-                <label asp-for="GrandFatherName" class="form-label required-field">اسم الجد</label>
-                <input asp-for="GrandFatherName" class="form-control" placeholder="اسم الجد" required />
-                <span asp-validation-for="GrandFatherName" class="text-danger small"></span>
-            </div>
+                <div class="form-group">
+                    <label asp-for="LastName" class="form-label required-field">اسم العائلة</label>
+                    <input asp-for="LastName" class="form-control" placeholder="اسم العائلة" required />
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
 
-            <div class="col-md-6">
-                <label asp-for="LastName" class="form-label required-field">اسم العائلة</label>
-                <input asp-for="LastName" class="form-control" placeholder="اسم العائلة" required />
-                <span asp-validation-for="LastName" class="text-danger small"></span>
-            </div>
+                <div class="form-group">
+                    <label asp-for="Nickname" class="form-label">اللقب</label>
+                    <input asp-for="Nickname" class="form-control" placeholder="اللقب (اختياري)" />
+                    <span asp-validation-for="Nickname" class="text-danger"></span>
+                </div>
 
-            <div class="col-md-6">
-                <label asp-for="Nickname" class="form-label">اللقب</label>
-                <input asp-for="Nickname" class="form-control" placeholder="اللقب (اختياري)" />
-                <span asp-validation-for="Nickname" class="text-danger small"></span>
-            </div>
-
-            <!-- حقل الجنس الجديد - Radio Buttons -->
-            <!-- حقل الجنس -->
-            <div class="col-12">
-                <div class="gender-selection">
-                    <label class="form-label fw-bold required-field">الجنس</label>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="gender-option">
-                                <input type="radio" id="Gender_Male" name="Gender" value="Male" class="btn-check" required>
-                                <label class="btn btn-outline-primary gender-btn male-btn" for="Gender_Male">
-                                    <i class="fas fa-mars fa-2x mb-2"></i>
-                                    <span class="d-block">ذكر</span>
-                                </label>
-                            </div>
+                <!-- حقل الجنس -->
+                <div class="gender-section">
+                    <label class="form-label required-field" style="font-size: 1.1rem;">الجنس</label>
+                    <div class="gender-options">
+                        <div class="gender-option">
+                            <input type="radio" id="Gender_Male" name="Gender" value="Male" class="btn-check" checked required>
+                            <label class="gender-btn male" for="Gender_Male">
+                                <i class="fas fa-mars gender-icon"></i>
+                                <span style="font-weight: 600; font-size: 1.1rem;">ذكر</span>
+                                <small class="text-muted mt-1">(محدد افتراضي)</small>
+                            </label>
                         </div>
-                        <div class="col-md-6">
-                            <div class="gender-option">
-                                <input type="radio" id="Gender_Female" name="Gender" value="Female" class="btn-check" required>
-                                <label class="btn btn-outline-danger gender-btn female-btn" for="Gender_Female">
-                                    <i class="fas fa-venus fa-2x mb-2"></i>
-                                    <span class="d-block">أنثى</span>
-                                </label>
+                        <div class="gender-option">
+                            <input type="radio" id="Gender_Female" name="Gender" value="Female" class="btn-check" required>
+                            <label class="gender-btn female" for="Gender_Female">
+                                <i class="fas fa-venus gender-icon"></i>
+                                <span style="font-weight: 600; font-size: 1.1rem;">أنثى</span>
+                            </label>
+                        </div>
+                    </div>
+                    <span asp-validation-for="Gender" class="text-danger"></span>
+                </div>
+
+                <!-- المعلومات الإضافية -->
+                <div class="smart-field">
+                    <label asp-for="OccupationId" class="form-label">المهنة</label>
+                    <select asp-for="OccupationId" class="form-select">
+                        <option value="" selected>غير محدد</option>
+                        @if (ViewBag.Occupations != null)
+                        {
+                            foreach (var occupation in ViewBag.Occupations)
+                            {
+                                <option value="@occupation.Id">@occupation.Name</option>
+                            }
+                        }
+                    </select>
+                    <div class="smart-note">✓ محدد تلقائياً كـ "غير محدد"</div>
+                    <span asp-validation-for="OccupationId" class="text-danger"></span>
+                </div>
+
+                <div class="smart-field">
+                    <label asp-for="CountryId" class="form-label">الدولة</label>
+                    <select asp-for="CountryId" class="form-select" id="countrySelect">
+                        <option value="">اختر الدولة</option>
+                        @if (ViewBag.Countries != null)
+                        {
+                            foreach (var country in ViewBag.Countries)
+                            {
+                                if (country.Name.Contains("السعودية") || country.Name.Contains("Saudi"))
+                                {
+                                    <option value="@country.Id" selected>@country.Name</option>
+                                }
+                                else
+                                {
+                                    <option value="@country.Id">@country.Name</option>
+                                }
+                            }
+                        }
+                    </select>
+                    <div class="smart-note">✓ محدد تلقائياً كـ "السعودية"</div>
+                    <span asp-validation-for="CountryId" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="City" class="form-label">المدينة</label>
+                    <input asp-for="City" class="form-control" placeholder="المدينة" />
+                    <span asp-validation-for="City" class="text-danger"></span>
+                </div>
+
+                <!-- العلاقات العائلية -->
+                <div class="form-group">
+                    <label asp-for="FatherId" class="form-label">الأب (من أفراد هذه الشجرة)</label>
+                    <select asp-for="FatherId" class="form-select">
+                        <option value="" selected>-- بدون أب (جذر العائلة) --</option>
+                        @if (ViewBag.PotentialFathers != null)
+                        {
+                            foreach (var father in ViewBag.PotentialFathers)
+                            {
+                                <option value="@father.Id">@father.FullName</option>
+                            }
+                        }
+                    </select>
+                    <small class="text-muted">اترك هذا الحقل فارغاً إذا كان هذا الشخص هو الجذر (بدون أب)</small>
+                    <span asp-validation-for="FatherId" class="text-danger"></span>
+                </div>
+
+                <!-- قسم تاريخ الميلاد -->
+                <div class="date-section">
+                    <h5 class="mb-4" style="color: #2d3748;">
+                        <i class="fas fa-calendar-alt me-2 text-primary"></i>
+                        تاريخ الميلاد
+                        <small class="text-muted">(اختياري)</small>
+                    </h5>
+
+                    <div class="date-main-input">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <label for="birthDateInput" class="form-label">التاريخ الميلادي</label>
+                                <input asp-for="BirthDate" type="date" class="form-control" id="birthDateInput" />
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="quick-options-btn" id="showOptionsBtn">
+                                    <i class="fas fa-bolt me-2"></i>
+                                    طرق سريعة
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <span asp-validation-for="Gender" class="text-danger small d-block mt-2"></span>
+
+                    <!-- الخيارات المتقدمة -->
+                    <div class="advanced-options" id="advancedOptions">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h6 class="mb-0" style="color: #2d3748;">
+                                <i class="fas fa-magic me-2 text-success"></i>
+                                خيارات سريعة لإدخال التاريخ
+                            </h6>
+                            <button type="button" class="btn-close" id="closeOptionsBtn"></button>
+                        </div>
+
+                        <div class="option-tabs">
+                            <button type="button" class="option-tab active" data-tab="age">
+                                <i class="fas fa-user-clock me-2"></i>بالعمر
+                            </button>
+                            <button type="button" class="option-tab" data-tab="century">
+                                <i class="fas fa-history me-2"></i>بالقرن
+                            </button>
+                            <button type="button" class="option-tab" data-tab="hijri">
+                                <i class="fas fa-moon me-2"></i>بالهجري
+                            </button>
+                            <button type="button" class="option-tab" data-tab="year">
+                                <i class="fas fa-calendar me-2"></i>بالسنة
+                            </button>
+                        </div>
+
+                        <!-- لوحة العمر -->
+                        <div class="tab-panel active" id="age-panel">
+                            <div class="age-input-group">
+                                <h6><i class="fas fa-user-clock me-2"></i>أدخل العمر</h6>
+                                <p class="text-muted mb-3">الأسرع! أدخل العمر فقط وسنحسب التاريخ تلقائياً</p>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="ageInput" placeholder="مثال: 25" min="1" max="1500">
+                                    <span class="input-group-text">سنة</span>
+                                    <button type="button" class="btn btn-success" id="calculateAgeBtn">
+                                        <i class="fas fa-calculator me-1"></i>احسب
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- لوحة القرون -->
+                        <div class="tab-panel" id="century-panel">
+                            <h6><i class="fas fa-history me-2"></i>اختر القرن</h6>
+                            <p class="text-muted mb-3">انقر على القرن المطلوب</p>
+                            <div class="century-grid">
+                                <button type="button" class="century-btn" data-year="2000">
+                                    القرن 21<br>
+                                    <small>2000-2099</small>
+                                </button>
+                                <button type="button" class="century-btn" data-year="1900">
+                                    القرن 20<br>
+                                    <small>1900-1999</small>
+                                </button>
+                                <button type="button" class="century-btn" data-year="1800">
+                                    القرن 19<br>
+                                    <small>1800-1899</small>
+                                </button>
+                                <button type="button" class="century-btn" data-year="1700">
+                                    القرن 18<br>
+                                    <small>1700-1799</small>
+                                </button>
+                                <button type="button" class="century-btn" data-year="1600">
+                                    القرن 17<br>
+                                    <small>1600-1699</small>
+                                </button>
+                                <button type="button" class="century-btn" data-year="1500">
+                                    القرن 16<br>
+                                    <small>1500-1599</small>
+                                </button>
+                                <button type="button" class="century-btn" data-year="1400">
+                                    القرن 15<br>
+                                    <small>1400-1499</small>
+                                </button>
+                                <button type="button" class="century-btn" data-year="1300">
+                                    القرن 14<br>
+                                    <small>1300-1399</small>
+                                </button>
+                                <button type="button" class="century-btn" data-year="1200">
+                                    القرن 13<br>
+                                    <small>1200-1299</small>
+                                </button>
+                                <button type="button" class="century-btn" data-year="1100">
+                                    القرن 12<br>
+                                    <small>1100-1199</small>
+                                </button>
+                                <button type="button" class="century-btn" data-year="1000">
+                                    القرن 11<br>
+                                    <small>1000-1099</small>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- لوحة الهجري -->
+                        <div class="tab-panel" id="hijri-panel">
+                            <div class="hijri-input-group">
+                                <h6><i class="fas fa-moon me-2"></i>أدخل التاريخ الهجري</h6>
+                                <div class="row g-2">
+                                    <div class="col-md-3">
+                                        <input type="number" class="form-control" id="hijriDay" placeholder="اليوم" min="1" max="30">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select class="form-select" id="hijriMonth">
+                                            <option value="">اختر الشهر</option>
+                                            <option value="1">محرم</option>
+                                            <option value="2">صفر</option>
+                                            <option value="3">ربيع الأول</option>
+                                            <option value="4">ربيع الآخر</option>
+                                            <option value="5">جمادى الأولى</option>
+                                            <option value="6">جمادى الآخرة</option>
+                                            <option value="7">رجب</option>
+                                            <option value="8">شعبان</option>
+                                            <option value="9">رمضان</option>
+                                            <option value="10">شوال</option>
+                                            <option value="11">ذو القعدة</option>
+                                            <option value="12">ذو الحجة</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="number" class="form-control" id="hijriYear" placeholder="السنة" min="1" max="1500">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-warning w-100 h-100" id="convertHijriBtn">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- لوحة السنة -->
+                        <div class="tab-panel" id="year-panel">
+                            <h6><i class="fas fa-calendar me-2"></i>أدخل السنة فقط</h6>
+                            <p class="text-muted mb-3">سيتم تعيين 1 يناير من السنة المدخلة</p>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="yearInput" placeholder="مثال: 1985" min="1000" max="@DateTime.Now.Year">
+                                <button type="button" class="btn btn-outline-primary" id="setYearBtn">
+                                    <i class="fas fa-check me-1"></i>تعيين
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <span asp-validation-for="BirthDate" class="text-danger"></span>
                 </div>
-            </div>
-            <!-- المعلومات الشخصية -->
-            <div class="col-12 mt-4">
-                <h5 class="border-bottom pb-2 mb-4">
-                    <i class="fas fa-user-tie me-2 text-success"></i>المعلومات الشخصية
-                </h5>
-            </div>
 
-            <div class="col-md-6">
-                <label asp-for="BirthDate" class="form-label">تاريخ الميلاد</label>
-                <input asp-for="BirthDate" type="date" class="form-control" />
-                <span asp-validation-for="BirthDate" class="text-danger small"></span>
-            </div>
-
-            <div class="col-md-6">
-                <label asp-for="OccupationId" class="form-label">المهنة</label>
-                <select asp-for="OccupationId" class="form-select">
-                    <option value="">اختر المهنة</option>
-                    @if (ViewBag.Occupations != null)
-                    {
-                        foreach (var occupation in ViewBag.Occupations)
-                        {
-                            <option value="@occupation.Id">@occupation.Name</option>
-                        }
-                    }
-                </select>
-                <span asp-validation-for="OccupationId" class="text-danger small"></span>
-            </div>
-
-            <!-- العنوان -->
-            <div class="col-md-6">
-                <label asp-for="CountryId" class="form-label">الدولة</label>
-                <select asp-for="CountryId" class="form-select">
-                    <option value="">اختر الدولة</option>
-                    @if (ViewBag.Countries != null)
-                    {
-                        foreach (var country in ViewBag.Countries)
-                        {
-                            <option value="@country.Id">@country.Name</option>
-                        }
-                    }
-                </select>
-                <span asp-validation-for="CountryId" class="text-danger small"></span>
-            </div>
-
-            <div class="col-md-6">
-                <label asp-for="City" class="form-label">المدينة</label>
-                <input asp-for="City" class="form-control" placeholder="المدينة" />
-                <span asp-validation-for="City" class="text-danger small"></span>
-            </div>
-
-            <!-- العلاقات العائلية -->
-            <div class="col-12 mt-4">
-                <h5 class="border-bottom pb-2 mb-4">
-                    <i class="fas fa-users me-2 text-warning"></i>العلاقات العائلية
-                </h5>
-            </div>
-
-            <div class="col-12">
-                <label asp-for="FatherId" class="form-label">الأب (من أفراد هذه الشجرة)</label>
-                <select asp-for="FatherId" class="form-select">
-                    <option value="">-- اختر الأب --</option>
-                    @if (ViewBag.PotentialFathers != null)
-                    {
-                        foreach (var father in ViewBag.PotentialFathers)
-                        {
-                            <option value="@father.Id">@father.FullName</option>
-                        }
-                    }
-                </select>
-                <small class="form-text text-muted">اترك هذا الحقل فارغاً إذا كان هذا الشخص هو الجذر (بدون أب)</small>
-                <span asp-validation-for="FatherId" class="text-danger small"></span>
-            </div>
-
-            <!-- معلومات إضافية -->
-            <div class="col-12 mt-4">
-                <h5 class="border-bottom pb-2 mb-4">
-                    <i class="fas fa-sticky-note me-2 text-info"></i>معلومات إضافية
-                </h5>
-            </div>
-
-            <div class="col-12">
-                <label asp-for="Notes" class="form-label">ملاحظات</label>
-                <textarea asp-for="Notes" class="form-control" rows="3" placeholder="أي معلومات إضافية عن الشخص..."></textarea>
-                <span asp-validation-for="Notes" class="text-danger small"></span>
+                <!-- الملاحظات -->
+                <div class="form-group">
+                    <label asp-for="Notes" class="form-label">ملاحظات</label>
+                    <textarea asp-for="Notes" class="form-control" rows="4" placeholder="أي معلومات إضافية عن الشخص..."></textarea>
+                    <span asp-validation-for="Notes" class="text-danger"></span>
+                </div>
             </div>
 
             <!-- أزرار الإجراءات -->
-            <div class="col-12 mt-5">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <button type="submit" class="btn btn-success btn-lg">
-                            <i class="fas fa-save me-2"></i>حفظ الفرد الجديد
-                        </button>
-                        <button type="reset" class="btn btn-outline-secondary ms-2">
-                            <i class="fas fa-redo me-2"></i>إعادة تعيين
-                        </button>
-                    </div>
-                    <a asp-action="Index" asp-route-familyTreeId="@Model.FamilyTreeId" class="btn btn-secondary">
-                        <i class="fas fa-arrow-right me-2"></i> رجوع للقائمة
-                    </a>
-                </div>
+            <div class="actions-section">
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save me-2"></i>حفظ الفرد الجديد
+                </button>
+                <button type="reset" class="btn-reset">
+                    <i class="fas fa-redo me-2"></i>إعادة تعيين
+                </button>
+                <a asp-action="Index" asp-route-familyTreeId="@Model.FamilyTreeId" class="btn-back">
+                    <i class="fas fa-arrow-right me-2"></i> رجوع للقائمة
+                </a>
             </div>
         </form>
     </div>
@@ -331,116 +689,141 @@
     }
 
     <script>
+        // نفس كود الجافاسكريبت السابق يبقى كما هو
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('personForm');
-            const genderInputs = document.querySelectorAll('input[name="Gender"]');
+            const birthDateInput = document.getElementById('birthDateInput');
+            const showOptionsBtn = document.getElementById('showOptionsBtn');
+            const closeOptionsBtn = document.getElementById('closeOptionsBtn');
+            const advancedOptions = document.getElementById('advancedOptions');
+            const ageInput = document.getElementById('ageInput');
+            const calculateAgeBtn = document.getElementById('calculateAgeBtn');
+            const yearInput = document.getElementById('yearInput');
+            const setYearBtn = document.getElementById('setYearBtn');
+            const hijriDay = document.getElementById('hijriDay');
+            const hijriMonth = document.getElementById('hijriMonth');
+            const hijriYear = document.getElementById('hijriYear');
+            const convertHijriBtn = document.getElementById('convertHijriBtn');
 
-            // التحقق من الحقول الإلزامية
-            form.addEventListener('submit', function(e) {
-                const firstName = document.querySelector('#FirstName').value.trim();
-                const fatherName = document.querySelector('#FatherName').value.trim();
-                const grandFatherName = document.querySelector('#GrandFatherName').value.trim();
-                const lastName = document.querySelector('#LastName').value.trim();
-                const genderSelected = document.querySelector('input[name="Gender"]:checked');
-
-                let isValid = true;
-                let errorMessage = '';
-
-                if (!firstName) {
-                    isValid = false;
-                    errorMessage += '• الاسم الأول مطلوب\n';
-                }
-
-                if (!fatherName) {
-                    isValid = false;
-                    errorMessage += '• اسم الأب مطلوب\n';
-                }
-
-                if (!grandFatherName) {
-                    isValid = false;
-                    errorMessage += '• اسم الجد مطلوب\n';
-                }
-
-                if (!lastName) {
-                    isValid = false;
-                    errorMessage += '• اسم العائلة مطلوب\n';
-                }
-
-                if (!genderSelected) {
-                    isValid = false;
-                    errorMessage += '• يجب اختيار الجنس\n';
-                }
-
-                if (!isValid) {
-                    e.preventDefault();
-                    alert('يرجى تصحيح الأخطاء التالية:\n\n' + errorMessage);
-                    return false;
-                }
-
-                // إظهار رسالة تأكيد
-                const genderText = genderSelected.value === 'Male' ? 'ذكر' : 'أنثى';
-                console.log(`جاري إضافة فرد جديد: ${firstName} - الجنس: ${genderText}`);
+            // إظهار/إخفاء الخيارات المتقدمة
+            showOptionsBtn.addEventListener('click', function() {
+                advancedOptions.style.display = 'block';
+                this.style.display = 'none';
+                ageInput.focus();
             });
 
-            // تأثيرات تفاعلية للـ Radio Buttons
-            genderInputs.forEach(input => {
-                input.addEventListener('change', function() {
-                    const genderText = this.value === 'Male' ? 'ذكر' : 'أنثى';
-                    console.log(`تم اختيار الجنس: ${genderText}`);
+            closeOptionsBtn.addEventListener('click', function() {
+                advancedOptions.style.display = 'none';
+                showOptionsBtn.style.display = 'block';
+            });
 
-                    // إضافة تأثير مرئي إضافي
-                    const allLabels = document.querySelectorAll('.gender-btn');
-                    allLabels.forEach(label => label.classList.remove('active-gender'));
+            // نظام التبويبات
+            document.querySelectorAll('.option-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.option-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
 
-                    const currentLabel = document.querySelector(`label[for="${this.id}"]`);
-                    currentLabel.classList.add('active-gender');
+                    this.classList.add('active');
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(`${tabId}-panel`).classList.add('active');
                 });
             });
 
-            // التركيز التلقائي على أول حقل
-            setTimeout(() => {
-                const firstNameInput = document.querySelector('#FirstName');
-                if (firstNameInput) {
-                    firstNameInput.focus();
-                }
-            }, 500);
+            // 1. حساب التاريخ من العمر
+            calculateAgeBtn.addEventListener('click', calculateFromAge);
+            ageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') calculateFromAge();
+            });
 
-            // تحسين إمكانية الوصول للـ Radio Buttons
-            genderInputs.forEach(input => {
-                input.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        this.checked = true;
-                        const label = document.querySelector(`label[for="${this.id}"]`);
-                        if (label) {
-                            label.click();
-                        }
+            function calculateFromAge() {
+                const age = parseInt(ageInput.value);
+                if (age && age > 0 && age <= 1500) {
+                    const today = new Date();
+                    const birthYear = today.getFullYear() - age;
+                    const birthDate = new Date(birthYear, 0, 1);
+                    birthDateInput.value = birthDate.toISOString().split('T')[0];
+                    showMessage(`✅ تم تعيين تاريخ الميلاد التقريبي لعمر ${age} سنة`, 'success');
+                    ageInput.value = '';
+                } else {
+                    showMessage('❌ الرجاء إدخال عمر صحيح بين 1 و 1500', 'error');
+                }
+            }
+
+            // 2. اختيار القرن
+            document.querySelectorAll('.century-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const year = parseInt(this.getAttribute('data-year'));
+                    const birthDate = new Date(year, 0, 1);
+                    birthDateInput.value = birthDate.toISOString().split('T')[0];
+                    showMessage(`✅ تم تعيين بداية القرن (${year})`, 'success');
+                });
+            });
+
+            // 3. إدخال السنة
+            setYearBtn.addEventListener('click', setFromYear);
+            yearInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') setFromYear();
+            });
+
+            function setFromYear() {
+                const year = parseInt(yearInput.value);
+                const currentYear = new Date().getFullYear();
+                if (year && year >= 1000 && year <= currentYear) {
+                    const birthDate = new Date(year, 0, 1);
+                    birthDateInput.value = birthDate.toISOString().split('T')[0];
+                    showMessage(`✅ تم تعيين سنة الميلاد ${year}`, 'success');
+                    yearInput.value = '';
+                } else {
+                    showMessage(`❌ الرجاء إدخال سنة بين 1000 و ${currentYear}`, 'error');
+                }
+            }
+
+            // 4. التحويل من الهجري
+            convertHijriBtn.addEventListener('click', convertHijri);
+            hijriYear.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') convertHijri();
+            });
+
+            function convertHijri() {
+                const day = hijriDay.value;
+                const month = hijriMonth.value;
+                const year = hijriYear.value;
+
+                if (day && month && year) {
+                    const gregorianYear = Math.round(parseInt(year) * 0.97 + 622);
+                    const gregorianDate = new Date(gregorianYear, parseInt(month) - 1, parseInt(day));
+
+                    if (!isNaN(gregorianDate.getTime())) {
+                        birthDateInput.value = gregorianDate.toISOString().split('T')[0];
+                        showMessage('✅ تم تحويل التاريخ الهجري إلى ميلادي', 'success');
+                        hijriDay.value = hijriYear.value = '';
+                        hijriMonth.selectedIndex = 0;
+                    } else {
+                        showMessage('❌ الرجاء التأكد من صحة التاريخ الهجري', 'error');
                     }
-                });
-            });
+                } else {
+                    showMessage('❌ الرجاء إكمال جميع حقول التاريخ الهجري', 'error');
+                }
+            }
+
+            function showMessage(message, type) {
+                const existingAlert = document.querySelector('.date-message-alert');
+                if (existingAlert) existingAlert.remove();
+
+                const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+                const alertHtml = `
+                    <div class="alert ${alertClass} alert-dismissible fade show date-message-alert mt-3" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+
+                birthDateInput.insertAdjacentHTML('afterend', alertHtml);
+
+                setTimeout(() => {
+                    const alert = document.querySelector('.date-message-alert');
+                    if (alert) alert.remove();
+                }, 4000);
+            }
         });
-
-        // تأثيرات CSS إضافية
-        const style = document.createElement('style');
-        style.textContent = `
-            .active-gender {
-                animation: genderPulse 0.6s ease-in-out;
-            }
-
-            @@keyframes genderPulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.08); }
-                100% { transform: scale(1.05); }
-            }
-
-            .form-control:focus, .form-select:focus {
-                border-color: #667eea;
-                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-            }
-
-            .btn-check:focus + .gender-btn {
-                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-            }
-        `;
-        document.head.appendChild(style);
     </script>
 }
