@@ -662,8 +662,8 @@ namespace FamilyTreePro.Controllers
             return View(viewModel);
         }
 
-        
-             public async Task<IActionResult> LeafTree(int familyTreeId)
+
+        public async Task<IActionResult> LeafTree(int familyTreeId)
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -734,7 +734,7 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction("Index", "Home");
             }
         }
-         
+
         //ComperhensiveTreeView
         public async Task<IActionResult> ComperhensiveTreeView(int familyTreeId)
         {
