@@ -4,6 +4,7 @@
 }
 
 <style>
+    /* نفس الأنماط السابقة */
     .form-container {
         background: white;
         border-radius: 20px;
@@ -22,11 +23,23 @@
         text-align: center;
     }
 
+    .dynamic-form {
+        transition: all 0.3s ease;
+    }
+
+    .form-section {
+        margin-bottom: 30px;
+        padding: 25px;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border: 2px solid #e9ecef;
+    }
+
     .form-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 25px;
-        margin-bottom: 30px;
+        gap: 20px;
+        margin-bottom: 20px;
     }
 
     .form-group {
@@ -61,12 +74,11 @@
         }
 
     .gender-section {
-        grid-column: 1 / -1;
         background: #f7fafc;
         padding: 25px;
         border-radius: 15px;
         border: 2px solid #e2e8f0;
-        margin: 10px 0;
+        margin: 20px 0;
     }
 
     .gender-options {
@@ -117,123 +129,14 @@
         box-shadow: 0 10px 25px rgba(237, 100, 166, 0.3);
     }
 
-    .gender-icon {
-        font-size: 2.5rem;
-        margin-bottom: 10px;
-    }
-
-    .date-section {
-        grid-column: 1 / -1;
+    .father-selection {
         background: #fffaf0;
         padding: 25px;
         border-radius: 15px;
         border: 2px dashed #f6ad55;
-        margin: 10px 0;
-    }
-
-    .date-main-input {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        border: 2px solid #4299e1;
-        margin-bottom: 20px;
-    }
-
-    .quick-options-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        padding: 15px 25px;
-        border-radius: 10px;
-        font-size: 1rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        width: 100%;
-        margin-top: 15px;
-    }
-
-        .quick-options-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-
-    .advanced-options {
-        background: white;
-        border-radius: 15px;
-        padding: 25px;
-        margin-top: 20px;
-        border: 2px solid #e2e8f0;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-        display: none;
-    }
-
-    .option-tabs {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 25px;
-        border-bottom: 2px solid #e2e8f0;
-        padding-bottom: 15px;
-        flex-wrap: wrap;
-    }
-
-    .option-tab {
-        padding: 12px 20px;
-        border: none;
-        background: #f7fafc;
-        color: #4a5568;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-        font-weight: 500;
-        flex: 1;
-        min-width: 120px;
-    }
-
-        .option-tab.active {
-            background: #667eea;
-            color: white;
-        }
-
-    .tab-panel {
-        display: none;
-    }
-
-        .tab-panel.active {
-            display: block;
-        }
-
-    .age-input-group, .hijri-input-group {
-        background: #f0fff4;
-        padding: 20px;
-        border-radius: 12px;
-        border-left: 4px solid #48bb78;
-        margin-bottom: 20px;
-    }
-
-    .hijri-input-group {
-        background: #fffaf0;
-        border-left-color: #ed8936;
-    }
-
-    .century-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-        gap: 12px;
         margin: 20px 0;
-    }
-
-    .century-btn {
-        padding: 15px 10px;
-        border: 2px solid #e2e8f0;
-        border-radius: 10px;
-        background: white;
-        transition: all 0.3s ease;
         text-align: center;
     }
-
-        .century-btn:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-        }
 
     .smart-field {
         background: #f0fff4;
@@ -251,7 +154,6 @@
     }
 
     .actions-section {
-        grid-column: 1 / -1;
         text-align: center;
         padding: 30px 0 10px;
         border-top: 2px solid #e2e8f0;
@@ -274,40 +176,56 @@
             box-shadow: 0 10px 25px rgba(72, 187, 120, 0.4);
         }
 
-    .btn-reset {
-        background: #718096;
-        color: white;
-        border: none;
-        padding: 15px 30px;
-        font-size: 1.1rem;
-        border-radius: 12px;
-        transition: all 0.3s ease;
-        margin: 0 10px;
+    .info-message {
+        background: #e6fffa;
+        border: 2px solid #81e6d9;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 15px 0;
+        text-align: center;
     }
 
-    .btn-back {
-        background: #4a5568;
-        color: white;
-        border: none;
-        padding: 15px 30px;
-        font-size: 1.1rem;
-        border-radius: 12px;
-        transition: all 0.3s ease;
+    .hidden-section {
+        display: none;
     }
 
-    .input-group {
-        margin-bottom: 15px;
+    .fade-in {
+        animation: fadeIn 0.5s ease-in;
     }
 
-    .input-group-text {
-        background: #edf2f7;
-        border: 2px solid #e2e8f0;
-        border-left: none;
+    .date-section {
+        background: #fffaf0;
+        padding: 25px;
+        border-radius: 15px;
+        border: 2px dashed #f6ad55;
+        margin: 20px 0;
     }
 
-    .text-danger {
+    .additional-info {
+        background: #f0f4ff;
+        padding: 25px;
+        border-radius: 15px;
+        border: 2px solid #c3dafe;
+        margin: 20px 0;
+    }
+
+    .validation-error {
+        color: #e53e3e;
         font-size: 0.85rem;
         margin-top: 5px;
+        display: block;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     /* تحسينات للشاشات الصغيرة */
@@ -330,33 +248,6 @@
         .gender-options {
             grid-template-columns: 1fr;
         }
-
-        .century-grid {
-            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-        }
-
-        .option-tabs {
-            flex-direction: column;
-        }
-
-        .option-tab {
-            min-width: auto;
-        }
-    }
-
-    @@media (max-width: 480px) {
-        .form-container {
-            padding: 15px;
-        }
-
-        .form-header {
-            margin: -15px -15px 25px -15px;
-            padding: 15px;
-        }
-
-        .century-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
     }
 </style>
 
@@ -366,316 +257,293 @@
             <h1 class="mb-3">
                 <i class="fas fa-user-plus me-3"></i>إضافة فرد جديد للشجرة العائلية
             </h1>
-            <p class="mb-0 opacity-90">املأ البيانات الأساسية أدناه ثم اضغط حفظ لإضافة الفرد الجديد</p>
+            <p class="mb-0 opacity-90">اختر الأب أولاً ثم املأ البيانات المطلوبة</p>
         </div>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
 
         <form asp-action="Create" method="post" id="personForm">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="FamilyTreeId" />
 
-            <div class="form-grid">
-                <!-- المعلومات الشخصية الأساسية -->
-                <div class="form-group">
-                    <label asp-for="FirstName" class="form-label required-field">الاسم الأول</label>
-                    <input asp-for="FirstName" class="form-control" placeholder="أدخل الاسم الأول" required />
-                    <span asp-validation-for="FirstName" class="text-danger"></span>
-                </div>
+            <!-- قسم اختيار الأب -->
+            <div class="father-selection">
+                <h4 class="mb-4">
+                    <i class="fas fa-users me-2"></i>اختر الأب من الشجرة
+                </h4>
 
                 <div class="form-group">
-                    <label asp-for="FatherName" class="form-label required-field">اسم الأب</label>
-                    <input asp-for="FatherName" class="form-control" placeholder="اسم الأب" required />
-                    <span asp-validation-for="FatherName" class="text-danger"></span>
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="GrandFatherName" class="form-label required-field">اسم الجد</label>
-                    <input asp-for="GrandFatherName" class="form-control" placeholder="اسم الجد" required />
-                    <span asp-validation-for="GrandFatherName" class="text-danger"></span>
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="LastName" class="form-label required-field">اسم العائلة</label>
-                    <input asp-for="LastName" class="form-control" placeholder="اسم العائلة" required />
-                    <span asp-validation-for="LastName" class="text-danger"></span>
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="Nickname" class="form-label">اللقب</label>
-                    <input asp-for="Nickname" class="form-control" placeholder="اللقب (اختياري)" />
-                    <span asp-validation-for="Nickname" class="text-danger"></span>
-                </div>
-
-                <!-- حقل الجنس -->
-                <div class="gender-section">
-                    <label class="form-label required-field" style="font-size: 1.1rem;">الجنس</label>
-                    <div class="gender-options">
-                        <div class="gender-option">
-                            <input type="radio" id="Gender_Male" name="Gender" value="Male" class="btn-check" checked required>
-                            <label class="gender-btn male" for="Gender_Male">
-                                <i class="fas fa-mars gender-icon"></i>
-                                <span style="font-weight: 600; font-size: 1.1rem;">ذكر</span>
-                                <small class="text-muted mt-1">(محدد افتراضي)</small>
-                            </label>
-                        </div>
-                        <div class="gender-option">
-                            <input type="radio" id="Gender_Female" name="Gender" value="Female" class="btn-check" required>
-                            <label class="gender-btn female" for="Gender_Female">
-                                <i class="fas fa-venus gender-icon"></i>
-                                <span style="font-weight: 600; font-size: 1.1rem;">أنثى</span>
-                            </label>
-                        </div>
-                    </div>
-                    <span asp-validation-for="Gender" class="text-danger"></span>
-                </div>
-
-                <!-- المعلومات الإضافية -->
-                <div class="smart-field">
-                    <label asp-for="OccupationId" class="form-label">المهنة</label>
-                    <select asp-for="OccupationId" class="form-select">
-                        <option value="" selected>غير محدد</option>
-                        @if (ViewBag.Occupations != null)
-                        {
-                            foreach (var occupation in ViewBag.Occupations)
-                            {
-                                <option value="@occupation.Id">@occupation.Name</option>
-                            }
-                        }
-                    </select>
-                    <div class="smart-note">✓ محدد تلقائياً كـ "غير محدد"</div>
-                    <span asp-validation-for="OccupationId" class="text-danger"></span>
-                </div>
-
-                <div class="smart-field">
-                    <label asp-for="CountryId" class="form-label">الدولة</label>
-                    <select asp-for="CountryId" class="form-select" id="countrySelect">
-                        <option value="">اختر الدولة</option>
-                        @if (ViewBag.Countries != null)
-                        {
-                            foreach (var country in ViewBag.Countries)
-                            {
-                                if (country.Name.Contains("السعودية") || country.Name.Contains("Saudi"))
-                                {
-                                    <option value="@country.Id" selected>@country.Name</option>
-                                }
-                                else
-                                {
-                                    <option value="@country.Id">@country.Name</option>
-                                }
-                            }
-                        }
-                    </select>
-                    <div class="smart-note">✓ محدد تلقائياً كـ "السعودية"</div>
-                    <span asp-validation-for="CountryId" class="text-danger"></span>
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="City" class="form-label">المدينة</label>
-                    <input asp-for="City" class="form-control" placeholder="المدينة" />
-                    <span asp-validation-for="City" class="text-danger"></span>
-                </div>
-
-                <!-- العلاقات العائلية -->
-                <div class="form-group">
-                    <label asp-for="FatherId" class="form-label">الأب (من أفراد هذه الشجرة)</label>
-                    <select asp-for="FatherId" class="form-select">
-                        <option value="" selected>-- بدون أب (جذر العائلة) --</option>
+                    <label class="form-label required-field">الأب (من أفراد هذه الشجرة)</label>
+                    <select class="form-select" id="fatherSelect" style="max-width: 500px; margin: 0 auto;" required>
+                        <option value="">-- اختر الأب --</option>
+                        <option value="none">-- بدون أب (فرد جديد) --</option>
                         @if (ViewBag.PotentialFathers != null)
                         {
                             foreach (var father in ViewBag.PotentialFathers)
                             {
-                                <option value="@father.Id">@father.FullName</option>
+                                <option value="@father.Id"
+                                        data-firstname="@father.FirstName"
+                                        data-fathername="@father.FatherName"
+                                        data-grandfathername="@father.GrandFatherName"
+                                        data-lastname="@father.LastName">
+                                    @father.FullName
+                                </option>
                             }
                         }
                     </select>
-                    <small class="text-muted">اترك هذا الحقل فارغاً إذا كان هذا الشخص هو الجذر (بدون أب)</small>
-                    <span asp-validation-for="FatherId" class="text-danger"></span>
+                    <small class="text-muted">اختر "بدون أب" لإضافة فرد جديد كامل المعلومات</small>
+                    <div class="validation-error" id="fatherSelectError"></div>
+                </div>
+            </div>
+
+            <!-- الواجهة الديناميكية -->
+            <div class="dynamic-form" id="dynamicForm" style="display: none;">
+
+                <!-- حالة عدم وجود أب - عرض جميع الحقول -->
+                <div class="hidden-section" id="noFatherSection">
+                    <div class="info-message">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>إضافة فرد جديد كامل المعلومات</strong>
+                        <p class="mb-0 mt-1">سيتم إضافة هذا الفرد كجذر جديد في الشجرة العائلية</p>
+                    </div>
+
+                    <div class="form-section">
+                        <h4 class="mb-4">
+                            <i class="fas fa-id-card me-2"></i>المعلومات الشخصية الكاملة
+                        </h4>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label required-field">الاسم الأول</label>
+                                <input type="text" class="form-control" id="firstNameNoFather" placeholder="أدخل الاسم الأول" />
+                                <div class="validation-error" id="firstNameNoFatherError"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label required-field">اسم الأب</label>
+                                <input type="text" class="form-control" id="fatherNameNoFather" placeholder="اسم الأب" />
+                                <div class="validation-error" id="fatherNameNoFatherError"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label required-field">اسم الجد</label>
+                                <input type="text" class="form-control" id="grandFatherNameNoFather" placeholder="اسم الجد" />
+                                <div class="validation-error" id="grandFatherNameNoFatherError"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label required-field">اسم العائلة</label>
+                                <input type="text" class="form-control" id="lastNameNoFather" placeholder="اسم العائلة" />
+                                <div class="validation-error" id="lastNameNoFatherError"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">اللقب</label>
+                                <input type="text" class="form-control" id="nicknameNoFather" placeholder="اللقب (اختياري)" />
+                            </div>
+                        </div>
+
+                        <!-- حقل الجنس -->
+                        <div class="gender-section">
+                            <label class="form-label required-field" style="font-size: 1.1rem;">الجنس</label>
+                            <div class="gender-options">
+                                <div class="gender-option">
+                                    <input type="radio" id="Gender_Male_NoFather" name="Gender" value="Male" class="btn-check" checked>
+                                    <label class="gender-btn male" for="Gender_Male_NoFather">
+                                        <i class="fas fa-mars gender-icon"></i>
+                                        <span style="font-weight: 600; font-size: 1.1rem;">ذكر</span>
+                                        <small class="text-muted mt-1">(محدد افتراضي)</small>
+                                    </label>
+                                </div>
+                                <div class="gender-option">
+                                    <input type="radio" id="Gender_Female_NoFather" name="Gender" value="Female" class="btn-check">
+                                    <label class="gender-btn female" for="Gender_Female_NoFather">
+                                        <i class="fas fa-venus gender-icon"></i>
+                                        <span style="font-weight: 600; font-size: 1.1rem;">أنثى</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="validation-error" id="genderError"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- حالة وجود أب - عرض الاسم الأول فقط -->
+                <div class="hidden-section" id="withFatherSection">
+                    <div class="info-message">
+                        <i class="fas fa-users me-2"></i>
+                        <strong>إضافة ابن للعائلة</strong>
+                        <p class="mb-0 mt-1" id="fatherInfo">سيتم أخذ باقي المعلومات من الأب المحدد تلقائياً</p>
+                    </div>
+
+                    <div class="form-section">
+                        <h4 class="mb-4">
+                            <i class="fas fa-user me-2"></i>معلومات الابن
+                        </h4>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label required-field">الاسم الأول</label>
+                                <input type="text" class="form-control" id="firstNameWithFather" placeholder="أدخل الاسم الأول فقط" />
+                                <div class="validation-error" id="firstNameWithFatherError"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">اسم الأب</label>
+                                <input type="text" class="form-control" id="displayFatherName" readonly style="background: #f7fafc;">
+                                <small class="text-muted">سيؤخذ تلقائياً من الأب المحدد</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">اسم الجد</label>
+                                <input type="text" class="form-control" id="displayGrandFatherName" readonly style="background: #f7fafc;">
+                                <small class="text-muted">سيؤخذ تلقائياً من الأب المحدد</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">اسم العائلة</label>
+                                <input type="text" class="form-control" id="displayLastName" readonly style="background: #f7fafc;">
+                                <small class="text-muted">سيؤخذ تلقائياً من الأب المحدد</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">اللقب</label>
+                                <input type="text" class="form-control" id="nicknameWithFather" placeholder="اللقب (اختياري)" />
+                            </div>
+                        </div>
+
+                        <!-- حقل الجنس -->
+                        <div class="gender-section">
+                            <label class="form-label required-field" style="font-size: 1.1rem;">الجنس</label>
+                            <div class="gender-options">
+                                <div class="gender-option">
+                                    <input type="radio" id="Gender_Male_WithFather" name="Gender" value="Male" class="btn-check" checked>
+                                    <label class="gender-btn male" for="Gender_Male_WithFather">
+                                        <i class="fas fa-mars gender-icon"></i>
+                                        <span style="font-weight: 600; font-size: 1.1rem;">ذكر</span>
+                                        <small class="text-muted mt-1">(محدد افتراضي)</small>
+                                    </label>
+                                </div>
+                                <div class="gender-option">
+                                    <input type="radio" id="Gender_Female_WithFather" name="Gender" value="Female" class="btn-check">
+                                    <label class="gender-btn female" for="Gender_Female_WithFather">
+                                        <i class="fas fa-venus gender-icon"></i>
+                                        <span style="font-weight: 600; font-size: 1.1rem;">أنثى</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="validation-error" id="genderError2"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- قسم تاريخ الميلاد -->
                 <div class="date-section">
-                    <h5 class="mb-4" style="color: #2d3748;">
-                        <i class="fas fa-calendar-alt me-2 text-primary"></i>
-                        تاريخ الميلاد
-                        <small class="text-muted">(اختياري)</small>
-                    </h5>
+                    <h4 class="mb-4">
+                        <i class="fas fa-calendar-alt me-2"></i>تاريخ الميلاد
+                    </h4>
 
-                    <div class="date-main-input">
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <label for="birthDateInput" class="form-label">التاريخ الميلادي</label>
-                                <input asp-for="BirthDate" type="date" class="form-control" id="birthDateInput" />
-                            </div>
-                            <div class="col-md-4">
-                                <button type="button" class="quick-options-btn" id="showOptionsBtn">
-                                    <i class="fas fa-bolt me-2"></i>
-                                    طرق سريعة
-                                </button>
-                            </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">تاريخ الميلاد</label>
+                            <input type="date" class="form-control" id="birthDate" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- المعلومات الإضافية المشتركة -->
+                <div class="form-section">
+                    <h4 class="mb-4">
+                        <i class="fas fa-info-circle me-2"></i>معلومات إضافية
+                    </h4>
+
+                    <div class="form-grid">
+                        <div class="smart-field">
+                            <label class="form-label">المهنة</label>
+                            <select class="form-select" id="occupationId">
+                                <option value="" selected>غير محدد</option>
+                                @if (ViewBag.Occupations != null)
+                                {
+                                    foreach (var occupation in ViewBag.Occupations)
+                                    {
+                                        <option value="@occupation.Id">@occupation.Name</option>
+                                    }
+                                }
+                            </select>
+                            <div class="smart-note">✓ محدد تلقائياً كـ "غير محدد"</div>
+                        </div>
+
+                        <div class="smart-field">
+                            <label class="form-label">الدولة</label>
+                            <select class="form-select" id="countryId">
+                                <option value="">اختر الدولة</option>
+                                @if (ViewBag.Countries != null)
+                                {
+                                    foreach (var country in ViewBag.Countries)
+                                    {
+                                        if (country.Name.Contains("السعودية") || country.Name.Contains("Saudi"))
+                                        {
+                                            <option value="@country.Id" selected>@country.Name</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@country.Id">@country.Name</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                            <div class="smart-note">✓ محدد تلقائياً كـ "السعودية"</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">المدينة</label>
+                            <input type="text" class="form-control" id="city" placeholder="المدينة" />
                         </div>
                     </div>
 
-                    <!-- الخيارات المتقدمة -->
-                    <div class="advanced-options" id="advancedOptions">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h6 class="mb-0" style="color: #2d3748;">
-                                <i class="fas fa-magic me-2 text-success"></i>
-                                خيارات سريعة لإدخال التاريخ
-                            </h6>
-                            <button type="button" class="btn-close" id="closeOptionsBtn"></button>
-                        </div>
-
-                        <div class="option-tabs">
-                            <button type="button" class="option-tab active" data-tab="age">
-                                <i class="fas fa-user-clock me-2"></i>بالعمر
-                            </button>
-                            <button type="button" class="option-tab" data-tab="century">
-                                <i class="fas fa-history me-2"></i>بالقرن
-                            </button>
-                            <button type="button" class="option-tab" data-tab="hijri">
-                                <i class="fas fa-moon me-2"></i>بالهجري
-                            </button>
-                            <button type="button" class="option-tab" data-tab="year">
-                                <i class="fas fa-calendar me-2"></i>بالسنة
-                            </button>
-                        </div>
-
-                        <!-- لوحة العمر -->
-                        <div class="tab-panel active" id="age-panel">
-                            <div class="age-input-group">
-                                <h6><i class="fas fa-user-clock me-2"></i>أدخل العمر</h6>
-                                <p class="text-muted mb-3">الأسرع! أدخل العمر فقط وسنحسب التاريخ تلقائياً</p>
-                                <div class="input-group">
-                                    <input type="number" class="form-control" id="ageInput" placeholder="مثال: 25" min="1" max="1500">
-                                    <span class="input-group-text">سنة</span>
-                                    <button type="button" class="btn btn-success" id="calculateAgeBtn">
-                                        <i class="fas fa-calculator me-1"></i>احسب
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- لوحة القرون -->
-                        <div class="tab-panel" id="century-panel">
-                            <h6><i class="fas fa-history me-2"></i>اختر القرن</h6>
-                            <p class="text-muted mb-3">انقر على القرن المطلوب</p>
-                            <div class="century-grid">
-                                <button type="button" class="century-btn" data-year="2000">
-                                    القرن 21<br>
-                                    <small>2000-2099</small>
-                                </button>
-                                <button type="button" class="century-btn" data-year="1900">
-                                    القرن 20<br>
-                                    <small>1900-1999</small>
-                                </button>
-                                <button type="button" class="century-btn" data-year="1800">
-                                    القرن 19<br>
-                                    <small>1800-1899</small>
-                                </button>
-                                <button type="button" class="century-btn" data-year="1700">
-                                    القرن 18<br>
-                                    <small>1700-1799</small>
-                                </button>
-                                <button type="button" class="century-btn" data-year="1600">
-                                    القرن 17<br>
-                                    <small>1600-1699</small>
-                                </button>
-                                <button type="button" class="century-btn" data-year="1500">
-                                    القرن 16<br>
-                                    <small>1500-1599</small>
-                                </button>
-                                <button type="button" class="century-btn" data-year="1400">
-                                    القرن 15<br>
-                                    <small>1400-1499</small>
-                                </button>
-                                <button type="button" class="century-btn" data-year="1300">
-                                    القرن 14<br>
-                                    <small>1300-1399</small>
-                                </button>
-                                <button type="button" class="century-btn" data-year="1200">
-                                    القرن 13<br>
-                                    <small>1200-1299</small>
-                                </button>
-                                <button type="button" class="century-btn" data-year="1100">
-                                    القرن 12<br>
-                                    <small>1100-1199</small>
-                                </button>
-                                <button type="button" class="century-btn" data-year="1000">
-                                    القرن 11<br>
-                                    <small>1000-1099</small>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- لوحة الهجري -->
-                        <div class="tab-panel" id="hijri-panel">
-                            <div class="hijri-input-group">
-                                <h6><i class="fas fa-moon me-2"></i>أدخل التاريخ الهجري</h6>
-                                <div class="row g-2">
-                                    <div class="col-md-3">
-                                        <input type="number" class="form-control" id="hijriDay" placeholder="اليوم" min="1" max="30">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <select class="form-select" id="hijriMonth">
-                                            <option value="">اختر الشهر</option>
-                                            <option value="1">محرم</option>
-                                            <option value="2">صفر</option>
-                                            <option value="3">ربيع الأول</option>
-                                            <option value="4">ربيع الآخر</option>
-                                            <option value="5">جمادى الأولى</option>
-                                            <option value="6">جمادى الآخرة</option>
-                                            <option value="7">رجب</option>
-                                            <option value="8">شعبان</option>
-                                            <option value="9">رمضان</option>
-                                            <option value="10">شوال</option>
-                                            <option value="11">ذو القعدة</option>
-                                            <option value="12">ذو الحجة</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <input type="number" class="form-control" id="hijriYear" placeholder="السنة" min="1" max="1500">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <button type="button" class="btn btn-warning w-100 h-100" id="convertHijriBtn">
-                                            <i class="fas fa-sync-alt"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- لوحة السنة -->
-                        <div class="tab-panel" id="year-panel">
-                            <h6><i class="fas fa-calendar me-2"></i>أدخل السنة فقط</h6>
-                            <p class="text-muted mb-3">سيتم تعيين 1 يناير من السنة المدخلة</p>
-                            <div class="input-group">
-                                <input type="number" class="form-control" id="yearInput" placeholder="مثال: 1985" min="1000" max="@DateTime.Now.Year">
-                                <button type="button" class="btn btn-outline-primary" id="setYearBtn">
-                                    <i class="fas fa-check me-1"></i>تعيين
-                                </button>
-                            </div>
+                    <!-- الملاحظات -->
+                    <div class="additional-info">
+                        <div class="form-group">
+                            <label class="form-label">ملاحظات</label>
+                            <textarea class="form-control" id="notes" rows="4" placeholder="أي معلومات إضافية عن الشخص..."></textarea>
                         </div>
                     </div>
-
-                    <span asp-validation-for="BirthDate" class="text-danger"></span>
                 </div>
 
-                <!-- الملاحظات -->
-                <div class="form-group">
-                    <label asp-for="Notes" class="form-label">ملاحظات</label>
-                    <textarea asp-for="Notes" class="form-control" rows="4" placeholder="أي معلومات إضافية عن الشخص..."></textarea>
-                    <span asp-validation-for="Notes" class="text-danger"></span>
-                </div>
+                <!-- حقول مخفية للبيانات المرسلة -->
+                <input type="hidden" name="FirstName" id="hiddenFirstName" />
+                <input type="hidden" name="FatherName" id="hiddenFatherName" />
+                <input type="hidden" name="GrandFatherName" id="hiddenGrandFatherName" />
+                <input type="hidden" name="LastName" id="hiddenLastName" />
+                <input type="hidden" name="Nickname" id="hiddenNickname" />
+                <input type="hidden" name="FatherId" id="hiddenFatherId" />
+                <input type="hidden" name="BirthDate" id="hiddenBirthDate" />
+                <input type="hidden" name="OccupationId" id="hiddenOccupationId" />
+                <input type="hidden" name="CountryId" id="hiddenCountryId" />
+                <input type="hidden" name="City" id="hiddenCity" />
+                <input type="hidden" name="Notes" id="hiddenNotes" />
             </div>
 
             <!-- أزرار الإجراءات -->
             <div class="actions-section">
-                <button type="submit" class="btn-save">
+                <button type="submit" class="btn-save" id="submitBtn">
                     <i class="fas fa-save me-2"></i>حفظ الفرد الجديد
                 </button>
-                <button type="reset" class="btn-reset">
-                    <i class="fas fa-redo me-2"></i>إعادة تعيين
-                </button>
-                <a asp-action="Index" asp-route-familyTreeId="@Model.FamilyTreeId" class="btn-back">
+                <a asp-action="Index" asp-route-familyTreeId="@Model.FamilyTreeId" class="btn btn-secondary">
                     <i class="fas fa-arrow-right me-2"></i> رجوع للقائمة
                 </a>
             </div>
@@ -689,141 +557,249 @@
     }
 
     <script>
-        // نفس كود الجافاسكريبت السابق يبقى كما هو
         document.addEventListener('DOMContentLoaded', function() {
-            const birthDateInput = document.getElementById('birthDateInput');
-            const showOptionsBtn = document.getElementById('showOptionsBtn');
-            const closeOptionsBtn = document.getElementById('closeOptionsBtn');
-            const advancedOptions = document.getElementById('advancedOptions');
-            const ageInput = document.getElementById('ageInput');
-            const calculateAgeBtn = document.getElementById('calculateAgeBtn');
-            const yearInput = document.getElementById('yearInput');
-            const setYearBtn = document.getElementById('setYearBtn');
-            const hijriDay = document.getElementById('hijriDay');
-            const hijriMonth = document.getElementById('hijriMonth');
-            const hijriYear = document.getElementById('hijriYear');
-            const convertHijriBtn = document.getElementById('convertHijriBtn');
+            const fatherSelect = document.getElementById('fatherSelect');
+            const noFatherSection = document.getElementById('noFatherSection');
+            const withFatherSection = document.getElementById('withFatherSection');
+            const dynamicForm = document.getElementById('dynamicForm');
+            const fatherInfo = document.getElementById('fatherInfo');
+            const submitBtn = document.getElementById('submitBtn');
+            const fatherSelectError = document.getElementById('fatherSelectError');
 
-            // إظهار/إخفاء الخيارات المتقدمة
-            showOptionsBtn.addEventListener('click', function() {
-                advancedOptions.style.display = 'block';
-                this.style.display = 'none';
-                ageInput.focus();
-            });
+            let currentMode = ''; // 'none' أو 'withFather'
 
-            closeOptionsBtn.addEventListener('click', function() {
-                advancedOptions.style.display = 'none';
-                showOptionsBtn.style.display = 'block';
-            });
+            // تحديث الواجهة حسب اختيار الأب
+            function updateForm() {
+                const selectedValue = fatherSelect.value;
+                const selectedOption = fatherSelect.options[fatherSelect.selectedIndex];
 
-            // نظام التبويبات
-            document.querySelectorAll('.option-tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    document.querySelectorAll('.option-tab').forEach(t => t.classList.remove('active'));
-                    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                // إخفاء جميع الأقسام أولاً
+                noFatherSection.classList.add('hidden-section');
+                withFatherSection.classList.add('hidden-section');
+                dynamicForm.style.display = 'none';
+                fatherSelectError.textContent = '';
 
-                    this.classList.add('active');
-                    const tabId = this.getAttribute('data-tab');
-                    document.getElementById(`${tabId}-panel`).classList.add('active');
-                });
-            });
-
-            // 1. حساب التاريخ من العمر
-            calculateAgeBtn.addEventListener('click', calculateFromAge);
-            ageInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') calculateFromAge();
-            });
-
-            function calculateFromAge() {
-                const age = parseInt(ageInput.value);
-                if (age && age > 0 && age <= 1500) {
-                    const today = new Date();
-                    const birthYear = today.getFullYear() - age;
-                    const birthDate = new Date(birthYear, 0, 1);
-                    birthDateInput.value = birthDate.toISOString().split('T')[0];
-                    showMessage(`✅ تم تعيين تاريخ الميلاد التقريبي لعمر ${age} سنة`, 'success');
-                    ageInput.value = '';
-                } else {
-                    showMessage('❌ الرجاء إدخال عمر صحيح بين 1 و 1500', 'error');
+                if (selectedValue === '') {
+                    // لم يتم اختيار أي أب
+                    dynamicForm.style.display = 'none';
+                    currentMode = '';
+                    return;
                 }
-            }
 
-            // 2. اختيار القرن
-            document.querySelectorAll('.century-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const year = parseInt(this.getAttribute('data-year'));
-                    const birthDate = new Date(year, 0, 1);
-                    birthDateInput.value = birthDate.toISOString().split('T')[0];
-                    showMessage(`✅ تم تعيين بداية القرن (${year})`, 'success');
-                });
-            });
+                dynamicForm.style.display = 'block';
 
-            // 3. إدخال السنة
-            setYearBtn.addEventListener('click', setFromYear);
-            yearInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') setFromYear();
-            });
+                if (selectedValue === 'none') {
+                    // حالة عدم اختيار أب أو اختيار "بدون أب"
+                    currentMode = 'none';
+                    noFatherSection.classList.remove('hidden-section');
+                    noFatherSection.classList.add('fade-in');
 
-            function setFromYear() {
-                const year = parseInt(yearInput.value);
-                const currentYear = new Date().getFullYear();
-                if (year && year >= 1000 && year <= currentYear) {
-                    const birthDate = new Date(year, 0, 1);
-                    birthDateInput.value = birthDate.toISOString().split('T')[0];
-                    showMessage(`✅ تم تعيين سنة الميلاد ${year}`, 'success');
-                    yearInput.value = '';
-                } else {
-                    showMessage(`❌ الرجاء إدخال سنة بين 1000 و ${currentYear}`, 'error');
-                }
-            }
+                    // تنظيف رسائل الخطأ
+                    clearValidationErrors('noFather');
 
-            // 4. التحويل من الهجري
-            convertHijriBtn.addEventListener('click', convertHijri);
-            hijriYear.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') convertHijri();
-            });
+                } else if (selectedValue) {
+                    // حالة اختيار أب موجود
+                    currentMode = 'withFather';
+                    withFatherSection.classList.remove('hidden-section');
+                    withFatherSection.classList.add('fade-in');
 
-            function convertHijri() {
-                const day = hijriDay.value;
-                const month = hijriMonth.value;
-                const year = hijriYear.value;
+                    // تنظيف رسائل الخطأ
+                    clearValidationErrors('withFather');
 
-                if (day && month && year) {
-                    const gregorianYear = Math.round(parseInt(year) * 0.97 + 622);
-                    const gregorianDate = new Date(gregorianYear, parseInt(month) - 1, parseInt(day));
+                    // عرض معلومات الأب
+                    const fatherFirstName = selectedOption.getAttribute('data-firstname');
+                    const fatherFatherName = selectedOption.getAttribute('data-fathername');
+                    const fatherGrandFatherName = selectedOption.getAttribute('data-grandfathername');
+                    const fatherLastName = selectedOption.getAttribute('data-lastname');
+                    const fatherFullName = selectedOption.text;
 
-                    if (!isNaN(gregorianDate.getTime())) {
-                        birthDateInput.value = gregorianDate.toISOString().split('T')[0];
-                        showMessage('✅ تم تحويل التاريخ الهجري إلى ميلادي', 'success');
-                        hijriDay.value = hijriYear.value = '';
-                        hijriMonth.selectedIndex = 0;
-                    } else {
-                        showMessage('❌ الرجاء التأكد من صحة التاريخ الهجري', 'error');
+                    if (fatherFirstName) {
+                        // تحديث الحقول المعروضة
+                        document.getElementById('displayFatherName').value = fatherFirstName;
+                        document.getElementById('displayGrandFatherName').value = fatherFatherName;
+                        document.getElementById('displayLastName').value = fatherLastName;
+
+                        // تحديث الحقول المخفية للإرسال
+                        document.getElementById('hiddenFatherId').value = selectedValue;
+                        document.getElementById('hiddenFatherName').value = fatherFirstName;
+                        document.getElementById('hiddenGrandFatherName').value = fatherFatherName;
+                        document.getElementById('hiddenLastName').value = fatherLastName;
+
+                        fatherInfo.innerHTML = `سيتم أخذ باقي المعلومات من الأب: <strong>${fatherFullName}</strong>`;
                     }
-                } else {
-                    showMessage('❌ الرجاء إكمال جميع حقول التاريخ الهجري', 'error');
                 }
             }
 
-            function showMessage(message, type) {
-                const existingAlert = document.querySelector('.date-message-alert');
-                if (existingAlert) existingAlert.remove();
-
-                const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-                const alertHtml = `
-                    <div class="alert ${alertClass} alert-dismissible fade show date-message-alert mt-3" role="alert">
-                        ${message}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                `;
-
-                birthDateInput.insertAdjacentHTML('afterend', alertHtml);
-
-                setTimeout(() => {
-                    const alert = document.querySelector('.date-message-alert');
-                    if (alert) alert.remove();
-                }, 4000);
+            // تنظيف رسائل الخطأ
+            function clearValidationErrors(mode) {
+                const errors = document.querySelectorAll('.validation-error');
+                errors.forEach(error => error.textContent = '');
             }
+
+            // التحقق من الحقول
+            function validateForm() {
+                let isValid = true;
+                clearValidationErrors(currentMode);
+
+                if (currentMode === 'none') {
+                    // حالة بدون أب - التحقق من جميع الحقول
+                    const firstName = document.getElementById('firstNameNoFather').value.trim();
+                    const fatherName = document.getElementById('fatherNameNoFather').value.trim();
+                    const grandFatherName = document.getElementById('grandFatherNameNoFather').value.trim();
+                    const lastName = document.getElementById('lastNameNoFather').value.trim();
+                    const genderSelected = document.querySelector('input[name="Gender"]:checked');
+
+                    if (!firstName) {
+                        document.getElementById('firstNameNoFatherError').textContent = 'الاسم الأول مطلوب';
+                        isValid = false;
+                    }
+                    if (!fatherName) {
+                        document.getElementById('fatherNameNoFatherError').textContent = 'اسم الأب مطلوب';
+                        isValid = false;
+                    }
+                    if (!grandFatherName) {
+                        document.getElementById('grandFatherNameNoFatherError').textContent = 'اسم الجد مطلوب';
+                        isValid = false;
+                    }
+                    if (!lastName) {
+                        document.getElementById('lastNameNoFatherError').textContent = 'اسم العائلة مطلوب';
+                        isValid = false;
+                    }
+                    if (!genderSelected) {
+                        document.getElementById('genderError').textContent = 'يجب اختيار الجنس';
+                        isValid = false;
+                    }
+
+                    if (isValid) {
+                        // تحديث الحقول المخفية
+                        document.getElementById('hiddenFirstName').value = firstName;
+                        document.getElementById('hiddenFatherName').value = fatherName;
+                        document.getElementById('hiddenGrandFatherName').value = grandFatherName;
+                        document.getElementById('hiddenLastName').value = lastName;
+                        document.getElementById('hiddenNickname').value = document.getElementById('nicknameNoFather').value;
+                        document.getElementById('hiddenFatherId').value = '';
+                    }
+
+                } else if (currentMode === 'withFather') {
+                    // حالة مع أب - التحقق من الاسم الأول فقط
+                    const firstName = document.getElementById('firstNameWithFather').value.trim();
+                    const genderSelected = document.querySelector('input[name="Gender"]:checked');
+
+                    if (!firstName) {
+                        document.getElementById('firstNameWithFatherError').textContent = 'الاسم الأول مطلوب';
+                        isValid = false;
+                    }
+                    if (!genderSelected) {
+                        document.getElementById('genderError2').textContent = 'يجب اختيار الجنس';
+                        isValid = false;
+                    }
+
+                    if (isValid) {
+                        // تحديث الحقول المخفية
+                        document.getElementById('hiddenFirstName').value = firstName;
+                        document.getElementById('hiddenNickname').value = document.getElementById('nicknameWithFather').value;
+                    }
+                }
+
+                // تحديث الحقول المشتركة
+                if (isValid) {
+                    document.getElementById('hiddenBirthDate').value = document.getElementById('birthDate').value;
+                    document.getElementById('hiddenOccupationId').value = document.getElementById('occupationId').value;
+                    document.getElementById('hiddenCountryId').value = document.getElementById('countryId').value;
+                    document.getElementById('hiddenCity').value = document.getElementById('city').value;
+                    document.getElementById('hiddenNotes').value = document.getElementById('notes').value;
+                }
+
+                return isValid;
+            }
+
+            // إضافة حدث عند تغيير اختيار الأب
+            fatherSelect.addEventListener('change', updateForm);
+
+            // التحقق من النموذج قبل الإرسال
+            document.getElementById('personForm').addEventListener('submit', function(e) {
+                const selectedValue = fatherSelect.value;
+
+                // التحقق من اختيار الأب
+                if (!selectedValue) {
+                    e.preventDefault();
+                    fatherSelectError.textContent = 'يرجى اختيار الأب أولاً';
+                    fatherSelect.focus();
+                    return false;
+                }
+
+                // التحقق من الحقول حسب النمط
+                if (!validateForm()) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                // إظهار رسالة تأكيد
+                const action = currentMode === 'none' ? 'فرد جديد' : 'ابن';
+                if (!confirm(`هل تريد حفظ ${action} في الشجرة العائلية؟`)) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                // يمكن إرسال النموذج
+                console.log('بيانات الإرسال:', {
+                    FirstName: document.getElementById('hiddenFirstName').value,
+                    FatherName: document.getElementById('hiddenFatherName').value,
+                    GrandFatherName: document.getElementById('hiddenGrandFatherName').value,
+                    LastName: document.getElementById('hiddenLastName').value,
+                    FatherId: document.getElementById('hiddenFatherId').value,
+                    Gender: document.querySelector('input[name="Gender"]:checked').value
+                });
+            });
+
+            // إضافة تأثيرات عند التحميل
+            setTimeout(() => {
+                dynamicForm.style.opacity = '1';
+            }, 300);
+
+            // تأثيرات تفاعلية للـ Radio Buttons
+            const genderInputs = document.querySelectorAll('input[name="Gender"]');
+            genderInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    const allLabels = document.querySelectorAll('.gender-btn');
+                    allLabels.forEach(label => label.classList.remove('active-gender'));
+
+                    const currentLabel = document.querySelector(`label[for="${this.id}"]`);
+                    currentLabel.classList.add('active-gender');
+                });
+            });
+
+            // التركيز التلقائي على أول حقل
+            setTimeout(() => {
+                const firstNameInput = document.querySelector('#firstNameNoFather') || document.querySelector('#firstNameWithFather');
+                if (firstNameInput) {
+                    firstNameInput.focus();
+                }
+            }, 500);
         });
+
+        // تأثيرات CSS إضافية
+        const style = document.createElement('style');
+        style.textContent = `
+            .active-gender {
+                animation: genderPulse 0.6s ease-in-out;
+            }
+
+            @@keyframes genderPulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.08); }
+                100% { transform: scale(1.05); }
+            }
+
+            .form-control:focus, .form-select:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            }
+
+            .btn-check:focus + .gender-btn {
+                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 }
