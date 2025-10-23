@@ -511,15 +511,22 @@
 
                         <div class="form-group">
                             <label class="form-label">المدينة</label>
-                            <input type="text" class="form-control" id="city" placeholder="المدينة" />
+                            <input type="text" class="form-control" asp-for="City" placeholder="المدينة" />
+                            <span asp-validation-for="City" class="validation-error"></span>
                         </div>
                     </div>
 
                     <!-- الملاحظات -->
-                    <div class="additional-info">
-                        <div class="form-group">
-                            <label class="form-label">ملاحظات</label>
-                            <textarea class="form-control" id="notes" rows="4" placeholder="أي معلومات إضافية عن الشخص..."></textarea>
+                    <div class="form-group">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea class="form-control" asp-for="Notes" rows="4"
+                                  placeholder="أي معلومات إضافية عن الشخص...">@(Model.Notes ?? "لا توجد ملاحظات")</textarea>
+                        <span asp-validation-for="Notes" class="validation-error"></span>
+                        <div class="mt-2">
+                            <small class="text-muted"><strong>اقتراحات للملاحظات:</strong></small><br>
+                            <small class="text-muted">• مواليد عام ١٩٨٠ وتوفي عام ٢٠٢٠</small><br>
+                            <small class="text-muted">• عمل في التجارة وكان معروفاً بالصدق</small><br>
+                           
                         </div>
                     </div>
                 </div>
@@ -552,254 +559,139 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const fatherSelect = document.getElementById('fatherSelect');
-            const noFatherSection = document.getElementById('noFatherSection');
-            const withFatherSection = document.getElementById('withFatherSection');
             const dynamicForm = document.getElementById('dynamicForm');
-            const fatherInfo = document.getElementById('fatherInfo');
             const submitBtn = document.getElementById('submitBtn');
-            const fatherSelectError = document.getElementById('fatherSelectError');
 
-            let currentMode = ''; // 'none' أو 'withFather'
-
-            // تحديث الواجهة حسب اختيار الأب
-            function updateForm() {
-                const selectedValue = fatherSelect.value;
-                const selectedOption = fatherSelect.options[fatherSelect.selectedIndex];
+            // تحديث الواجهة عند اختيار الأب
+            fatherSelect.addEventListener('change', function() {
+                const selectedValue = this.value;
+                const selectedOption = this.options[this.selectedIndex];
 
                 // إخفاء جميع الأقسام أولاً
-                noFatherSection.classList.add('hidden-section');
-                withFatherSection.classList.add('hidden-section');
+                document.getElementById('noFatherSection').style.display = 'none';
+                document.getElementById('withFatherSection').style.display = 'none';
                 dynamicForm.style.display = 'none';
-                fatherSelectError.textContent = '';
 
                 if (selectedValue === '') {
-                    // لم يتم اختيار أي أب
-                    dynamicForm.style.display = 'none';
-                    currentMode = '';
                     return;
                 }
 
                 dynamicForm.style.display = 'block';
 
                 if (selectedValue === 'none') {
-                    // حالة عدم اختيار أب أو اختيار "بدون أب"
-                    currentMode = 'none';
-                    noFatherSection.classList.remove('hidden-section');
-                    noFatherSection.classList.add('fade-in');
+                    // حالة بدون أب
+                    document.getElementById('noFatherSection').style.display = 'block';
 
-                    // تنظيف رسائل الخطأ
-                    clearValidationErrors('noFather');
+                    // تنظيف الحقول
+                    document.getElementById('firstNameNoFather').value = '';
+                    document.getElementById('fatherNameNoFather').value = '';
+                    document.getElementById('grandFatherNameNoFather').value = '';
+                    document.getElementById('lastNameNoFather').value = '';
+                    document.getElementById('nicknameNoFather').value = '';
 
-                } else if (selectedValue) {
-                    // حالة اختيار أب موجود
-                    currentMode = 'withFather';
-                    withFatherSection.classList.remove('hidden-section');
-                    withFatherSection.classList.add('fade-in');
+                } else {
+                    // حالة مع أب
+                    document.getElementById('withFatherSection').style.display = 'block';
 
-                    // تنظيف رسائل الخطأ
-                    clearValidationErrors('withFather');
-
-                    // عرض معلومات الأب
+                    // تعبئة بيانات الأب في الحقول المعروضة
                     const fatherFirstName = selectedOption.getAttribute('data-firstname');
                     const fatherFatherName = selectedOption.getAttribute('data-fathername');
                     const fatherGrandFatherName = selectedOption.getAttribute('data-grandfathername');
                     const fatherLastName = selectedOption.getAttribute('data-lastname');
-                    const fatherFullName = selectedOption.text;
 
-                    if (fatherFirstName) {
-                        // تحديث الحقول المعروضة
-                        document.getElementById('displayFatherName').value = fatherFirstName;
-                        document.getElementById('displayGrandFatherName').value = fatherFatherName;
-                        document.getElementById('displayLastName').value = fatherLastName;
+                    document.getElementById('displayFatherName').value = fatherFirstName;
+                    document.getElementById('displayGrandFatherName').value = fatherFatherName;
+                    document.getElementById('displayLastName').value = fatherLastName;
 
-                        // تحديث الحقول المخفية للإرسال
-                        document.getElementById('hiddenFatherId').value = selectedValue;
-                        document.getElementById('hiddenFatherName').value = fatherFirstName;
-                        document.getElementById('hiddenGrandFatherName').value = fatherFatherName;
-                        document.getElementById('hiddenLastName').value = fatherLastName;
-
-                        fatherInfo.innerHTML = `سيتم أخذ باقي المعلومات من الأب: <strong>${fatherFullName}</strong>`;
-                    }
+                    // تنظيف حقل الاسم الأول
+                    document.getElementById('firstNameWithFather').value = '';
+                    document.getElementById('nicknameWithFather').value = '';
                 }
-            }
-
-            // تنظيف رسائل الخطأ
-            function clearValidationErrors(mode) {
-                const errors = document.querySelectorAll('.validation-error');
-                errors.forEach(error => error.textContent = '');
-            }
-
-            // التحقق من الحقول
-            function validateForm() {
-                let isValid = true;
-                clearValidationErrors(currentMode);
-
-                if (currentMode === 'none') {
-                    // حالة بدون أب - التحقق من جميع الحقول
-                    const firstName = document.getElementById('firstNameNoFather').value.trim();
-                    const fatherName = document.getElementById('fatherNameNoFather').value.trim();
-                    const grandFatherName = document.getElementById('grandFatherNameNoFather').value.trim();
-                    const lastName = document.getElementById('lastNameNoFather').value.trim();
-                    const genderSelected = document.querySelector('input[name="Gender"]:checked');
-
-                    if (!firstName) {
-                        document.getElementById('firstNameNoFatherError').textContent = 'الاسم الأول مطلوب';
-                        isValid = false;
-                    }
-                    if (!fatherName) {
-                        document.getElementById('fatherNameNoFatherError').textContent = 'اسم الأب مطلوب';
-                        isValid = false;
-                    }
-                    if (!grandFatherName) {
-                        document.getElementById('grandFatherNameNoFatherError').textContent = 'اسم الجد مطلوب';
-                        isValid = false;
-                    }
-                    if (!lastName) {
-                        document.getElementById('lastNameNoFatherError').textContent = 'اسم العائلة مطلوب';
-                        isValid = false;
-                    }
-                    if (!genderSelected) {
-                        document.getElementById('genderError').textContent = 'يجب اختيار الجنس';
-                        isValid = false;
-                    }
-
-                    if (isValid) {
-                        // تحديث الحقول المخفية
-                        document.getElementById('hiddenFirstName').value = firstName;
-                        document.getElementById('hiddenFatherName').value = fatherName;
-                        document.getElementById('hiddenGrandFatherName').value = grandFatherName;
-                        document.getElementById('hiddenLastName').value = lastName;
-                        document.getElementById('hiddenNickname').value = document.getElementById('nicknameNoFather').value;
-                        document.getElementById('hiddenFatherId').value = '';
-                    }
-
-                } else if (currentMode === 'withFather') {
-                    // حالة مع أب - التحقق من الاسم الأول فقط
-                    const firstName = document.getElementById('firstNameWithFather').value.trim();
-                    const genderSelected = document.querySelector('input[name="Gender"]:checked');
-
-                    if (!firstName) {
-                        document.getElementById('firstNameWithFatherError').textContent = 'الاسم الأول مطلوب';
-                        isValid = false;
-                    }
-                    if (!genderSelected) {
-                        document.getElementById('genderError2').textContent = 'يجب اختيار الجنس';
-                        isValid = false;
-                    }
-
-                    if (isValid) {
-                        // تحديث الحقول المخفية
-                        document.getElementById('hiddenFirstName').value = firstName;
-                        document.getElementById('hiddenNickname').value = document.getElementById('nicknameWithFather').value;
-                    }
-                }
-
-                // تحديث الحقول المشتركة
-                if (isValid) {
-                    document.getElementById('hiddenBirthDate').value = document.getElementById('birthDate').value;
-                    document.getElementById('hiddenOccupationId').value = document.getElementById('occupationId').value;
-                    document.getElementById('hiddenCountryId').value = document.getElementById('countryId').value;
-                    document.getElementById('hiddenCity').value = document.getElementById('city').value;
-                    document.getElementById('hiddenNotes').value = document.getElementById('notes').value;
-                }
-
-                return isValid;
-            }
-
-            // إضافة حدث عند تغيير اختيار الأب
-            fatherSelect.addEventListener('change', updateForm);
+            });
 
             // التحقق من النموذج قبل الإرسال
             document.getElementById('personForm').addEventListener('submit', function(e) {
                 const selectedValue = fatherSelect.value;
 
-                // التحقق من اختيار الأب
                 if (!selectedValue) {
                     e.preventDefault();
-                    fatherSelectError.textContent = 'يرجى اختيار الأب أولاً';
-                    fatherSelect.focus();
+                    alert('يرجى اختيار الأب أولاً');
                     return false;
                 }
 
-                // التحقق من الحقول حسب النمط
-                if (!validateForm()) {
+                let isValid = true;
+
+                if (selectedValue === 'none') {
+                    // التحقق من حالة بدون أب
+                    const firstName = document.getElementById('firstNameNoFather').value.trim();
+                    const fatherName = document.getElementById('fatherNameNoFather').value.trim();
+                    const grandFatherName = document.getElementById('grandFatherNameNoFather').value.trim();
+                    const lastName = document.getElementById('lastNameNoFather').value.trim();
+
+                    if (!firstName) { alert('الاسم الأول مطلوب'); isValid = false; }
+                    else if (!fatherName) { alert('اسم الأب مطلوب'); isValid = false; }
+                    else if (!grandFatherName) { alert('اسم الجد مطلوب'); isValid = false; }
+                    else if (!lastName) { alert('اسم العائلة مطلوب'); isValid = false; }
+
+                    if (isValid) {
+                        // تعيين القيم في الحقول المخفية للإرسال
+                        document.getElementById('hiddenFirstName').value = firstName;
+                        document.getElementById('hiddenFatherName').value = fatherName;
+                        document.getElementById('hiddenGrandFatherName').value = grandFatherName;
+                        document.getElementById('hiddenLastName').value = lastName;
+                        document.getElementById('hiddenNickname').value = document.getElementById('nicknameNoFather').value;
+                        document.getElementById('hiddenFatherId').value = ''; // لا يوجد أب
+                    }
+
+                } else {
+                    // التحقق من حالة مع أب
+                    const firstName = document.getElementById('firstNameWithFather').value.trim();
+
+                    if (!firstName) {
+                        alert('الاسم الأول مطلوب');
+                        isValid = false;
+                    }
+
+                    if (isValid) {
+                        // تعيين القيم في الحقول المخفية للإرسال
+                        const selectedOption = fatherSelect.options[fatherSelect.selectedIndex];
+
+                        document.getElementById('hiddenFirstName').value = firstName;
+                        document.getElementById('hiddenFatherName').value = selectedOption.getAttribute('data-firstname');
+                        document.getElementById('hiddenGrandFatherName').value = selectedOption.getAttribute('data-fathername');
+                        document.getElementById('hiddenLastName').value = selectedOption.getAttribute('data-lastname');
+                        document.getElementById('hiddenNickname').value = document.getElementById('nicknameWithFather').value;
+                        document.getElementById('hiddenFatherId').value = selectedValue;
+                    }
+                }
+
+                if (!isValid) {
                     e.preventDefault();
                     return false;
                 }
 
-                // إظهار رسالة تأكيد
-                const action = currentMode === 'none' ? 'فرد جديد' : 'ابن';
-                if (!confirm(`هل تريد حفظ ${action} في الشجرة العائلية؟`)) {
-                    e.preventDefault();
-                    return false;
-                }
-
-                // يمكن إرسال النموذج
+                // تسجيل البيانات للتأكد
                 console.log('بيانات الإرسال:', {
                     FirstName: document.getElementById('hiddenFirstName').value,
                     FatherName: document.getElementById('hiddenFatherName').value,
                     GrandFatherName: document.getElementById('hiddenGrandFatherName').value,
                     LastName: document.getElementById('hiddenLastName').value,
                     FatherId: document.getElementById('hiddenFatherId').value,
-                    Gender: document.querySelector('input[name="Gender"]:checked').value
+                    FamilyTreeId: document.querySelector('input[name="FamilyTreeId"]').value
                 });
-            });
 
-            // إضافة تأثيرات عند التحميل
-            setTimeout(() => {
-                dynamicForm.style.opacity = '1';
-            }, 300);
-
-            // تأثيرات تفاعلية للـ Radio Buttons
-            const genderInputs = document.querySelectorAll('input[name="Gender"]');
-            genderInputs.forEach(input => {
-                input.addEventListener('change', function() {
-                    const allLabels = document.querySelectorAll('.gender-btn');
-                    allLabels.forEach(label => label.classList.remove('active-gender'));
-
-                    const currentLabel = document.querySelector(`label[for="${this.id}"]`);
-                    currentLabel.classList.add('active-gender');
-                });
-            });
-
-            // التركيز التلقائي على أول حقل
-            setTimeout(() => {
-                const firstNameInput = document.querySelector('#firstNameNoFather') || document.querySelector('#firstNameWithFather');
-                if (firstNameInput) {
-                    firstNameInput.focus();
+                // إظهار رسالة تأكيد
+                if (!confirm('هل تريد حفظ الفرد الجديد؟')) {
+                    e.preventDefault();
+                    return false;
                 }
-            }, 500);
+
+                return true;
+            });
         });
-
-        // تأثيرات CSS إضافية
-        const style = document.createElement('style');
-        style.textContent = `
-            .active-gender {
-                animation: genderPulse 0.6s ease-in-out;
-            }
-
-            @@keyframes genderPulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.08); }
-                100% { transform: scale(1.05); }
-            }
-
-            .form-control:focus, .form-select:focus {
-                border-color: #667eea;
-                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-            }
-
-            .btn-check:focus + .gender-btn {
-                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-            }
-        `;
-        document.head.appendChild(style);
     </script>
+}
 }

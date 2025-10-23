@@ -123,13 +123,30 @@ namespace FamilyTreePro.Controllers
             if (!string.IsNullOrEmpty(viewModel.AdditionReason))
                 viewModel.AdditionReason = viewModel.AdditionReason.Trim();
 
+            // ⭐⭐ الإصلاحات - تعيين القيم الافتراضية للحقول المطلوبة ⭐⭐
+            if (string.IsNullOrWhiteSpace(viewModel.Nickname)) viewModel.Nickname = "لا يوجد";
+            if (string.IsNullOrWhiteSpace(viewModel.City)) viewModel.City = "غير محدد";
+            if (string.IsNullOrWhiteSpace(viewModel.Notes)) viewModel.Notes = "لا يوجد";
+            if (string.IsNullOrWhiteSpace(viewModel.Photo)) viewModel.Photo = "";
+            if (string.IsNullOrWhiteSpace(viewModel.AdditionReason)) viewModel.AdditionReason = "";
+
+            // ⭐⭐ إصلاح أخطاء ModelState لهذه الحقول ⭐⭐
+            ModelState.Remove("Nickname");
+            ModelState.Remove("City");
+            ModelState.Remove("Notes");
+            ModelState.Remove("Photo");
+            ModelState.Remove("AdditionReason");
+
             _logger.LogInformation($"🔍 بيانات النموذج المستلمة بعد التنظيف:");
             _logger.LogInformation($"   - الاسم: '{viewModel.FirstName}'");
             _logger.LogInformation($"   - اسم الأب: '{viewModel.FatherName}'");
             _logger.LogInformation($"   - اسم الجد: '{viewModel.GrandFatherName}'");
             _logger.LogInformation($"   - العائلة: '{viewModel.LastName}'");
+            _logger.LogInformation($"   - اللقب: '{viewModel.Nickname}'");
             _logger.LogInformation($"   - الجنس: '{viewModel.Gender}'");
             _logger.LogInformation($"   - الشجرة: {viewModel.FamilyTreeId}");
+            _logger.LogInformation($"   - المدينة: '{viewModel.City}'");
+            _logger.LogInformation($"   - الملاحظات: '{viewModel.Notes}'");
 
             // التحقق اليدوي من الحقول المطلوبة
             bool hasErrors = false;
@@ -203,23 +220,23 @@ namespace FamilyTreePro.Controllers
             {
                 var person = new Person
                 {
-                    FirstName = viewModel.FirstName?.Trim(),
-                    FatherName = viewModel.FatherName?.Trim(),
-                    GrandFatherName = viewModel.GrandFatherName?.Trim(),
-                    LastName = viewModel.LastName?.Trim(),
-                    Nickname = viewModel.Nickname?.Trim(),
+                    FirstName = viewModel.FirstName,
+                    FatherName = viewModel.FatherName,
+                    GrandFatherName = viewModel.GrandFatherName,
+                    LastName = viewModel.LastName,
+                    Nickname = viewModel.Nickname,
                     Gender = viewModel.Gender,
                     BirthDate = viewModel.BirthDate,
                     DeathDate = viewModel.DeathDate,
                     OccupationId = viewModel.OccupationId,
                     CountryId = viewModel.CountryId,
-                    City = viewModel.City?.Trim(),
-                    Notes = viewModel.Notes?.Trim(),
+                    City = viewModel.City,
+                    Notes = viewModel.Notes,
                     FamilyTreeId = viewModel.FamilyTreeId,
                     FatherId = viewModel.FatherId,
                     MotherId = viewModel.MotherId,
                     AdditionReason = viewModel.AdditionReason,
-                    Photo = viewModel.Photo ?? string.Empty,
+                    Photo = viewModel.Photo,
                     IsOriginalRecord = true,
                     IsConnectionPoint = false,
                     CreatedDate = DateTime.Now,
