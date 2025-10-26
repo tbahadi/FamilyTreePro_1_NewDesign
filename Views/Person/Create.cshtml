@@ -5,707 +5,1040 @@
     var hasFatherId = !string.IsNullOrEmpty(fatherId) && fatherId != "0";
 }
 
-<style>
-    .form-container {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        padding: 30px;
-        margin-bottom: 20px;
-        border: 1px solid #e9ecef;
-    }
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FamilyTreePro</title>
 
-    .form-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        border-radius: 12px 12px 0 0;
-        margin: -30px -30px 25px -30px;
-        text-align: center;
-    }
+    <!-- Font Awesome للأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    .dynamic-form {
-        transition: all 0.3s ease;
-    }
-
-    .form-section {
-        margin-bottom: 25px;
-        padding: 20px;
-        background: #f8f9fa;
-        border-radius: 10px;
-        border: 1px solid #e9ecef;
-    }
-
-    .section-title {
-        font-size: 1.2rem;
-        font-weight: 600;
-        color: #2d3748;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #667eea;
-        display: flex;
-        align-items: center;
-    }
-
-        .section-title i {
-            margin-left: 10px;
-            color: #667eea;
+    <style>
+        /* متغيرات الألوان المحسنة */
+        :root {
+            --primary-color: #2c5aa0;
+            --secondary-color: #d4af37;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+            --light-color: #f8f9fa;
+            --dark-color: #2c3e50;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
         }
 
-    .form-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 15px;
-        margin-bottom: 15px;
-    }
-
-    .form-group {
-        margin-bottom: 15px;
-    }
-
-    .form-label {
-        font-weight: 600;
-        margin-bottom: 8px;
-        color: #2d3748;
-        font-size: 0.9rem;
-        display: block;
-    }
-
-    .required-field::after {
-        content: " *";
-        color: #e53e3e;
-    }
-
-    .form-control, .form-select {
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 10px 12px;
-        font-size: 0.9rem;
-        transition: all 0.2s ease;
-        background: #fff;
-        width: 100%;
-    }
-
-        .form-control:focus, .form-select:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        /* التصميم العام المحسن */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-    /* تحسين أزرار الجنس */
-    .gender-section {
-        background: #f7fafc;
-        padding: 15px;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        margin: 15px 0;
-    }
-
-    .gender-options {
-        display: flex;
-        gap: 10px;
-        margin-top: 10px;
-    }
-
-    .gender-btn {
-        padding: 12px 15px;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        background: white;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        text-align: center;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 70px;
-    }
-
-        .gender-btn.male {
-            border-color: #4299e1;
-            color: #4299e1;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+            color: var(--text-color);
         }
 
-        .gender-btn.female {
-            border-color: #ed64a6;
-            color: #ed64a6;
+        .content-container {
+            max-width: 1000px;
+            margin: 0 auto;
         }
 
-    .btn-check:checked + .gender-btn.male {
-        background: #4299e1;
-        color: white;
-        border-color: #4299e1;
-    }
-
-    .btn-check:checked + .gender-btn.female {
-        background: #ed64a6;
-        color: white;
-        border-color: #ed64a6;
-    }
-
-    .gender-icon {
-        font-size: 1.1rem;
-        margin-bottom: 5px;
-    }
-
-    .father-selection {
-        background: #fffaf0;
-        padding: 20px;
-        border-radius: 10px;
-        border: 2px dashed #f6ad55;
-        margin: 15px 0;
-        text-align: center;
-    }
-
-    .auto-selected-father {
-        background: #f0fff4;
-        padding: 15px;
-        border-radius: 10px;
-        border: 2px solid #68d391;
-        margin: 15px 0;
-    }
-
-    .father-info-card {
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
-        border: 1px solid #c6f6d5;
-        margin: 10px 0;
-    }
-
-    .father-name {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #22543d;
-        margin-bottom: 8px;
-    }
-
-    .father-details {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 10px;
-        margin-top: 10px;
-    }
-
-    .father-detail-item {
-        background: #f7fafc;
-        padding: 8px 10px;
-        border-radius: 6px;
-        text-align: center;
-    }
-
-    .father-detail-label {
-        font-weight: 600;
-        color: #4a5568;
-        font-size: 0.8rem;
-    }
-
-    .father-detail-value {
-        color: #2d3748;
-        font-size: 0.9rem;
-        margin-top: 3px;
-    }
-
-    .auto-filled {
-        background-color: #f0fff4 !important;
-        border-color: #68d391 !important;
-    }
-
-    .auto-filled-note {
-        font-size: 0.75rem;
-        color: #38a169;
-        margin-top: 3px;
-        display: block;
-    }
-
-    .info-message {
-        background: #e6fffa;
-        border: 1px solid #81e6d9;
-        border-radius: 8px;
-        padding: 12px;
-        margin: 12px 0;
-        text-align: center;
-    }
-
-    .hidden-section {
-        display: none;
-    }
-
-    .actions-section {
-        text-align: center;
-        padding: 25px 0 5px;
-        border-top: 1px solid #e2e8f0;
-        margin-top: 20px;
-    }
-
-    .btn-save {
-        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-        color: white;
-        border: none;
-        padding: 12px 30px;
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: 8px;
-        transition: all 0.2s ease;
-    }
-
-        .btn-save:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.3);
+        /* بطاقة محسنة */
+        .hilal-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 30px;
+            border: 2px solid var(--secondary-color);
         }
 
-    .btn-secondary {
-        background: #6c757d;
-        color: white;
-        border: none;
-        padding: 12px 25px;
-        font-size: 1rem;
-        border-radius: 8px;
-        transition: all 0.2s ease;
-    }
+        .hilal-header {
+            background: linear-gradient(135deg, var(--primary-color), #1e3a8a);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
 
-    .validation-error {
-        color: #e53e3e;
-        font-size: 0.8rem;
-        margin-top: 3px;
-        display: block;
-    }
+        .header-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="rgba(255,255,255,0.1)"><polygon points="50,0 100,50 50,100 0,50"/></svg>');
+            background-size: 80px 80px;
+        }
 
-    .text-muted {
-        font-size: 0.8rem;
-    }
+        .crescent-design {
+            width: 80px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--secondary-color), #f39c12);
+            border-radius: 0 0 40px 40px;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+            position: relative;
+            z-index: 2;
+        }
 
-    /* تحسينات للشاشات الصغيرة */
-    @@media (max-width: 768px) {
+        .hilal-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .hilal-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hilal-body {
+            padding: 30px;
+        }
+
+        /* رسائل التنبيه المحسنة */
+        .alert-message {
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1rem;
+            border: 2px solid transparent;
+            box-shadow: var(--shadow);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border-color: var(--success-color);
+            color: #065f46;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            border-color: var(--accent-color);
+            color: #991b1b;
+        }
+
+        /* تحسينات النموذج */
         .form-container {
-            padding: 15px;
-            margin: 10px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
         }
 
-        .form-header {
-            margin: -15px -15px 20px -15px;
-            padding: 15px;
+        .dynamic-form {
+            transition: var(--transition);
         }
+
+        .form-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .section-title i {
+                color: var(--primary-color);
+            }
 
         .form-grid {
-            grid-template-columns: 1fr;
-            gap: 12px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .required-field::after {
+            content: " *";
+            color: var(--accent-color);
+        }
+
+        .form-control, .form-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: var(--transition);
+            background: white;
+        }
+
+            .form-control:focus, .form-select:focus {
+                outline: none;
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+                background: white;
+            }
+
+        /* أزرار الجنس المحسنة */
+        .gender-section {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin: 20px 0;
         }
 
         .gender-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .gender-option {
+            position: relative;
+        }
+
+        .btn-check {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .gender-btn {
+            padding: 20px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            display: flex;
             flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+
+            .gender-btn.male {
+                border-color: var(--info-color);
+                color: var(--info-color);
+            }
+
+            .gender-btn.female {
+                border-color: var(--accent-color);
+                color: var(--accent-color);
+            }
+
+        .btn-check:checked + .gender-btn.male {
+            background: var(--info-color);
+            color: white;
+            border-color: var(--info-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-check:checked + .gender-btn.female {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .gender-icon {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+
+        /* اختيار الأب */
+        .father-selection {
+            background: linear-gradient(135deg, #fffaf0, #fefce8);
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px dashed var(--warning-color);
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .auto-selected-father {
+            background: linear-gradient(135deg, #f0fff4, #f0fdf4);
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px solid var(--success-color);
+            margin: 20px 0;
+        }
+
+        .father-info-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #c6f6d5;
+            margin: 15px 0;
+            box-shadow: var(--shadow);
+        }
+
+        .father-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #22543d;
+            margin-bottom: 15px;
+            text-align: center;
         }
 
         .father-details {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
-
-<div class="container mt-4" dir="rtl">
-    <div class="form-container">
-        <div class="form-header">
-            <h1 class="mb-2" style="font-size: 1.5rem;">
-                <i class="fas fa-user-plus me-2"></i>
-                @if (hasFatherId)
-                {
-                    <text>إضافة ابن جديد</text>
-                }
-                else
-                {
-                    <text>إضافة فرد جديد</text>
-                }
-            </h1>
-            <p class="mb-0 opacity-90" style="font-size: 0.9rem;">
-                @if (hasFatherId)
-                {
-                    <text>تم اختيار الأب تلقائياً</text>
-                }
-                else
-                {
-                    <text>اختر الأب أولاً ثم املأ البيانات</text>
-                }
-            </p>
-        </div>
-
-        @if (TempData["ErrorMessage"] != null)
-        {
-            <div class="alert alert-danger alert-dismissible fade show" role="alert" style="font-size: 0.9rem;">
-                <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
         }
 
-        @if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success alert-dismissible fade show" role="alert" style="font-size: 0.9rem;">
-                <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
+        .father-detail-item {
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
         }
 
-        <form asp-action="Create" method="post" id="personForm">
-            @Html.AntiForgeryToken()
-            <input type="hidden" asp-for="FamilyTreeId" />
+        .father-detail-label {
+            font-weight: 600;
+            color: var(--dark-color);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
 
-            <!-- قسم اختيار الأب -->
-            <div class="father-selection" id="fatherSelectionSection" style="@(hasFatherId ? "display:none" : "display:block")">
-                <h4 class="mb-3" style="font-size: 1.1rem;">
-                    <i class="fas fa-users me-2"></i>اختر الأب
-                </h4>
+        .father-detail-value {
+            color: var(--text-color);
+            font-size: 1rem;
+            font-weight: 500;
+        }
 
-                <div class="form-group">
-                    <label class="form-label required-field">الأب</label>
-                    <select class="form-select" id="fatherSelect" required>
-                        <option value="">-- اختر الأب --</option>
-                        <option value="none">-- بدون أب --</option>
-                        @if (ViewBag.PotentialFathers != null)
-                        {
-                            foreach (var father in ViewBag.PotentialFathers)
-                            {
-                                <option value="@father.Id"
-                                        data-firstname="@father.FirstName"
-                                        data-fathername="@father.FatherName"
-                                        data-grandfathername="@father.GrandFatherName"
-                                        data-lastname="@father.LastName">
-                                    @father.FullName
-                                </option>
-                            }
-                        }
-                    </select>
-                    <small class="text-muted">اختر "بدون أب" لإضافة فرد جديد</small>
-                </div>
-            </div>
+        .auto-filled {
+            background-color: #f0fff4 !important;
+            border-color: #68d391 !important;
+        }
 
-            <!-- قسم عرض الأب المختار تلقائياً -->
-            @if (hasFatherId)
-            {
-                <div class="auto-selected-father">
-                    <h4 class="mb-3" style="font-size: 1.1rem;">
-                        <i class="fas fa-user-check me-2"></i>تم اختيار الأب تلقائياً
-                    </h4>
-                    <div class="father-info-card">
-                        <div class="father-name" id="autoSelectedFatherName">جاري تحميل...</div>
-                        <div class="father-details">
-                            <div class="father-detail-item">
-                                <div class="father-detail-label">اسم الأب</div>
-                                <div class="father-detail-value" id="autoFatherFirstName">-</div>
-                            </div>
-                            <div class="father-detail-item">
-                                <div class="father-detail-label">اسم الجد</div>
-                                <div class="father-detail-value" id="autoFatherFatherName">-</div>
-                            </div>
-                            <div class="father-detail-item">
-                                <div class="father-detail-label">اسم العائلة</div>
-                                <div class="father-detail-value" id="autoFatherLastName">-</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        .auto-filled-note {
+            font-size: 0.8rem;
+            color: var(--success-color);
+            margin-top: 5px;
+            display: block;
+            font-weight: 600;
+        }
+
+        .info-message {
+            background: linear-gradient(135deg, #e6fffa, #f0fff4);
+            border: 1px solid #81e6d9;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 600;
+            color: #065f46;
+        }
+
+        .hidden-section {
+            display: none;
+        }
+
+        /* الأزرار المحسنة */
+        .actions-section {
+            text-align: center;
+            padding: 25px 0 5px;
+            border-top: 2px solid var(--border-color);
+            margin-top: 25px;
+        }
+
+        .hilal-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+            .hilal-btn::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+                transition: left 0.5s;
             }
 
-            <!-- الواجهة الديناميكية -->
-            <div class="dynamic-form" id="dynamicForm" style="@(hasFatherId ? "display:block" : "display:none")">
+            .hilal-btn:hover::before {
+                left: 100%;
+            }
 
-                <!-- حالة عدم وجود أب -->
-                <div class="hidden-section" id="noFatherSection">
-                    <div class="info-message">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>إضافة فرد جديد كامل المعلومات</strong>
-                    </div>
+            .hilal-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            }
 
-                    <!-- المعلومات الشخصية -->
-                    <div class="form-section">
-                        <div class="section-title">
-                            <i class="fas fa-user"></i>
-                            المعلومات الشخصية
-                        </div>
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            color: white;
+        }
 
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label required-field">الاسم الأول</label>
-                                <input type="text" class="form-control" id="firstNameNoFather" placeholder="الاسم الأول" />
-                                <div class="validation-error" id="firstNameNoFatherError"></div>
-                            </div>
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            color: white;
+        }
 
-                            <div class="form-group">
-                                <label class="form-label required-field">اسم الأب</label>
-                                <input type="text" class="form-control" id="fatherNameNoFather" placeholder="اسم الأب" />
-                                <div class="validation-error" id="fatherNameNoFatherError"></div>
-                            </div>
+        .btn-light {
+            background: linear-gradient(135deg, var(--light-color), #e9ecef);
+            color: var(--dark-color);
+            border: 1px solid var(--border-color);
+        }
 
-                            <div class="form-group">
-                                <label class="form-label required-field">اسم الجد</label>
-                                <input type="text" class="form-control" id="grandFatherNameNoFather" placeholder="اسم الجد" />
-                                <div class="validation-error" id="grandFatherNameNoFatherError"></div>
-                            </div>
+        .validation-error {
+            color: var(--accent-color);
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: block;
+            font-weight: 500;
+        }
 
-                            <div class="form-group">
-                                <label class="form-label required-field">اسم العائلة</label>
-                                <input type="text" class="form-control" id="lastNameNoFather" placeholder="اسم العائلة" />
-                                <div class="validation-error" id="lastNameNoFatherError"></div>
-                            </div>
-                        </div>
+        .text-muted {
+            color: #6b7280 !important;
+            font-size: 0.85rem;
+        }
 
-                        <div class="form-group">
-                            <label class="form-label">اللقب</label>
-                            <input type="text" class="form-control" id="nicknameNoFather" placeholder="اللقب (اختياري)" />
-                        </div>
-                    </div>
+        /* التصميم المتجاوب المحسن */
+        @@media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
 
-                    <!-- التفاصيل الإضافية -->
-                    <div class="form-section">
-                        <div class="section-title">
-                            <i class="fas fa-info-circle"></i>
-                            التفاصيل الإضافية
-                        </div>
+            .hilal-header {
+                padding: 25px 20px;
+            }
 
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">تاريخ الميلاد</label>
-                                <input type="date" class="form-control" id="birthDateNoFather" />
-                            </div>
+            .hilal-title {
+                font-size: 1.8rem;
+            }
 
-                            <div class="form-group">
-                                <label class="form-label">المهنة</label>
-                                <select class="form-select" id="occupationIdNoFather">
-                                    <option value="" selected>غير محدد</option>
-                                    @if (ViewBag.Occupations != null)
-                                    {
-                                        foreach (var occupation in ViewBag.Occupations)
-                                        {
-                                            <option value="@occupation.Id">@occupation.Name</option>
-                                        }
-                                    }
-                                </select>
-                            </div>
+            .hilal-subtitle {
+                font-size: 1rem;
+            }
 
-                            <div class="form-group">
-                                <label class="form-label">الدولة</label>
-                                <select class="form-select" id="countryIdNoFather">
-                                    <option value="">اختر الدولة</option>
-                                    @if (ViewBag.Countries != null)
-                                    {
-                                        foreach (var country in ViewBag.Countries)
-                                        {
-                                            if (country.Name.Contains("السعودية") || country.Name.Contains("Saudi"))
-                                            {
-                                                <option value="@country.Id" selected>@country.Name</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="@country.Id">@country.Name</option>
-                                            }
-                                        }
-                                    }
-                                </select>
-                            </div>
+            .hilal-body {
+                padding: 20px;
+            }
 
-                            <div class="form-group">
-                                <label class="form-label">المدينة</label>
-                                <input type="text" class="form-control" id="cityNoFather" placeholder="المدينة" />
-                            </div>
+            .form-container {
+                padding: 20px;
+            }
 
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
 
-                        </div>
+            .gender-options {
+                grid-template-columns: 1fr;
+            }
 
-                        <!-- الجنس -->
-                        <div class="gender-section">
-                            <label class="form-label required-field">الجنس</label>
-                            <div class="gender-options">
-                                <div class="gender-option">
-                                    <input type="radio" id="Gender_Male_NoFather" name="Gender" value="Male" class="btn-check" checked>
-                                    <label class="gender-btn male" for="Gender_Male_NoFather">
-                                        <i class="fas fa-mars gender-icon"></i>
-                                        <span>ذكر</span>
-                                    </label>
-                                </div>
-                                <div class="gender-option">
-                                    <input type="radio" id="Gender_Female_NoFather" name="Gender" value="Female" class="btn-check">
-                                    <label class="gender-btn female" for="Gender_Female_NoFather">
-                                        <i class="fas fa-venus gender-icon"></i>
-                                        <span>أنثى</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
+            .father-details {
+                grid-template-columns: 1fr;
+            }
 
-                        <!-- الملاحظات -->
-                        <div class="form-group">
-                            <label class="form-label">ملاحظات</label>
-                            <textarea class="form-control" id="notesNoFather" rows="2" placeholder="ملاحظات إضافية...">لا توجد ملاحظات</textarea>
-                        </div>
-                    </div>
+            .actions-section {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .hilal-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .hilal-title {
+                font-size: 1.6rem;
+            }
+
+            .hilal-subtitle {
+                font-size: 0.9rem;
+            }
+
+            .hilal-body {
+                padding: 15px;
+            }
+
+            .form-container {
+                padding: 15px;
+            }
+
+            .form-section {
+                padding: 15px;
+            }
+
+            .form-control, .form-select {
+                padding: 10px 12px;
+            }
+
+            .gender-btn {
+                padding: 15px 10px;
+                min-height: 70px;
+            }
+
+            .alert-message {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+                padding: 15px;
+            }
+        }
+
+        /* تأثيرات إضافية */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* تأثيرات للهواتف */
+        @@media (hover: hover) {
+            .hilal-btn:hover {
+                transform: translateY(-3px);
+            }
+
+            .gender-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="content-container">
+        <div class="hilal-card fade-in">
+            <div class="hilal-header">
+                <div class="header-pattern"></div>
+                <div class="crescent-design"></div>
+                <div class="hilal-title">
+                    @if (hasFatherId)
+                    {
+                        <text>إضافة ابن جديد</text>
+                    }
+                    else
+                    {
+                        <text>إضافة فرد جديد</text>
+                    }
                 </div>
-
-                <!-- حالة وجود أب -->
-                <div class="hidden-section" id="withFatherSection" style="@(hasFatherId ? "display:block" : "display:none")">
-                    <div class="info-message">
-                        <i class="fas fa-users me-2"></i>
-                        <strong>إضافة ابن للعائلة</strong>
-                        <p class="mb-0 mt-1" style="font-size: 0.8rem;">تم تعبئة البيانات تلقائياً من الأب المحدد</p>
-                    </div>
-
-                    <!-- المعلومات الشخصية -->
-                    <div class="form-section">
-                        <div class="section-title">
-                            <i class="fas fa-user"></i>
-                            معلومات الابن
-                        </div>
-
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label required-field">الاسم الأول</label>
-                                <input type="text" class="form-control" id="firstNameWithFather" placeholder="الاسم الأول فقط" />
-                                <div class="validation-error" id="firstNameWithFatherError"></div>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label required-field">اسم الأب</label>
-                                <input type="text" class="form-control auto-filled" id="fatherNameWithFather" />
-                                <span class="auto-filled-note">✓ معبأ تلقائياً</span>
-                                <div class="validation-error" id="fatherNameWithFatherError"></div>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label required-field">اسم الجد</label>
-                                <input type="text" class="form-control auto-filled" id="grandFatherNameWithFather" />
-                                <span class="auto-filled-note">✓ معبأ تلقائياً</span>
-                                <div class="validation-error" id="grandFatherNameWithFatherError"></div>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label required-field">اسم العائلة</label>
-                                <input type="text" class="form-control auto-filled" id="lastNameWithFather" />
-                                <span class="auto-filled-note">✓ معبأ تلقائياً</span>
-                                <div class="validation-error" id="lastNameWithFatherError"></div>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">اللقب</label>
-                            <input type="text" class="form-control" id="nicknameWithFather" placeholder="اللقب (اختياري)" />
-                        </div>
-                    </div>
-
-                    <!-- التفاصيل الإضافية -->
-                    <div class="form-section">
-                        <div class="section-title">
-                            <i class="fas fa-info-circle"></i>
-                            التفاصيل الإضافية
-                        </div>
-
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label class="form-label">تاريخ الميلاد</label>
-                                <input type="date" class="form-control" id="birthDateWithFather" />
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">المهنة</label>
-                                <select class="form-select" id="occupationIdWithFather">
-                                    <option value="" selected>غير محدد</option>
-                                    @if (ViewBag.Occupations != null)
-                                    {
-                                        foreach (var occupation in ViewBag.Occupations)
-                                        {
-                                            <option value="@occupation.Id">@occupation.Name</option>
-                                        }
-                                    }
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">الدولة</label>
-                                <select class="form-select" id="countryIdWithFather">
-                                    <option value="">اختر الدولة</option>
-                                    @if (ViewBag.Countries != null)
-                                    {
-                                        foreach (var country in ViewBag.Countries)
-                                        {
-                                            if (country.Name.Contains("السعودية") || country.Name.Contains("Saudi"))
-                                            {
-                                                <option value="@country.Id" selected>@country.Name</option>
-                                            }
-                                            else
-                                            {
-                                                <option value="@country.Id">@country.Name</option>
-                                            }
-                                        }
-                                    }
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">المدينة</label>
-                                <input type="text" class="form-control" id="cityWithFather" placeholder="المدينة" />
-                            </div>
-                        </div>
-
-                        <!-- الجنس -->
-                        <div class="gender-section">
-                            <label class="form-label required-field">الجنس</label>
-                            <div class="gender-options">
-                                <div class="gender-option">
-                                    <input type="radio" id="Gender_Male_WithFather" name="Gender" value="Male" class="btn-check" checked>
-                                    <label class="gender-btn male" for="Gender_Male_WithFather">
-                                        <i class="fas fa-mars gender-icon"></i>
-                                        <span>ذكر</span>
-                                    </label>
-                                </div>
-                                <div class="gender-option">
-                                    <input type="radio" id="Gender_Female_WithFather" name="Gender" value="Female" class="btn-check">
-                                    <label class="gender-btn female" for="Gender_Female_WithFather">
-                                        <i class="fas fa-venus gender-icon"></i>
-                                        <span>أنثى</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- الملاحظات -->
-                        <div class="form-group">
-                            <label class="form-label">ملاحظات</label>
-                            <textarea class="form-control" id="notesWithFather" rows="2" placeholder="ملاحظات إضافية...">لا توجد ملاحظات</textarea>
-                        </div>
-                    </div>
+                <div class="hilal-subtitle">
+                    @if (hasFatherId)
+                    {
+                        <text>تم اختيار الأب تلقائياً</text>
+                    }
+                    else
+                    {
+                        <text>اختر الأب أولاً ثم املأ البيانات</text>
+                    }
                 </div>
-
-                <!-- حقول مخفية للبيانات المرسلة -->
-                <input type="hidden" name="FirstName" id="hiddenFirstName" />
-                <input type="hidden" name="FatherName" id="hiddenFatherName" />
-                <input type="hidden" name="GrandFatherName" id="hiddenGrandFatherName" />
-                <input type="hidden" name="LastName" id="hiddenLastName" />
-                <input type="hidden" name="Nickname" id="hiddenNickname" />
-                <input type="hidden" name="FatherId" id="hiddenFatherId" value="@fatherId" />
-                <input type="hidden" name="BirthDate" id="hiddenBirthDate" />
-                <input type="hidden" name="OccupationId" id="hiddenOccupationId" />
-                <input type="hidden" name="CountryId" id="hiddenCountryId" />
-                <input type="hidden" name="City" id="hiddenCity" />
-                <input type="hidden" name="Notes" id="hiddenNotes" />
             </div>
 
-            <!-- أزرار الإجراءات -->
-            <div class="actions-section">
-                <button type="submit" class="btn-save" id="submitBtn">
-                    <i class="fas fa-save me-2"></i>حفظ الفرد الجديد
-                </button>
-                <a asp-action="FamilyTreeView" asp-route-familyTreeId="@Model.FamilyTreeId" class="btn btn-secondary">
-                    <i class="fas fa-arrow-right me-2"></i> رجوع
-                </a>
+            <div class="hilal-body">
+                <!-- رسائل التنبيه -->
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert-message alert-danger">
+                        <i class="fas fa-exclamation-circle fa-lg"></i>
+                        <div>@TempData["ErrorMessage"]</div>
+                    </div>
+                }
+
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert-message alert-success">
+                        <i class="fas fa-check-circle fa-lg"></i>
+                        <div>@TempData["SuccessMessage"]</div>
+                    </div>
+                }
+
+                <form asp-action="Create" method="post" id="personForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="FamilyTreeId" />
+
+                    <!-- قسم اختيار الأب -->
+                    <div class="form-container">
+                        <div class="father-selection" id="fatherSelectionSection" style="@(hasFatherId ? "display:none" : "display:block")">
+                            <h4 class="section-title">
+                                <i class="fas fa-users"></i>اختر الأب
+                            </h4>
+
+                            <div class="form-group">
+                                <label class="form-label required-field">
+                                    <i class="fas fa-user"></i>الأب
+                                </label>
+                                <select class="form-select" id="fatherSelect" required>
+                                    <option value="">-- اختر الأب --</option>
+                                    <option value="none">-- بدون أب --</option>
+                                    @if (ViewBag.PotentialFathers != null)
+                                    {
+                                        foreach (var father in ViewBag.PotentialFathers)
+                                        {
+                                            <option value="@father.Id"
+                                                    data-firstname="@father.FirstName"
+                                                    data-fathername="@father.FatherName"
+                                                    data-grandfathername="@father.GrandFatherName"
+                                                    data-lastname="@father.LastName">
+                                                @father.FullName
+                                            </option>
+                                        }
+                                    }
+                                </select>
+                                <small class="text-muted">اختر "بدون أب" لإضافة فرد جديد</small>
+                            </div>
+                        </div>
+
+                        <!-- قسم عرض الأب المختار تلقائياً -->
+                        @if (hasFatherId)
+                        {
+                            <div class="auto-selected-father">
+                                <h4 class="section-title">
+                                    <i class="fas fa-user-check"></i>تم اختيار الأب تلقائياً
+                                </h4>
+                                <div class="father-info-card">
+                                    <div class="father-name" id="autoSelectedFatherName">جاري تحميل...</div>
+                                    <div class="father-details">
+                                        <div class="father-detail-item">
+                                            <div class="father-detail-label">اسم الأب</div>
+                                            <div class="father-detail-value" id="autoFatherFirstName">-</div>
+                                        </div>
+                                        <div class="father-detail-item">
+                                            <div class="father-detail-label">اسم الجد</div>
+                                            <div class="father-detail-value" id="autoFatherFatherName">-</div>
+                                        </div>
+                                        <div class="father-detail-item">
+                                            <div class="father-detail-label">اسم العائلة</div>
+                                            <div class="father-detail-value" id="autoFatherLastName">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- الواجهة الديناميكية -->
+                    <div class="dynamic-form" id="dynamicForm" style="@(hasFatherId ? "display:block" : "display:none")">
+
+                        <!-- حالة عدم وجود أب -->
+                        <div class="hidden-section" id="noFatherSection">
+                            <div class="info-message">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>إضافة فرد جديد كامل المعلومات</strong>
+                            </div>
+
+                            <!-- المعلومات الشخصية -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <i class="fas fa-user"></i>
+                                    المعلومات الشخصية
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label required-field">
+                                            <i class="fas fa-signature"></i>الاسم الأول
+                                        </label>
+                                        <input type="text" class="form-control" id="firstNameNoFather" placeholder="الاسم الأول" />
+                                        <div class="validation-error" id="firstNameNoFatherError"></div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label required-field">
+                                            <i class="fas fa-user-friends"></i>اسم الأب
+                                        </label>
+                                        <input type="text" class="form-control" id="fatherNameNoFather" placeholder="اسم الأب" />
+                                        <div class="validation-error" id="fatherNameNoFatherError"></div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label required-field">
+                                            <i class="fas fa-user-tie"></i>اسم الجد
+                                        </label>
+                                        <input type="text" class="form-control" id="grandFatherNameNoFather" placeholder="اسم الجد" />
+                                        <div class="validation-error" id="grandFatherNameNoFatherError"></div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label required-field">
+                                            <i class="fas fa-home"></i>اسم العائلة
+                                        </label>
+                                        <input type="text" class="form-control" id="lastNameNoFather" placeholder="اسم العائلة" />
+                                        <div class="validation-error" id="lastNameNoFatherError"></div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-star"></i>اللقب
+                                    </label>
+                                    <input type="text" class="form-control" id="nicknameNoFather" placeholder="اللقب (اختياري)" />
+                                </div>
+                            </div>
+
+                            <!-- التفاصيل الإضافية -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <i class="fas fa-info-circle"></i>
+                                    التفاصيل الإضافية
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            <i class="fas fa-calendar"></i>تاريخ الميلاد
+                                        </label>
+                                        <input type="date" class="form-control" id="birthDateNoFather" />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            <i class="fas fa-briefcase"></i>المهنة
+                                        </label>
+                                        <select class="form-select" id="occupationIdNoFather">
+                                            <option value="" selected>غير محدد</option>
+                                            @if (ViewBag.Occupations != null)
+                                            {
+                                                foreach (var occupation in ViewBag.Occupations)
+                                                {
+                                                    <option value="@occupation.Id">@occupation.Name</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            <i class="fas fa-globe"></i>الدولة
+                                        </label>
+                                        <select class="form-select" id="countryIdNoFather">
+                                            <option value="">اختر الدولة</option>
+                                            @if (ViewBag.Countries != null)
+                                            {
+                                                foreach (var country in ViewBag.Countries)
+                                                {
+                                                    if (country.Name.Contains("السعودية") || country.Name.Contains("Saudi"))
+                                                    {
+                                                        <option value="@country.Id" selected>@country.Name</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@country.Id">@country.Name</option>
+                                                    }
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            <i class="fas fa-city"></i>المدينة
+                                        </label>
+                                        <input type="text" class="form-control" id="cityNoFather" placeholder="المدينة" />
+                                    </div>
+                                </div>
+
+                                <!-- الجنس -->
+                                <div class="gender-section">
+                                    <label class="form-label required-field">
+                                        <i class="fas fa-venus-mars"></i>الجنس
+                                    </label>
+                                    <div class="gender-options">
+                                        <div class="gender-option">
+                                            <input type="radio" id="Gender_Male_NoFather" name="Gender" value="Male" class="btn-check" checked>
+                                            <label class="gender-btn male" for="Gender_Male_NoFather">
+                                                <i class="fas fa-mars gender-icon"></i>
+                                                <span>ذكر</span>
+                                            </label>
+                                        </div>
+                                        <div class="gender-option">
+                                            <input type="radio" id="Gender_Female_NoFather" name="Gender" value="Female" class="btn-check">
+                                            <label class="gender-btn female" for="Gender_Female_NoFather">
+                                                <i class="fas fa-venus gender-icon"></i>
+                                                <span>أنثى</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- الملاحظات -->
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-sticky-note"></i>ملاحظات
+                                    </label>
+                                    <textarea class="form-control" id="notesNoFather" rows="3" placeholder="ملاحظات إضافية...">لا توجد ملاحظات</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- حالة وجود أب -->
+                        <div class="hidden-section" id="withFatherSection" style="@(hasFatherId ? "display:block" : "display:none")">
+                            <div class="info-message">
+                                <i class="fas fa-users"></i>
+                                <strong>إضافة ابن للعائلة</strong>
+                                <p class="mb-0 mt-1" style="font-size: 0.9rem;">تم تعبئة البيانات تلقائياً من الأب المحدد</p>
+                            </div>
+
+                            <!-- المعلومات الشخصية -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <i class="fas fa-user"></i>
+                                    معلومات الابن
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label required-field">
+                                            <i class="fas fa-signature"></i>الاسم الأول
+                                        </label>
+                                        <input type="text" class="form-control" id="firstNameWithFather" placeholder="الاسم الأول فقط" />
+                                        <div class="validation-error" id="firstNameWithFatherError"></div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label required-field">
+                                            <i class="fas fa-user-friends"></i>اسم الأب
+                                        </label>
+                                        <input type="text" class="form-control auto-filled" id="fatherNameWithFather" readonly />
+                                        <span class="auto-filled-note">✓ معبأ تلقائياً</span>
+                                        <div class="validation-error" id="fatherNameWithFatherError"></div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label required-field">
+                                            <i class="fas fa-user-tie"></i>اسم الجد
+                                        </label>
+                                        <input type="text" class="form-control auto-filled" id="grandFatherNameWithFather" readonly />
+                                        <span class="auto-filled-note">✓ معبأ تلقائياً</span>
+                                        <div class="validation-error" id="grandFatherNameWithFatherError"></div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label required-field">
+                                            <i class="fas fa-home"></i>اسم العائلة
+                                        </label>
+                                        <input type="text" class="form-control auto-filled" id="lastNameWithFather" readonly />
+                                        <span class="auto-filled-note">✓ معبأ تلقائياً</span>
+                                        <div class="validation-error" id="lastNameWithFatherError"></div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-star"></i>اللقب
+                                    </label>
+                                    <input type="text" class="form-control" id="nicknameWithFather" placeholder="اللقب (اختياري)" />
+                                </div>
+                            </div>
+
+                            <!-- التفاصيل الإضافية -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <i class="fas fa-info-circle"></i>
+                                    التفاصيل الإضافية
+                                </div>
+
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            <i class="fas fa-calendar"></i>تاريخ الميلاد
+                                        </label>
+                                        <input type="date" class="form-control" id="birthDateWithFather" />
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            <i class="fas fa-briefcase"></i>المهنة
+                                        </label>
+                                        <select class="form-select" id="occupationIdWithFather">
+                                            <option value="" selected>غير محدد</option>
+                                            @if (ViewBag.Occupations != null)
+                                            {
+                                                foreach (var occupation in ViewBag.Occupations)
+                                                {
+                                                    <option value="@occupation.Id">@occupation.Name</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            <i class="fas fa-globe"></i>الدولة
+                                        </label>
+                                        <select class="form-select" id="countryIdWithFather">
+                                            <option value="">اختر الدولة</option>
+                                            @if (ViewBag.Countries != null)
+                                            {
+                                                foreach (var country in ViewBag.Countries)
+                                                {
+                                                    if (country.Name.Contains("السعودية") || country.Name.Contains("Saudi"))
+                                                    {
+                                                        <option value="@country.Id" selected>@country.Name</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@country.Id">@country.Name</option>
+                                                    }
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            <i class="fas fa-city"></i>المدينة
+                                        </label>
+                                        <input type="text" class="form-control" id="cityWithFather" placeholder="المدينة" />
+                                    </div>
+                                </div>
+
+                                <!-- الجنس -->
+                                <div class="gender-section">
+                                    <label class="form-label required-field">
+                                        <i class="fas fa-venus-mars"></i>الجنس
+                                    </label>
+                                    <div class="gender-options">
+                                        <div class="gender-option">
+                                            <input type="radio" id="Gender_Male_WithFather" name="Gender" value="Male" class="btn-check" checked>
+                                            <label class="gender-btn male" for="Gender_Male_WithFather">
+                                                <i class="fas fa-mars gender-icon"></i>
+                                                <span>ذكر</span>
+                                            </label>
+                                        </div>
+                                        <div class="gender-option">
+                                            <input type="radio" id="Gender_Female_WithFather" name="Gender" value="Female" class="btn-check">
+                                            <label class="gender-btn female" for="Gender_Female_WithFather">
+                                                <i class="fas fa-venus gender-icon"></i>
+                                                <span>أنثى</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- الملاحظات -->
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-sticky-note"></i>ملاحظات
+                                    </label>
+                                    <textarea class="form-control" id="notesWithFather" rows="3" placeholder="ملاحظات إضافية...">لا توجد ملاحظات</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- حقول مخفية للبيانات المرسلة -->
+                        <input type="hidden" name="FirstName" id="hiddenFirstName" />
+                        <input type="hidden" name="FatherName" id="hiddenFatherName" />
+                        <input type="hidden" name="GrandFatherName" id="hiddenGrandFatherName" />
+                        <input type="hidden" name="LastName" id="hiddenLastName" />
+                        <input type="hidden" name="Nickname" id="hiddenNickname" />
+                        <input type="hidden" name="FatherId" id="hiddenFatherId" value="@fatherId" />
+                        <input type="hidden" name="BirthDate" id="hiddenBirthDate" />
+                        <input type="hidden" name="OccupationId" id="hiddenOccupationId" />
+                        <input type="hidden" name="CountryId" id="hiddenCountryId" />
+                        <input type="hidden" name="City" id="hiddenCity" />
+                        <input type="hidden" name="Notes" id="hiddenNotes" />
+                    </div>
+
+                    <!-- أزرار الإجراءات -->
+                    <div class="actions-section">
+                        <button type="submit" class="hilal-btn btn-success" id="submitBtn">
+                            <i class="fas fa-save"></i>حفظ الفرد الجديد
+                        </button>
+                        <a asp-action="FamilyTreeView" asp-route-familyTreeId="@Model.FamilyTreeId" class="hilal-btn btn-light">
+                            <i class="fas fa-arrow-right"></i> رجوع
+                        </a>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
-</div>
 
-@section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const fatherSelect = document.getElementById('fatherSelect');
             const dynamicForm = document.getElementById('dynamicForm');
             const urlParams = new URLSearchParams(window.location.search);
             const fatherIdFromUrl = urlParams.get('fatherId');
+
+            // تأثير للهلال
+            const crescent = document.querySelector('.crescent-design');
+            if (crescent) {
+                crescent.addEventListener('mouseover', function() {
+                    this.style.transform = 'scale(1.1) rotate(5deg)';
+                    this.style.transition = 'transform 0.3s ease';
+                });
+
+                crescent.addEventListener('mouseout', function() {
+                    this.style.transform = 'scale(1) rotate(0)';
+                });
+            }
 
             // إذا كان هناك fatherId في الرابط، نعبئ البيانات تلقائياً
             if (fatherIdFromUrl && fatherIdFromUrl !== '0') {
@@ -876,4 +1209,5 @@
             });
         });
     </script>
-}
+</body>
+</html>

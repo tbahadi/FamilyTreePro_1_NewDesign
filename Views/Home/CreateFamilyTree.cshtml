@@ -4,408 +4,606 @@
     ViewData["Title"] = "إنشاء شجرة عائلية جديدة";
 }
 
-<div class="container mt-4 content-container" dir="rtl">
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FamilyTreePro</title>
+
+    <!-- Font Awesome للأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* متغيرات الألوان المحسنة */
+        :root {
+            --primary-color: #2c5aa0;
+            --secondary-color: #d4af37;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+            --light-color: #f8f9fa;
+            --dark-color: #2c3e50;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        /* التصميم العام المحسن */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+
+        .content-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* بطاقة محسنة */
+        .hilal-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 30px;
+            border: 2px solid var(--secondary-color);
+        }
+
+        .hilal-header {
+            background: linear-gradient(135deg, var(--primary-color), #1e3a8a);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="rgba(255,255,255,0.1)"><polygon points="50,0 100,50 50,100 0,50"/></svg>');
+            background-size: 80px 80px;
+        }
+
+        .crescent-design {
+            width: 80px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--secondary-color), #f39c12);
+            border-radius: 0 0 40px 40px;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .hilal-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .hilal-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hilal-body {
+            padding: 40px;
+        }
+
+        /* رسائل التنبيه المحسنة */
+        .alert-message {
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1rem;
+            border: 2px solid transparent;
+            box-shadow: var(--shadow);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border-color: var(--success-color);
+            color: #065f46;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            border-color: var(--accent-color);
+            color: #991b1b;
+        }
+
+        /* تحسينات النموذج */
+        .form-container {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+            .form-label i {
+                color: var(--primary-color);
+                width: 20px;
+                text-align: center;
+            }
+
+        .form-control {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: var(--transition);
+            background: white;
+        }
+
+            .form-control:focus {
+                outline: none;
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.1);
+                background: white;
+            }
+
+        .form-control-lg {
+            font-size: 1.1rem;
+            padding: 18px 20px;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-text {
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .text-danger {
+            color: var(--accent-color) !important;
+            font-size: 0.9rem;
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* محدد الألوان المحسن */
+        .color-picker-container {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            border: 2px dashed var(--border-color);
+            text-align: center;
+        }
+
+        .form-control-color {
+            width: 100px;
+            height: 100px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .color-presets {
+            margin-top: 15px;
+        }
+
+            .color-presets small {
+                display: block;
+                margin-bottom: 10px;
+                color: #666;
+                font-weight: 600;
+            }
+
+        .color-preset {
+            display: inline-block;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: var(--transition);
+            margin: 0 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+            .color-preset:hover {
+                transform: scale(1.2);
+                border-color: var(--dark-color);
+            }
+
+            .color-preset.active {
+                transform: scale(1.2);
+                border-color: var(--dark-color);
+                box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.3);
+            }
+
+        /* الأزرار المحسنة */
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .hilal-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+            .hilal-btn::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+                transition: left 0.5s;
+            }
+
+            .hilal-btn:hover::before {
+                left: 100%;
+            }
+
+            .hilal-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            }
+
+        /* ألوان الأزرار المحدثة */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), #1e3a8a);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            color: white;
+        }
+
+        .btn-light {
+            background: linear-gradient(135deg, var(--light-color), #e9ecef);
+            color: var(--dark-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-lg {
+            padding: 18px 35px !important;
+            font-size: 1.2rem !important;
+        }
+
+        /* النجوم المتحركة */
+        .star {
+            position: fixed;
+            background-color: var(--secondary-color);
+            border-radius: 50%;
+            animation: twinkle 3s infinite alternate;
+            z-index: -1;
+        }
+
+        .star-1 {
+            top: 10%;
+            right: 5%;
+            width: 3px;
+            height: 3px;
+            animation-delay: 0s;
+        }
+
+        .star-2 {
+            top: 20%;
+            right: 15%;
+            width: 2px;
+            height: 2px;
+            animation-delay: 1s;
+        }
+
+        .star-3 {
+            top: 15%;
+            right: 25%;
+            width: 4px;
+            height: 4px;
+            animation-delay: 2s;
+        }
+
+        .star-4 {
+            top: 25%;
+            right: 10%;
+            width: 2px;
+            height: 2px;
+            animation-delay: 1.5s;
+        }
+
+        @@keyframes twinkle {
+            from {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        /* التصميم المتجاوب المحسن */
+        @@media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .hilal-header {
+                padding: 25px 20px;
+            }
+
+            .hilal-title {
+                font-size: 1.8rem;
+            }
+
+            .hilal-subtitle {
+                font-size: 1rem;
+            }
+
+            .hilal-body {
+                padding: 25px;
+            }
+
+            .form-container {
+                padding: 20px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .hilal-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .color-picker-container {
+                padding: 20px;
+            }
+
+            .form-control-color {
+                width: 80px;
+                height: 80px;
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .hilal-title {
+                font-size: 1.6rem;
+            }
+
+            .hilal-subtitle {
+                font-size: 0.9rem;
+            }
+
+            .hilal-body {
+                padding: 20px;
+            }
+
+            .form-container {
+                padding: 15px;
+            }
+
+            .form-control {
+                padding: 12px 15px;
+            }
+
+            .form-control-lg {
+                padding: 15px;
+            }
+
+            .color-preset {
+                width: 30px;
+                height: 30px;
+                margin: 0 3px;
+            }
+
+            .alert-message {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+                padding: 15px;
+            }
+        }
+
+        /* تأثيرات إضافية */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* تحسينات الوصول */
+        .form-control:focus {
+            transform: translateY(-2px);
+        }
+
+        /* تأثيرات للهواتف */
+        @@media (hover: hover) {
+            .hilal-btn:hover {
+                transform: translateY(-3px);
+            }
+        }
+    </style>
+</head>
+<body>
     <!-- النجوم المتحركة -->
     <div class="star star-1"></div>
     <div class="star star-2"></div>
     <div class="star star-3"></div>
     <div class="star star-4"></div>
 
-    <div class="text-center mb-4">
-        <h2 class="page-title">إنشاء شجرة عائلية جديدة</h2>
-        <p class="page-subtitle">ابدأ رحلة عائلتك بإنشاء شجرة عائلية جديدة</p>
-    </div>
-
-    <!-- عرض رسائل النجاح والخطأ -->
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show hilal-alert" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-check-circle me-2"></i>
-                <div>@TempData["SuccessMessage"]</div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show hilal-alert" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-exclamation-circle me-2"></i>
-                <div>@TempData["ErrorMessage"]</div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
-    <div class="form-container">
-        <form asp-action="CreateFamilyTree" method="post" class="row g-3">
-            @Html.AntiForgeryToken()
-
-            <div class="col-md-12">
-                <div class="form-group mb-4">
-                    <label asp-for="Name" class="form-label">
-                        <i class="fas fa-tree me-2"></i>اسم الشجرة العائلية
-                    </label>
-                    <input asp-for="Name" class="form-control form-control-lg" placeholder="أدخل اسم الشجرة العائلية (مثال: عائلة آل محمد)" />
-                    <div class="form-text">اختر اسماً مميزاً يمثل عائلتك</div>
-                    <span asp-validation-for="Name" class="text-danger small mt-1"></span>
-                </div>
+    <div class="content-container">
+        <div class="hilal-card fade-in">
+            <div class="hilal-header">
+                <div class="header-pattern"></div>
+                <div class="crescent-design"></div>
+                <div class="hilal-title">إنشاء شجرة عائلية جديدة</div>
+                <div class="hilal-subtitle">ابدأ رحلة عائلتك بإنشاء شجرة عائلية جديدة</div>
             </div>
 
-            <div class="col-md-12">
-                <div class="form-group mb-4">
-                    <label asp-for="Description" class="form-label">
-                        <i class="fas fa-file-alt me-2"></i>وصف الشجرة
-                    </label>
-                    <textarea asp-for="Description" class="form-control" rows="4" placeholder="أدخل وصفاً للشجرة العائلية (اختياري) - مثال: شجرة عائلة آل محمد تضم جميع الفروع والأصول"></textarea>
-                    <div class="form-text">يمكنك إضافة وصف مختصر عن العائلة أو تاريخها</div>
-                    <span asp-validation-for="Description" class="text-danger small mt-1"></span>
-                </div>
-            </div>
+            <div class="hilal-body">
+                <!-- رسائل التنبيه -->
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert-message alert-success">
+                        <i class="fas fa-check-circle fa-lg"></i>
+                        <div>@TempData["SuccessMessage"]</div>
+                    </div>
+                }
 
-            <div class="col-md-6">
-                <div class="form-group mb-4">
-                    <label asp-for="Color" class="form-label">
-                        <i class="fas fa-palette me-2"></i>لون الشجرة
-                    </label>
-                    <div class="color-picker-container">
-                        <input type="color" asp-for="Color" class="form-control form-control-color" value="#0047ab" title="اختر لوناً للشجرة" />
-                        <div class="color-presets mt-2">
-                            <small class="text-muted d-block mb-2">ألوان مقترحة:</small>
-                            <div class="d-flex gap-2 flex-wrap">
-                                <span class="color-preset" data-color="#0047ab" title="أزرق الهلال"></span>
-                                <span class="color-preset" data-color="#28a745" title="أخضر"></span>
-                                <span class="color-preset" data-color="#dc3545" title="أحمر"></span>
-                                <span class="color-preset" data-color="#ffc107" title="أصفر"></span>
-                                <span class="color-preset" data-color="#6f42c1" title="بنفسجي"></span>
-                                <span class="color-preset" data-color="#e91e63" title="وردي"></span>
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert-message alert-danger">
+                        <i class="fas fa-exclamation-circle fa-lg"></i>
+                        <div>@TempData["ErrorMessage"]</div>
+                    </div>
+                }
+
+                <form asp-action="CreateFamilyTree" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="form-container">
+                        <!-- حقل اسم الشجرة -->
+                        <div class="form-group">
+                            <label asp-for="Name" class="form-label">
+                                <i class="fas fa-tree"></i>
+                                اسم الشجرة العائلية
+                            </label>
+                            <input asp-for="Name" class="form-control form-control-lg"
+                                   placeholder="أدخل اسم الشجرة العائلية (مثال: عائلة آل محمد)" />
+                            <div class="form-text">اختر اسماً مميزاً يمثل عائلتك</div>
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <!-- حقل وصف الشجرة -->
+                        <div class="form-group">
+                            <label asp-for="Description" class="form-label">
+                                <i class="fas fa-file-alt"></i>
+                                وصف الشجرة
+                            </label>
+                            <textarea asp-for="Description" class="form-control" rows="4"
+                                      placeholder="أدخل وصفاً للشجرة العائلية (اختياري) - مثال: شجرة عائلة آل محمد تضم جميع الفروع والأصول"></textarea>
+                            <div class="form-text">يمكنك إضافة وصف مختصر عن العائلة أو تاريخها</div>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <!-- حقل لون الشجرة -->
+                        <div class="form-group">
+                            <label asp-for="Color" class="form-label">
+                                <i class="fas fa-palette"></i>
+                                لون الشجرة
+                            </label>
+                            <div class="color-picker-container">
+                                <input type="color" asp-for="Color" class="form-control form-control-color" value="#2c5aa0"
+                                       title="اختر لوناً للشجرة" />
+                                <div class="color-presets">
+                                    <small>ألوان مقترحة:</small>
+                                    <div class="mt-2">
+                                        <span class="color-preset" data-color="#2c5aa0" title="أزرق الهلال"></span>
+                                        <span class="color-preset" data-color="#27ae60" title="أخضر"></span>
+                                        <span class="color-preset" data-color="#e74c3c" title="أحمر"></span>
+                                        <span class="color-preset" data-color="#f39c12" title="أصفر"></span>
+                                        <span class="color-preset" data-color="#9b59b6" title="بنفسجي"></span>
+                                        <span class="color-preset" data-color="#e91e63" title="وردي"></span>
+                                    </div>
+                                </div>
                             </div>
+                            <span asp-validation-for="Color" class="text-danger"></span>
                         </div>
                     </div>
-                    <span asp-validation-for="Color" class="text-danger small mt-1"></span>
-                </div>
-            </div>
 
-            <div class="col-12">
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-success btn-lg">
-                        <i class="fas fa-tree me-2"></i> إنشاء الشجرة
-                    </button>
-                    <a asp-action="Index" class="btn btn-view-normal">
-                        <i class="fas fa-arrow-right me-2"></i> إلغاء والعودة للقائمة
-                    </a>
-                </div>
+                    <!-- أزرار الإجراءات -->
+                    <div class="form-actions">
+                        <button type="submit" class="hilal-btn btn-success btn-lg">
+                            <i class="fas fa-tree"></i> إنشاء الشجرة
+                        </button>
+                        <a asp-action="Index" class="hilal-btn btn-light">
+                            <i class="fas fa-arrow-right"></i> العودة للقائمة
+                        </a>
+                    </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
-</div>
-
-<style>
-    /* تنسيقات الصفحة */
-    .page-title {
-        color: #000000 !important;
-        font-weight: 800 !important;
-        margin-bottom: 0.5rem;
-        position: relative;
-        font-size: 2.2rem !important;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
-    }
-
-    .page-subtitle {
-        color: #333333 !important;
-        font-weight: 600 !important;
-        font-size: 1.2rem !important;
-        margin-bottom: 2rem;
-    }
-
-    .page-title:after {
-        content: '';
-        position: absolute;
-        bottom: -10px;
-        right: 50%;
-        transform: translateX(50%);
-        width: 100px;
-        height: 4px;
-        background: linear-gradient(135deg, #000000 0%, #333333 100%);
-        border-radius: 2px;
-    }
-
-    .form-container {
-        background: white;
-        border-radius: 15px;
-        padding: 40px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        border: 1px solid #e9ecef;
-        max-width: 800px;
-        margin: 0 auto;
-    }
-
-    /* تحسينات الحقول */
-    .form-label {
-        color: #000000 !important;
-        font-weight: 700 !important;
-        font-size: 1.1rem !important;
-        margin-bottom: 10px;
-    }
-
-    .form-control {
-        border: 2px solid #e9ecef;
-        border-radius: 10px;
-        padding: 12px 15px;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        background: #f8f9fa;
-    }
-
-        .form-control:focus {
-            border-color: #0047ab;
-            box-shadow: 0 0 0 0.2rem rgba(0, 71, 171, 0.25);
-            background: white;
-        }
-
-    .form-control-lg {
-        font-size: 1.1rem;
-        padding: 15px;
-    }
-
-    .form-text {
-        color: #666 !important;
-        font-size: 0.85rem;
-        margin-top: 5px;
-    }
-
-    /* محدد الألوان */
-    .color-picker-container {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
-        border: 2px dashed #dee2e6;
-    }
-
-    .form-control-color {
-        width: 80px;
-        height: 80px;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        margin-bottom: 15px;
-    }
-
-    .color-presets {
-        text-align: center;
-    }
-
-    .color-preset {
-        display: inline-block;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        cursor: pointer;
-        border: 3px solid transparent;
-        transition: all 0.3s ease;
-    }
-
-        .color-preset:hover {
-            transform: scale(1.2);
-            border-color: #000;
-        }
-
-        .color-preset[data-color="#0047ab"] {
-            background: #0047ab;
-        }
-
-        .color-preset[data-color="#28a745"] {
-            background: #28a745;
-        }
-
-        .color-preset[data-color="#dc3545"] {
-            background: #dc3545;
-        }
-
-        .color-preset[data-color="#ffc107"] {
-            background: #ffc107;
-        }
-
-        .color-preset[data-color="#6f42c1"] {
-            background: #6f42c1;
-        }
-
-        .color-preset[data-color="#e91e63"] {
-            background: #e91e63;
-        }
-
-    /* أزرار التحكم */
-    .form-actions {
-        display: flex;
-        gap: 15px;
-        justify-content: center;
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 2px solid #f1f1f1;
-    }
-
-    .btn-success {
-        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
-        border: 2px solid #1e7e34 !important;
-        border-radius: 10px !important;
-        padding: 12px 30px !important;
-        font-weight: 600 !important;
-        font-size: 1.1rem !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3) !important;
-    }
-
-        .btn-success:hover {
-            background: linear-gradient(135deg, #1e7e34 0%, #155724 100%) !important;
-            transform: translateY(-2px) !important;
-            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4) !important;
-            border-color: #155724 !important;
-        }
-
-    .btn-view-normal {
-        background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
-        color: white !important;
-        border: 2px solid #495057 !important;
-        border-radius: 10px !important;
-        padding: 12px 25px !important;
-        font-weight: 600 !important;
-        font-size: 1.1rem !important;
-        transition: all 0.3s ease !important;
-        text-decoration: none !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3) !important;
-    }
-
-        .btn-view-normal:hover {
-            background: linear-gradient(135deg, #495057 0%, #343a40 100%) !important;
-            color: white !important;
-            transform: translateY(-2px) !important;
-            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4) !important;
-            border-color: #343a40 !important;
-        }
-
-    /* التنبيهات */
-    .hilal-alert {
-        border: none;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        margin-bottom: 25px;
-    }
-
-    /* النجوم المتحركة */
-    .star {
-        position: fixed;
-        background-color: #000000;
-        border-radius: 50%;
-        animation: twinkle 3s infinite alternate;
-        z-index: -1;
-    }
-
-    .star-1 {
-        top: 10%;
-        right: 5%;
-        width: 3px;
-        height: 3px;
-        animation-delay: 0s;
-    }
-
-    .star-2 {
-        top: 20%;
-        right: 15%;
-        width: 2px;
-        height: 2px;
-        animation-delay: 1s;
-    }
-
-    .star-3 {
-        top: 15%;
-        right: 25%;
-        width: 4px;
-        height: 4px;
-        animation-delay: 2s;
-    }
-
-    .star-4 {
-        top: 25%;
-        right: 10%;
-        width: 2px;
-        height: 2px;
-        animation-delay: 1.5s;
-    }
-
-    @@keyframes twinkle {
-        from {
-            opacity: 0.3;
-            transform: scale(1);
-        }
-
-        to {
-            opacity: 1;
-            transform: scale(1.2);
-        }
-    }
-
-    /* تحسينات التجاوب */
-    @@media (max-width: 768px) {
-        .form-container {
-            padding: 30px 20px;
-            margin: 0 10px;
-        }
-
-        .page-title {
-            font-size: 1.8rem !important;
-        }
-
-        .page-subtitle {
-            font-size: 1.1rem !important;
-        }
-
-        .form-actions {
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .btn-success,
-        .btn-view-normal {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-
-    @@media (max-width: 576px) {
-        .form-container {
-            padding: 20px 15px;
-        }
-
-        .page-title {
-            font-size: 1.6rem !important;
-        }
-
-        .page-subtitle {
-            font-size: 1rem !important;
-        }
-
-        .form-label {
-            font-size: 1rem !important;
-        }
-
-        .form-control {
-            padding: 10px 12px;
-        }
-
-        .color-picker-container {
-            padding: 15px;
-        }
-    }
-</style>
-
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -419,9 +617,14 @@
                     colorInput.value = color;
 
                     // تأثير عند الاختيار
-                    colorPresets.forEach(p => p.style.borderColor = 'transparent');
-                    this.style.borderColor = '#000';
+                    colorPresets.forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
                 });
+
+                // تفعيل اللون الافتراضي
+                if (preset.getAttribute('data-color') === '#2c5aa0') {
+                    preset.classList.add('active');
+                }
             });
 
             // التحقق من الحقول قبل الإرسال
@@ -431,11 +634,38 @@
                 if (!nameInput.value.trim()) {
                     e.preventDefault();
                     nameInput.focus();
+                    nameInput.style.borderColor = 'var(--accent-color)';
                     return false;
                 }
             });
 
-            console.log('تم تحميل صفحة إنشاء الشجرة العائلية');
+            // تأثيرات عند التركيز على الحقول
+            const inputs = document.querySelectorAll('.form-control');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.style.transform = 'translateY(-2px)';
+                });
+
+                input.addEventListener('blur', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+
+            console.log('تم تحميل صفحة إنشاء الشجرة العائلية بنجاح');
         });
+
+        // تأثير للهلال
+        const crescent = document.querySelector('.crescent-design');
+        if (crescent) {
+            crescent.addEventListener('mouseover', function() {
+                this.style.transform = 'scale(1.1) rotate(5deg)';
+                this.style.transition = 'transform 0.3s ease';
+            });
+
+            crescent.addEventListener('mouseout', function() {
+                this.style.transform = 'scale(1) rotate(0)';
+            });
+        }
     </script>
-}
+</body>
+</html>

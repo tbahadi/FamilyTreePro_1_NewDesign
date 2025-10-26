@@ -1,9 +1,20 @@
 ﻿@{
     ViewData["Title"] = "تسجيل الدخول - شجرة العائلة";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var rememberMe = ViewBag.RememberMe != null && (bool)ViewBag.RememberMe;
+    var username = ViewBag.Username ?? "";
 }
 
 <div class="family-login-page">
+    <!-- شريط النسخة التجريبية -->
+    <div class="trial-version-banner">
+        <div class="trial-content">
+            <i class="fas fa-flask"></i>
+            <span>هذا الموقع يعمل حاليًا في نسخة تجريبية</span>
+        </div>
+    </div>
+
     <!-- خلفية العائلة -->
     <div class="family-background">
         <div class="generation-lines">
@@ -13,64 +24,26 @@
             <div class="gen-line gen-4"></div>
         </div>
 
-        <div class="generation-marks">
-            <div class="gen-mark mark-1" data-gen="الجذور"></div>
-            <div class="gen-mark mark-2" data-gen="الأجداد"></div>
-            <div class="gen-mark mark-3" data-gen="الآباء"></div>
-            <div class="gen-mark mark-4" data-gen="الأبناء"></div>
+        <!-- النسيج العائلي الحي -->
+        <div class="living-family-fabric">
+            <div class="fabric-canvas" id="familyFabric"></div>
         </div>
     </div>
 
     <div class="login-container">
         <div class="family-login-card">
-            <!-- الهيدر مع شجرة العائلة المصغرة -->
+            <!-- الهيدر -->
             <div class="family-card-header">
-                <div class="family-tree-preview">
-                    <div class="mini-family-tree">
-                        <!-- الجذور -->
-                        <div class="family-generation gen-roots">
-                            <div class="gen-node">
-                                <div class="node-dot"></div>
-                                <div class="gen-label">الجذور</div>
-                            </div>
+                <div class="header-content">
+                    <div class="logo-container">
+                        <div class="family-tree-icon">
+                            <i class="fas fa-tree"></i>
                         </div>
-
-                        <!-- التوصيلات -->
-                        <div class="family-connections">
-                            <div class="connection-line"></div>
-                            <div class="connection-line"></div>
-                            <div class="connection-line"></div>
-                        </div>
-
-                        <!-- الأجداد -->
-                        <div class="family-generation gen-grandparents">
-                            <div class="gen-node">
-                                <div class="node-dot"></div>
-                                <div class="gen-label">الأجداد</div>
-                            </div>
-                        </div>
-
-                        <!-- الآباء -->
-                        <div class="family-generation gen-parents">
-                            <div class="gen-node">
-                                <div class="node-dot"></div>
-                                <div class="gen-label">الآباء</div>
-                            </div>
-                        </div>
-
-                        <!-- الأبناء -->
-                        <div class="family-generation gen-children">
-                            <div class="gen-node">
-                                <div class="node-dot"></div>
-                                <div class="gen-label">الأبناء</div>
-                            </div>
+                        <div class="title-section">
+                            <h1>شجرة العائلة</h1>
+                            <p class="tagline">حيث تلتقي الأجيال وتتواصل القلوب</p>
                         </div>
                     </div>
-                </div>
-
-                <div class="header-content">
-                    <h1>شجرة العائلة</h1>
-                    <p class="tagline">حيث تلتقي الأجيال وتتواصل القلوب</p>
                 </div>
             </div>
 
@@ -83,65 +56,144 @@
                     </div>
                 }
 
-                <form asp-action="Login" method="post" class="login-form">
-                    <div class="input-field">
-                        <div class="input-wrapper">
-                            <i class="fas fa-user icon"></i>
-                            <input type="text" id="username" name="username" required
-                                   placeholder="اسم المستخدم">
+                <!-- نموذج التسجيل -->
+                <div class="login-section">
+                    <form asp-action="Login" method="post" class="login-form">
+                        @Html.AntiForgeryToken()
+
+                        <div class="input-field">
+                            <div class="input-wrapper">
+                                <i class="fas fa-user icon"></i>
+                                <input type="text" id="username" name="username" required
+                                       placeholder="اسم المستخدم" value="@username">
+                            </div>
+                        </div>
+
+                        <div class="input-field">
+                            <div class="input-wrapper">
+                                <i class="fas fa-lock icon"></i>
+                                <input type="password" id="password" name="password" required
+                                       placeholder="كلمة المرور">
+                                <button type="button" class="toggle-password" id="togglePassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" id="rememberMe" name="rememberMe" @(rememberMe ? "checked" : "")>
+                                <span class="checkmark"></span>
+                                تذكر دخولي
+                            </label>
+                            <a href="@Url.Action("ForgotPassword", "Account")" class="forgot-link">نسيت كلمة المرور؟</a>
+                        </div>
+
+                        <button type="submit" class="submit-btn">
+                            <span>دخول إلى الشجرة</span>
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- الإحصائيات -->
+                <div class="stats-section">
+                    <div class="family-stats">
+                        @{
+                            var stats = new[]
+                            {
+                                                new { Icon = "fas fa-users", Number = "١٠٠٠+", Label = "عائلة" },
+                                                new { Icon = "fas fa-network-wired", Number = "٥٠٠٠+", Label = "ترابط" },
+                                                new { Icon = "fas fa-history", Number = "١٠٠+", Label = "سنة" }
+                                                };
+                        }
+
+                        @foreach (var stat in stats)
+                        {
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="@stat.Icon"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <span class="stat-number">@stat.Number</span>
+                                    <span class="stat-label">@stat.Label</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- الميزات التفاعلية -->
+                <div class="features-grid">
+                    <!-- التوصيات الذكية -->
+                    <div class="feature-card smart-recommendations">
+                        <div class="feature-header">
+                            <i class="feature-icon fas fa-lightbulb"></i>
+                            <h3>توصيات ذكية</h3>
+                        </div>
+                        <div class="recommendation-cards">
+                            <div class="rec-card" data-type="connect">
+                                <div class="rec-content">
+                                    <h4>تواصل مع الأقارب</h4>
+                                    <p>اكتشف 5 أقارب جدد</p>
+                                </div>
+                                <button class="rec-action">استكشف</button>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="input-field">
-                        <div class="input-wrapper">
-                            <i class="fas fa-lock icon"></i>
-                            <input type="password" id="password" name="password" required
-                                   placeholder="كلمة المرور">
-                            <button type="button" class="toggle-password" id="togglePassword">
-                                <i class="fas fa-eye"></i>
-                            </button>
+                    <!-- المؤشر الحيوي -->
+                    <div class="feature-card family-vitality">
+                        <div class="feature-header">
+                            <i class="feature-icon fas fa-heartbeat"></i>
+                            <h3>الحيوية العائلية</h3>
+                        </div>
+                        <div class="vitality-content">
+                            <div class="vitality-score">85%</div>
+                            <div class="vitality-metrics">
+                                <div class="metric">
+                                    <span class="metric-label">التواصل</span>
+                                    <div class="metric-bar">
+                                        <div class="metric-fill" style="width: 78%"></div>
+                                    </div>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">النمو</span>
+                                    <div class="metric-bar">
+                                        <div class="metric-fill" style="width: 92%"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="form-actions">
-                        <label class="checkbox-wrapper">
-                            <input type="checkbox" id="rememberMe">
-                            <span class="checkmark"></span>
-                            تذكر دخولي
-                        </label>
-                        <a href="#" class="forgot-link">نسيت كلمة المرور؟</a>
-                    </div>
-
-                    <button type="submit" class="submit-btn">
-                        <span>دخول إلى الشجرة</span>
-                        <i class="fas fa-arrow-left"></i>
-                    </button>
-                </form>
-
-                <div class="family-stats">
-                    <div class="stat-item">
-                        <i class="fas fa-users"></i>
-                        <div class="stat-info">
-                            <span class="stat-number">+١٠٠٠</span>
-                            <span class="stat-label">عائلة</span>
+                    <!-- المساعد الذكي -->
+                    <div class="feature-card family-ai-assistant">
+                        <div class="feature-header">
+                            <i class="feature-icon fas fa-robot"></i>
+                            <h3>المساعد الذكي</h3>
+                        </div>
+                        <div class="ai-suggestions">
+                            <div class="ai-suggestion">
+                                "هل تريد إضافة صورة لجدك؟"
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-item">
-                        <i class="fas fa-network-wired"></i>
-                        <div class="stat-info">
-                            <span class="stat-number">+٥٠٠٠</span>
-                            <span class="stat-label">ترابط</span>
+
+                    <!-- النسيج العائلي -->
+                    <div class="feature-card fabric-preview">
+                        <div class="feature-header">
+                            <i class="feature-icon fas fa-project-diagram"></i>
+                            <h3>النسيج العائلي</h3>
                         </div>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fas fa-history"></i>
-                        <div class="stat-info">
-                            <span class="stat-number">+١٠٠</span>
-                            <span class="stat-label">سنة</span>
+                        <div class="fabric-preview-canvas" id="fabricPreview"></div>
+                        <div class="fabric-stats-preview">
+                            <span class="fabric-stat">١٢٤ عائلة متصلة</span>
                         </div>
                     </div>
                 </div>
 
+                <!-- التسجيل الجديد -->
                 <div class="alternative-actions">
                     <p>جديد معنا؟ <a asp-action="Register" asp-controller="Account" class="register-link">ابدأ شجرتك الآن</a></p>
                 </div>
@@ -150,551 +202,645 @@
     </div>
 </div>
 
-<style>
-    /* الأساسيات */
-    .family-login-page {
-        min-height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    /* خلفية الأجيال */
-    .family-background {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-    }
-
-    .generation-lines {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: space-around;
-        opacity: 0.1;
-    }
-
-    .gen-line {
-        width: 2px;
-        height: 100%;
-        background: linear-gradient(to bottom, transparent, #fff, transparent);
-        position: relative;
-    }
-
-        .gen-line::before {
-            content: '';
-            position: absolute;
-            top: 20%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 6px;
-            height: 6px;
-            background: #fff;
-            border-radius: 50%;
+@section Styles {
+    <style>
+        /* الأساسيات */
+        .family-login-page {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-    .gen-1::before {
-        top: 20%;
-    }
-
-    .gen-2::before {
-        top: 40%;
-    }
-
-    .gen-3::before {
-        top: 60%;
-    }
-
-    .gen-4::before {
-        top: 80%;
-    }
-
-    .generation-marks {
-        position: absolute;
-        right: 20px;
-        top: 50%;
-        transform: translateY(-50%);
-        display: flex;
-        flex-direction: column;
-        gap: 60px;
-    }
-
-    .gen-mark {
-        color: rgba(255,255,255,0.6);
-        font-size: 14px;
-        text-align: right;
-        position: relative;
-        padding-right: 25px;
-    }
-
-        .gen-mark::before {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 12px;
-            height: 12px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border: 2px solid rgba(255,255,255,0.6);
-        }
-
-    /* الحاوية الرئيسية */
-    .login-container {
-        width: 100%;
-        max-width: 450px;
-        z-index: 2;
-    }
-
-    /* الكارت */
-    .family-login-card {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        overflow: hidden;
-    }
-
-    /* الهيدر مع شجرة العائلة */
-    .family-card-header {
-        background: linear-gradient(135deg, #4a69bd, #1e3799);
-        padding: 30px;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .family-tree-preview {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        width: 120px;
-        height: 120px;
-        opacity: 0.3;
-    }
-
-    .mini-family-tree {
-        position: relative;
-        width: 100%;
-        height: 100%;
-    }
-
-    .family-generation {
-        position: absolute;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .gen-roots {
-        bottom: 5px;
-        left: 50%;
-        transform: translateX(-50%);
-    }
-
-    .gen-grandparents {
-        bottom: 35px;
-        left: 25%;
-    }
-
-    .gen-parents {
-        bottom: 65px;
-        right: 25%;
-    }
-
-    .gen-children {
-        top: 5px;
-        left: 50%;
-        transform: translateX(-50%);
-    }
-
-    .gen-node {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 5px;
-    }
-
-    .node-dot {
-        width: 8px;
-        height: 8px;
-        background: rgba(255,255,255,0.8);
-        border-radius: 50%;
-        border: 2px solid rgba(255,255,255,0.5);
-    }
-
-    .gen-label {
-        color: rgba(255,255,255,0.7);
-        font-size: 8px;
-        white-space: nowrap;
-    }
-
-    .family-connections {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-    }
-
-    .connection-line {
-        position: absolute;
-        background: rgba(255,255,255,0.2);
-        height: 2px;
-        transform-origin: left center;
-    }
-
-        .connection-line:nth-child(1) {
-            width: 40px;
-            bottom: 35px;
-            left: 50%;
-            transform: rotate(-30deg) translateX(-20px);
-        }
-
-        .connection-line:nth-child(2) {
-            width: 40px;
-            bottom: 35px;
-            right: 50%;
-            transform: rotate(30deg) translateX(20px);
-        }
-
-        .connection-line:nth-child(3) {
-            width: 30px;
-            bottom: 65px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-    .header-content {
-        text-align: center;
-        color: white;
-        position: relative;
-        z-index: 2;
-    }
-
-        .header-content h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin: 0 0 10px;
-        }
-
-    .tagline {
-        opacity: 0.9;
-        margin: 0;
-        font-size: 14px;
-    }
-
-    /* الجسم */
-    .card-body {
-        padding: 40px 30px;
-    }
-
-    /* رسالة الخطأ */
-    .error-message {
-        background: #ffe6e6;
-        border: 1px solid #ffcccc;
-        color: #d63031;
-        padding: 12px 15px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 25px;
-        font-size: 14px;
-    }
-
-    /* النموذج */
-    .login-form {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-
-    .input-field {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .input-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
-
-        .input-wrapper .icon {
-            position: absolute;
-            right: 15px;
-            color: #7f8c8d;
-            font-size: 16px;
-        }
-
-        .input-wrapper input {
+        /* شريط النسخة التجريبية */
+        .trial-version-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            padding: 15px 45px 15px 15px;
-            border: 2px solid #ecf0f1;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            background: #f8f9fa;
+            background: linear-gradient(90deg, #ff6b6b, #ffa500);
+            color: white;
+            padding: 8px 0;
+            text-align: center;
+            z-index: 1000;
+            font-size: 14px;
+            font-weight: 600;
         }
 
-            .input-wrapper input:focus {
-                outline: none;
-                border-color: #4a69bd;
-                background: white;
-                box-shadow: 0 0 0 3px rgba(74, 105, 189, 0.1);
+        .trial-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* الحاوية الرئيسية */
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            z-index: 2;
+            margin-top: 50px;
+        }
+
+        /* الكارت الرئيسي */
+        .family-login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            overflow: hidden;
+            animation: cardEntrance 0.8s ease-out;
+        }
+
+        @@keyframes cardEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
             }
 
-    .toggle-password {
-        position: absolute;
-        left: 15px;
-        background: none;
-        border: none;
-        color: #7f8c8d;
-        cursor: pointer;
-        padding: 5px;
-    }
-
-    /* خيارات النموذج */
-    .form-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin: 10px 0 20px;
-    }
-
-    .checkbox-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        font-size: 14px;
-        color: #2c3e50;
-    }
-
-        .checkbox-wrapper input {
-            display: none;
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
-    .checkmark {
-        width: 18px;
-        height: 18px;
-        border: 2px solid #bdc3c7;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-    }
+        /* الهيدر */
+        .family-card-header {
+            background: linear-gradient(135deg, #4a69bd, #1e3799);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
 
-    .checkbox-wrapper input:checked + .checkmark {
-        background: #4a69bd;
-        border-color: #4a69bd;
-    }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            justify-content: center;
+        }
 
-        .checkbox-wrapper input:checked + .checkmark::after {
-            content: '✓';
+        .family-tree-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
             color: white;
+        }
+
+        .title-section {
+            text-align: center;
+        }
+
+            .title-section h1 {
+                color: white;
+                font-size: 28px;
+                font-weight: 700;
+                margin: 0 0 5px 0;
+            }
+
+        .tagline {
+            color: rgba(255,255,255,0.9);
+            margin: 0;
+            font-size: 14px;
+        }
+
+        /* الجسم */
+        .card-body {
+            padding: 30px;
+        }
+
+        /* الأقسام */
+        .login-section {
+            margin-bottom: 25px;
+        }
+
+        .stats-section {
+            margin-bottom: 25px;
+        }
+
+        .features-grid {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        /* نموذج التسجيل */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+            .input-wrapper .icon {
+                position: absolute;
+                right: 15px;
+                color: #7f8c8d;
+                font-size: 16px;
+            }
+
+            .input-wrapper input {
+                width: 100%;
+                padding: 15px 45px 15px 15px;
+                border: 2px solid #ecf0f1;
+                border-radius: 12px;
+                font-size: 16px;
+                transition: all 0.3s ease;
+                background: #f8f9fa;
+            }
+
+                .input-wrapper input:focus {
+                    outline: none;
+                    border-color: #4a69bd;
+                    background: white;
+                    box-shadow: 0 0 0 3px rgba(74, 105, 189, 0.1);
+                }
+
+        .toggle-password {
+            position: absolute;
+            left: 15px;
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0 15px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+
+            .checkbox-wrapper input {
+                display: none;
+            }
+
+        .checkmark {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #bdc3c7;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-wrapper input:checked + .checkmark {
+            background: #4a69bd;
+            border-color: #4a69bd;
+        }
+
+            .checkbox-wrapper input:checked + .checkmark::after {
+                content: '✓';
+                color: white;
+                font-size: 12px;
+            }
+
+        .forgot-link {
+            color: #4a69bd;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #4a69bd, #1e3799);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+            .submit-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(74, 105, 189, 0.3);
+            }
+
+        /* الإحصائيات */
+        .family-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            padding: 20px 0;
+            border-top: 1px solid #ecf0f1;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-align: center;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #4a69bd, #1e3799);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .stat-number {
+            font-weight: 700;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
             font-size: 12px;
         }
 
-    .forgot-link {
-        color: #4a69bd;
-        text-decoration: none;
-        font-size: 14px;
-        transition: color 0.3s ease;
-    }
-
-        .forgot-link:hover {
-            color: #1e3799;
+        /* شبكة الميزات */
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
         }
 
-    /* زر التسجيل */
-    .submit-btn {
-        background: linear-gradient(135deg, #4a69bd, #1e3799);
-        color: white;
-        border: none;
-        padding: 15px;
-        border-radius: 10px;
-        font-size: 16px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(74, 105, 189, 0.3);
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #f8f9fa;
+            transition: all 0.3s ease;
         }
 
-    /* إحصائيات العائلة */
-    .family-stats {
-        display: flex;
-        justify-content: space-around;
-        margin: 30px 0;
-        padding: 20px 0;
-        border-top: 1px solid #ecf0f1;
-        border-bottom: 1px solid #ecf0f1;
-    }
+            .feature-card:hover {
+                border-color: #4a69bd;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            }
 
-    .stat-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        text-align: center;
-    }
+        .feature-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
 
-        .stat-item i {
-            width: 40px;
-            height: 40px;
+        .feature-icon {
+            width: 35px;
+            height: 35px;
             background: #f8f9fa;
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #4a69bd;
-            font-size: 16px;
+            font-size: 14px;
         }
 
-    .stat-info {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .stat-number {
-        font-weight: 700;
-        color: #2c3e50;
-        font-size: 14px;
-    }
-
-    .stat-label {
-        color: #7f8c8d;
-        font-size: 12px;
-    }
-
-    /* الإجراءات البديلة */
-    .alternative-actions {
-        text-align: center;
-    }
-
-        .alternative-actions p {
-            color: #7f8c8d;
+        .feature-header h3 {
             margin: 0;
+            color: #2c3e50;
+            font-size: 14px;
+            font-weight: 600;
         }
 
-    .register-link {
-        color: #4a69bd;
-        text-decoration: none;
-        font-weight: 600;
-    }
-
-        .register-link:hover {
-            text-decoration: underline;
+        /* التوصيات الذكية */
+        .smart-recommendations {
+            grid-column: 1 / -1;
         }
 
-    /* الاستجابة للشاشات الصغيرة */
-    @@media (max-width: 480px) {
-        .family-login-page {
+        .rec-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8f9fa;
             padding: 15px;
+            border-radius: 10px;
         }
 
-        .family-card-header {
-            padding: 25px 20px;
+        .rec-content h4 {
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+            font-size: 13px;
         }
 
-        .family-tree-preview {
-            display: none;
+        .rec-content p {
+            margin: 0;
+            color: #7f8c8d;
+            font-size: 11px;
         }
 
-        .card-body {
-            padding: 30px 20px;
+        .rec-action {
+            background: #4a69bd;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 11px;
+            cursor: pointer;
+            white-space: nowrap;
         }
 
-        .form-actions {
+        /* المؤشر الحيوي */
+        .vitality-content {
+            text-align: center;
+        }
+
+        .vitality-score {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4a69bd;
+            margin-bottom: 10px;
+        }
+
+        .vitality-metrics {
+            display: flex;
             flex-direction: column;
-            gap: 15px;
-            align-items: flex-start;
+            gap: 8px;
         }
 
-        .forgot-link {
-            align-self: flex-end;
+        .metric {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .family-stats {
-            flex-direction: column;
-            gap: 15px;
+        .metric-label {
+            width: 60px;
+            font-size: 11px;
+            color: #7f8c8d;
+            text-align: left;
         }
 
-        .stat-item {
-            justify-content: center;
+        .metric-bar {
+            flex: 1;
+            height: 6px;
+            background: #ecf0f1;
+            border-radius: 3px;
+            overflow: hidden;
         }
-    }
-</style>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // إظهار/إخفاء كلمة المرور
-        const togglePassword = document.getElementById('togglePassword');
-        const password = document.getElementById('password');
+        .metric-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4a69bd, #1e3799);
+            border-radius: 3px;
+            transition: width 1.5s ease;
+        }
 
-        if (togglePassword && password) {
-            togglePassword.addEventListener('click', function() {
-                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-                password.setAttribute('type', type);
-                this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        /* المساعد الذكي */
+        .ai-suggestions {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            border-right: 3px solid #4a69bd;
+        }
+
+        .ai-suggestion {
+            color: #2c3e50;
+            font-size: 12px;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* النسيج العائلي */
+        .fabric-preview {
+            grid-column: 1 / -1;
+        }
+
+        .fabric-preview-canvas {
+            height: 80px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .fabric-stats-preview {
+            text-align: center;
+        }
+
+        .fabric-stat {
+            color: #7f8c8d;
+            font-size: 11px;
+        }
+
+        /* التسجيل الجديد */
+        .alternative-actions {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+        }
+
+            .alternative-actions p {
+                color: #7f8c8d;
+                margin: 0;
+            }
+
+        .register-link {
+            color: #4a69bd;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* الخلفية والنسيج */
+        .family-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .generation-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: space-around;
+            opacity: 0.1;
+        }
+
+        .gen-line {
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, #fff, transparent);
+        }
+
+        .living-family-fabric {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .fabric-canvas {
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+        }
+
+        /* الاستجابة للشاشات الصغيرة */
+        @@media (max-width: 480px) {
+            .login-container {
+                margin-top: 40px;
+            }
+
+            .family-login-card {
+                border-radius: 15px;
+            }
+
+            .card-body {
+                padding: 20px;
+            }
+
+            .family-card-header {
+                padding: 25px 20px;
+            }
+
+            .title-section h1 {
+                font-size: 24px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .family-stats {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+                padding: 15px 0;
+            }
+
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+
+            .feature-card {
+                padding: 15px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .forgot-link {
+                align-self: flex-end;
+            }
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // إظهار/إخفاء كلمة المرور
+            const togglePassword = document.getElementById('togglePassword');
+            const password = document.getElementById('password');
+
+            if (togglePassword && password) {
+                togglePassword.addEventListener('click', function() {
+                    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                    password.setAttribute('type', type);
+                    this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+                });
+            }
+
+            // تأثيرات بسيطة للحقول
+            const inputs = document.querySelectorAll('.input-wrapper input');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.style.transform = 'translateY(-2px)';
+                });
+
+                input.addEventListener('blur', function() {
+                    this.parentElement.style.transform = 'translateY(0)';
+                });
             });
-        }
 
-        // تفاعل مع علامات الأجيال
-        const genMarks = document.querySelectorAll('.gen-mark');
-        genMarks.forEach(mark => {
-            mark.addEventListener('mouseenter', function() {
-                const generation = this.getAttribute('data-gen');
-                // يمكن إضافة تأثيرات إضافية هنا
+            // تفعيل التوصيات الذكية
+            const recActions = document.querySelectorAll('.rec-action');
+            recActions.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 150);
+                });
             });
+
+            // إنشاء نسيج بسيط للمعاينة
+            function createFabricPreview() {
+                const canvas = document.getElementById('fabricPreview');
+                for (let i = 0; i < 15; i++) {
+                    const node = document.createElement('div');
+                    node.style.cssText = `
+                        position: absolute;
+                        width: 4px;
+                        height: 4px;
+                        background: #4a69bd;
+                        border-radius: 50%;
+                        left: ${10 + Math.random() * 80}%;
+                        top: ${10 + Math.random() * 80}%;
+                        opacity: 0.6;
+                    `;
+                    canvas.appendChild(node);
+                }
+            }
+
+            // تهيئة المؤثرات
+            setTimeout(function() {
+                document.querySelector('.family-login-card').style.opacity = '1';
+            }, 100);
+
+            createFabricPreview();
         });
-
-        // تأثيرات بسيطة للحقول
-        const inputs = document.querySelectorAll('.input-wrapper input');
-        inputs.forEach(input => {
-            input.addEventListener('focus', function() {
-                this.parentElement.style.transform = 'translateY(-2px)';
-            });
-
-            input.addEventListener('blur', function() {
-                this.parentElement.style.transform = 'translateY(0)';
-            });
-        });
-
-        // تأثير عند التحميل
-        setTimeout(function() {
-            document.querySelector('.family-login-card').style.opacity = '1';
-            document.querySelector('.family-login-card').style.transform = 'translateY(0)';
-        }, 100);
-
-        // تركيز على حقل المستخدم
-        const usernameInput = document.getElementById('username');
-        if (usernameInput) {
-            setTimeout(() => {
-                usernameInput.focus();
-            }, 600);
-        }
-    });
-</script>
+    </script>
+}
