@@ -504,10 +504,141 @@ namespace FamilyTreePro.Controllers
                     }
                 }
 
-                TempData["ErrorMessage"] = "البيانات غير صالحة. يرجى تصحيح الأخطاء أدناه.";
+                TempData["ErrorMessage"] = "البيانات غير صالحة. يرجى تصحيح الأخطاء أدناه حين انشاء شجرة جديدة.";
             }
 
             return View(viewModel);
+        }
+
+        // في HomeController
+        // عرض صفحة تعديل الشجرة العائلية - GET
+        // عرض صفحة تعديل الشجرة العائلية - GET
+        // في الـ Controller - GET
+        public IActionResult EditFamilyTree(int id)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var familyTree = _context.FamilyTrees
+                .Include(ft => ft.Country)
+                .Include(ft => ft.Persons)
+                .FirstOrDefault(ft => ft.Id == id && ft.UserId == userId);
+
+            if (familyTree == null)
+            {
+                TempData["ErrorMessage"] = "الشجرة العائلية غير موجودة أو لا تملك صلاحية التعديل عليها";
+                return RedirectToAction("Index");
+            }
+
+            var countries = _context.Countries.ToList();
+            ViewBag.Countries = countries;
+
+            var viewModel = new EditFamilyTreeViewModel
+            {
+                Id = familyTree.Id,
+                Name = familyTree.Name,
+                Description = familyTree.Description,
+                Color = familyTree.Color,
+                CountryID = familyTree.CountryID,
+                Visibility = familyTree.Visibility,
+                CreatedDate = familyTree.CreatedDate,
+                PersonCount = familyTree.Persons?.Count ?? 0,
+                CountryName = familyTree.Country?.Name // تعيين اسم الدولة
+            };
+
+            return View(viewModel);
+        }
+
+        // في الـ Controller - POST
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditFamilyTree(EditFamilyTreeViewModel viewModel)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            // إعادة تحميل قائمة الدول
+            var countries = _context.Countries.ToList();
+            ViewBag.Countries = countries;
+
+            // الحل الشامل: إزالة جميع الأخطاء من الحقول غير الأساسية
+            var validFields = new List<string>
+    {
+        "Id", "Name", "Description", "Color", "Visibility", "CountryID"
+    };
+
+            var invalidFields = ModelState.Keys
+                .Where(key => !validFields.Contains(key))
+                .ToList();
+
+            foreach (var field in invalidFields)
+            {
+                ModelState.Remove(field);
+                _logger.LogInformation("تم إزالة الحقل {Field} من التحقق", field);
+            }
+
+            // تسجيل حالة ModelState
+            _logger.LogInformation("حالة ModelState بعد الإزالة: {IsValid}", ModelState.IsValid);
+
+            if (!ModelState.IsValid)
+            {
+                var errorMessages = ModelState
+                    .Where(x => x.Value.Errors.Count > 0)
+                    .SelectMany(x => x.Value.Errors.Select(e => $"{x.Key}: {e.ErrorMessage}"))
+                    .ToList();
+
+                _logger.LogWarning("أخطاء التحقق المتبقية: {Errors}", string.Join("; ", errorMessages));
+
+                TempData["ErrorMessage"] = "البيانات غير صالحة. يرجى تصحيح الأخطاء أدناه.";
+                return View(viewModel);
+            }
+
+            // باقي الكود...
+            try
+            {
+                var existingTree = await _context.FamilyTrees
+                    .FirstOrDefaultAsync(ft => ft.Id == viewModel.Id && ft.UserId == userId);
+
+                if (existingTree == null)
+                {
+                    TempData["ErrorMessage"] = "الشجرة العائلية غير موجودة أو لا تملك صلاحية التعديل عليها";
+                    return RedirectToAction("Index");
+                }
+
+                // تحديث البيانات
+                existingTree.Name = viewModel.Name.Trim();
+                existingTree.Description = viewModel.Description?.Trim() ?? string.Empty;
+                existingTree.Color = viewModel.Color;
+                existingTree.CountryID = viewModel.CountryID;
+                existingTree.Visibility = viewModel.Visibility;
+                existingTree.ModifiedDate = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = $"تم تعديل الشجرة العائلية '{existingTree.Name}' بنجاح!";
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطأ أثناء تعديل الشجرة: {TreeId}", viewModel.Id);
+                TempData["ErrorMessage"] = $"حدث خطأ أثناء حفظ التعديلات: {ex.Message}";
+                return View(viewModel);
+            }
+        }
+
+        // دالة مساعدة للتحقق من وجود الشجرة
+
+
+        // دالة مساعدة للتحقق من وجود الشجرة
+        private bool FamilyTreeExists(int id)
+        {
+            return _context.FamilyTrees.Any(e => e.Id == id);
         }
 
         // عرض الـ Logs مباشرة في المتصفح

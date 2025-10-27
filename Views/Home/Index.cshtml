@@ -202,6 +202,18 @@
             color: #991b1b;
         }
 
+        .alert-info {
+            background: linear-gradient(135deg, #dbeafe, #93c5fd);
+            border-color: var(--info-color);
+            color: #1e40af;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fef3c7, #fcd34d);
+            border-color: var(--warning-color);
+            color: #92400e;
+        }
+
         /* الأزرار المحسنة */
         .main-actions {
             display: flex;
@@ -289,6 +301,16 @@
             background: var(--light-color);
             color: var(--dark-color);
             border: 1px solid var(--border-color);
+        }
+
+        .btn-purple {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .btn-edit {
+            background: #f59e0b;
+            color: white;
         }
 
         .btn-sm {
@@ -649,6 +671,14 @@
                     </div>
                 }
 
+                @if (TempData["InfoMessage"] != null)
+                {
+                    <div class="alert-message alert-info">
+                        <i class="fas fa-info-circle fa-lg"></i>
+                        <div>@TempData["InfoMessage"]</div>
+                    </div>
+                }
+
                 <!-- حالة عدم وجود شجرات -->
                 @if (ViewBag.NoTrees == true)
                 {
@@ -713,8 +743,8 @@
                             </a>
                         </div>
                         <div class="responsive-actions">
-                            <a href="@Url.Action("CheckDatabaseDirectly", "Home")" class="hilal-btn btn-info">
-                                <i class="fas fa-database"></i> فحص قاعدة البيانات
+                            <a href="@Url.Action("CheckDatabaseDirectly", "Home")" class="hilal-btn btn-purple">
+                                <i class="fas fa-archive"></i> السجلات
                             </a>
                         </div>
                     </div>
@@ -731,7 +761,7 @@
                                         <th width="120">عدد الأفراد</th>
                                         <th width="120">الحالة</th>
                                         <th width="130">تاريخ الإنشاء</th>
-                                        <th width="200" class="text-center">الإجراءات</th>
+                                        <th width="220" class="text-center">الإجراءات</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -815,6 +845,11 @@
                                                     <a href="@Url.Action("Create", "Person", new { familyTreeId = tree.Id })"
                                                        class="hilal-btn btn-success btn-sm" title="إضافة فرد">
                                                         <i class="fas fa-plus"></i>
+                                                    </a>
+                                                    <!-- زر التعديل الجديد -->
+                                                    <a href="@Url.Action("EditFamilyTree", "Home", new { id = tree.Id })"
+                                                       class="hilal-btn btn-edit btn-sm" title="تعديل الشجرة">
+                                                        <i class="fas fa-edit"></i>
                                                     </a>
                                                     <a href="@Url.Action("ConnectTrees", "Home", new { id = tree.Id })"
                                                        class="hilal-btn btn-warning btn-sm" title="ربط الشجرة">

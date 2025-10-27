@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FamilyTreePro.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251027054940_AddCountryAndVisibilityToFamilyTree")]
-    partial class AddCountryAndVisibilityToFamilyTree
+    [Migration("20251027072115_InitialCreateWithModifiedDate")]
+    partial class InitialCreateWithModifiedDate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -128,6 +128,9 @@ namespace FamilyTreePro.Migrations
 
                     b.Property<bool>("IsDataIndependent")
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .IsRequired()

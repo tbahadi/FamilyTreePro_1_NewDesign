@@ -20,6 +20,7 @@ namespace FamilyTreePro.Models
 
         [Display(Name = "تاريخ الإنشاء")]
         public DateTime CreatedDate { get; set; }
+        public DateTime? ModifiedDate { get; set; }
 
         [Display(Name = "لون الشجرة")]
         [RegularExpression("^#[0-9A-Fa-f]{6}$", ErrorMessage = "اللون يجب أن يكون بصيغة HEX (مثل: #007bff)")]

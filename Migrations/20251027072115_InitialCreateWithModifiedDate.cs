@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FamilyTreePro.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialCreateWithModifiedDate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -51,11 +51,58 @@ namespace FamilyTreePro.Migrations
                     Password = table.Column<string>(type: "TEXT", nullable: false),
                     Email = table.Column<string>(type: "TEXT", nullable: false),
                     FullName = table.Column<string>(type: "TEXT", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsAdmin = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CombinedTrees",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", nullable: false),
+                    Color = table.Column<string>(type: "TEXT", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CombinedTrees", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CombinedTrees_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CombinedTreeItems",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    CombinedTreeId = table.Column<int>(type: "INTEGER", nullable: false),
+                    FamilyTreeId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ConnectionPersonId = table.Column<int>(type: "INTEGER", nullable: true),
+                    AddedDate = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CombinedTreeItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CombinedTreeItems_CombinedTrees_CombinedTreeId",
+                        column: x => x.CombinedTreeId,
+                        principalTable: "CombinedTrees",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -64,17 +111,27 @@ namespace FamilyTreePro.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "TEXT", nullable: true),
                     Color = table.Column<string>(type: "TEXT", nullable: false),
                     UserId = table.Column<int>(type: "INTEGER", nullable: false),
+                    CountryID = table.Column<int>(type: "INTEGER", nullable: false),
+                    Visibility = table.Column<int>(type: "INTEGER", nullable: false),
                     ParentTreeId = table.Column<int>(type: "INTEGER", nullable: true),
-                    ConnectionPersonId = table.Column<int>(type: "INTEGER", nullable: true)
+                    ConnectionPersonId = table.Column<int>(type: "INTEGER", nullable: true),
+                    IsDataIndependent = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_FamilyTrees", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_FamilyTrees_Countries_CountryID",
+                        column: x => x.CountryID,
+                        principalTable: "Countries",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_FamilyTrees_FamilyTrees_ParentTreeId",
                         column: x => x.ParentTreeId,
@@ -100,19 +157,23 @@ namespace FamilyTreePro.Migrations
                     GrandFatherName = table.Column<string>(type: "TEXT", nullable: false),
                     LastName = table.Column<string>(type: "TEXT", nullable: false),
                     Nickname = table.Column<string>(type: "TEXT", nullable: false),
+                    IsOriginalRecord = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IsConnectionPoint = table.Column<bool>(type: "INTEGER", nullable: false),
+                    OriginalTreeId = table.Column<int>(type: "INTEGER", nullable: true),
+                    Gender = table.Column<string>(type: "TEXT", nullable: false),
                     BirthDate = table.Column<DateTime>(type: "TEXT", nullable: true),
                     DeathDate = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    Gender = table.Column<string>(type: "TEXT", nullable: false),
                     City = table.Column<string>(type: "TEXT", nullable: false),
                     Photo = table.Column<string>(type: "TEXT", nullable: false),
                     Notes = table.Column<string>(type: "TEXT", nullable: false),
+                    AdditionReason = table.Column<string>(type: "TEXT", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    LastUpdated = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    FamilyTreeId = table.Column<int>(type: "INTEGER", nullable: false),
                     OccupationId = table.Column<int>(type: "INTEGER", nullable: true),
                     CountryId = table.Column<int>(type: "INTEGER", nullable: true),
-                    FamilyTreeId = table.Column<int>(type: "INTEGER", nullable: false),
                     FatherId = table.Column<int>(type: "INTEGER", nullable: true),
-                    MotherId = table.Column<int>(type: "INTEGER", nullable: true),
-                    IsConnectionPoint = table.Column<bool>(type: "INTEGER", nullable: false)
+                    MotherId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -146,9 +207,34 @@ namespace FamilyTreePro.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_CombinedTreeItems_CombinedTreeId",
+                table: "CombinedTreeItems",
+                column: "CombinedTreeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CombinedTreeItems_ConnectionPersonId",
+                table: "CombinedTreeItems",
+                column: "ConnectionPersonId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CombinedTreeItems_FamilyTreeId",
+                table: "CombinedTreeItems",
+                column: "FamilyTreeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CombinedTrees_UserId",
+                table: "CombinedTrees",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_FamilyTrees_ConnectionPersonId",
                 table: "FamilyTrees",
                 column: "ConnectionPersonId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FamilyTrees_CountryID",
+                table: "FamilyTrees",
+                column: "CountryID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_FamilyTrees_ParentTreeId",
@@ -186,6 +272,21 @@ namespace FamilyTreePro.Migrations
                 column: "OccupationId");
 
             migrationBuilder.AddForeignKey(
+                name: "FK_CombinedTreeItems_FamilyTrees_FamilyTreeId",
+                table: "CombinedTreeItems",
+                column: "FamilyTreeId",
+                principalTable: "FamilyTrees",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_CombinedTreeItems_Persons_ConnectionPersonId",
+                table: "CombinedTreeItems",
+                column: "ConnectionPersonId",
+                principalTable: "Persons",
+                principalColumn: "Id");
+
+            migrationBuilder.AddForeignKey(
                 name: "FK_FamilyTrees_Persons_ConnectionPersonId",
                 table: "FamilyTrees",
                 column: "ConnectionPersonId",
@@ -198,23 +299,29 @@ namespace FamilyTreePro.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
-                name: "FK_FamilyTrees_Persons_ConnectionPersonId",
-                table: "FamilyTrees");
+                name: "FK_Persons_FamilyTrees_FamilyTreeId",
+                table: "Persons");
 
             migrationBuilder.DropTable(
-                name: "Persons");
+                name: "CombinedTreeItems");
 
             migrationBuilder.DropTable(
-                name: "Countries");
+                name: "CombinedTrees");
 
             migrationBuilder.DropTable(
                 name: "FamilyTrees");
 
             migrationBuilder.DropTable(
-                name: "Occupations");
+                name: "Persons");
 
             migrationBuilder.DropTable(
                 name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Countries");
+
+            migrationBuilder.DropTable(
+                name: "Occupations");
         }
     }
 }

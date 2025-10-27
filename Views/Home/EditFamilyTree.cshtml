@@ -1,0 +1,166 @@
+﻿@model FamilyTreePro.Models.EditFamilyTreeViewModel
+
+@{
+    ViewData["Title"] = "تعديل الشجرة العائلية";
+}
+
+<div class="content-container">
+    <div class="hilal-card fade-in">
+        <div class="hilal-header">
+            <div class="header-pattern"></div>
+            <div class="crescent-design"></div>
+            <div class="hilal-title">تعديل الشجرة العائلية</div>
+            <div class="hilal-subtitle">تعديل بيانات الشجرة العائلية "@Model.Name"</div>
+        </div>
+
+        <div class="hilal-body">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert-message alert-success">
+                    <i class="fas fa-check-circle fa-lg"></i>
+                    <div>@TempData["SuccessMessage"]</div>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert-message alert-danger">
+                    <i class="fas fa-exclamation-circle fa-lg"></i>
+                    <div>@TempData["ErrorMessage"]</div>
+                </div>
+            }
+            @if (TempData["InfoMessage"] != null)
+            {
+                <div class="alert-message alert-info">
+                    <i class="fas fa-exclamation-circle fa-lg"></i>
+                    <div>@TempData["InfoMessage"]</div>
+                </div>
+            }
+
+            <form asp-action="EditFamilyTree" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+
+                <div class="form-container">
+                    <!-- حقل اسم الشجرة -->
+                    <div class="form-group">
+                        <label asp-for="Name" class="form-label">
+                            <i class="fas fa-tree"></i>
+                            اسم الشجرة العائلية
+                        </label>
+                        <input asp-for="Name" class="form-control form-control-lg"
+                               placeholder="أدخل اسم الشجرة العائلية" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <!-- حقل وصف الشجرة -->
+                    <div class="form-group">
+                        <label asp-for="Description" class="form-label">
+                            <i class="fas fa-file-alt"></i>
+                            وصف الشجرة
+                        </label>
+                        <textarea asp-for="Description" class="form-control" rows="4"
+                                  placeholder="أدخل وصفاً للشجرة العائلية"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <!-- حقل الدولة -->
+                    <div class="form-group">
+                        <label asp-for="CountryID" class="form-label">
+                            <i class="fas fa-globe"></i>
+                            الدولة
+                        </label>
+                        <select asp-for="CountryID" class="form-control">
+                            <option value="">اختر الدولة</option>
+                            @if (ViewBag.Countries != null)
+                            {
+                                foreach (var country in ViewBag.Countries)
+                                {
+                                    <option value="@country.Id">@country.Name</option>
+                                }
+                            }
+                        </select>
+                        <span asp-validation-for="CountryID" class="text-danger"></span>
+                    </div>
+
+                    <!-- حقل visibility الشجرة -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-eye"></i>
+                            رؤية الشجرة
+                        </label>
+                        <div class="visibility-options">
+                            <div class="visibility-option">
+                                <input type="radio" asp-for="Visibility" value="1" class="btn-check" id="Visibility_Public">
+                                <label class="visibility-btn public" for="Visibility_Public">
+                                    <i class="fas fa-globe visibility-icon"></i>
+                                    <div class="visibility-text">عامة</div>
+                                    <div class="visibility-desc">يمكن للجميع رؤية الشجرة</div>
+                                </label>
+                            </div>
+                            <div class="visibility-option">
+                                <input type="radio" asp-for="Visibility" value="0" class="btn-check" id="Visibility_Private">
+                                <label class="visibility-btn private" for="Visibility_Private">
+                                    <i class="fas fa-lock visibility-icon"></i>
+                                    <div class="visibility-text">خاصة</div>
+                                    <div class="visibility-desc">يمكنك فقط رؤية الشجرة</div>
+                                </label>
+                            </div>
+                        </div>
+                        <span asp-validation-for="Visibility" class="text-danger"></span>
+                    </div>
+
+                    <!-- حقل لون الشجرة -->
+                    <div class="form-group">
+                        <label asp-for="Color" class="form-label">
+                            <i class="fas fa-palette"></i>
+                            لون الشجرة
+                        </label>
+                        <div class="color-picker-container">
+                            <input type="color" asp-for="Color" class="form-control form-control-color" />
+                            <div class="color-presets">
+                                <small>ألوان مقترحة:</small>
+                                <div class="mt-2">
+                                    <span class="color-preset" data-color="#2c5aa0" title="أزرق"></span>
+                                    <span class="color-preset" data-color="#27ae60" title="أخضر"></span>
+                                    <span class="color-preset" data-color="#e74c3c" title="أحمر"></span>
+                                    <span class="color-preset" data-color="#f39c12" title="أصفر"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <span asp-validation-for="Color" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <!-- أزرار الإجراءات -->
+                <div class="form-actions">
+                    <button type="submit" class="hilal-btn btn-warning btn-lg">
+                        <i class="fas fa-save"></i> حفظ التعديلات
+                    </button>
+                    <a href="@Url.Action("Index", "Home")" class="hilal-btn btn-light">
+                        <i class="fas fa-arrow-right"></i> العودة للقائمة
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // اختيار الألوان المسبقة
+            const colorPresets = document.querySelectorAll('.color-preset');
+            const colorInput = document.querySelector('input[type="color"]');
+
+            colorPresets.forEach(preset => {
+                preset.addEventListener('click', function() {
+                    const color = this.getAttribute('data-color');
+                    colorInput.value = color;
+                    colorPresets.forEach(p => p.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        });
+    </script>
+}

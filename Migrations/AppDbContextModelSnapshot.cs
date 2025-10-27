@@ -126,6 +126,9 @@ namespace FamilyTreePro.Migrations
                     b.Property<bool>("IsDataIndependent")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("ModifiedDate")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
