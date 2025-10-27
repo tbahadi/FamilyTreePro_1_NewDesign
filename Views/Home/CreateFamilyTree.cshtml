@@ -208,6 +208,89 @@
             display: block;
         }
 
+        /* خيارات visibility المحسنة */
+        .visibility-options {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .visibility-option {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-check {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .visibility-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            min-height: 100px;
+        }
+
+            .visibility-btn:hover {
+                transform: translateY(-3px);
+                border-color: var(--primary-color);
+                box-shadow: var(--shadow);
+            }
+
+        .btn-check:checked + .visibility-btn {
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(44, 90, 160, 0.2);
+        }
+
+        .btn-check:checked + .public {
+            border-color: var(--success-color);
+            background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+        }
+
+        .btn-check:checked + .private {
+            border-color: var(--info-color);
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        }
+
+        .visibility-icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .public .visibility-icon {
+            color: var(--success-color);
+        }
+
+        .private .visibility-icon {
+            color: var(--info-color);
+        }
+
+        .visibility-text {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .visibility-desc {
+            font-size: 0.8rem;
+            color: #666;
+            line-height: 1.3;
+        }
+
         /* محدد الألوان المحسن */
         .color-picker-container {
             background: white;
@@ -433,6 +516,14 @@
                 width: 80px;
                 height: 80px;
             }
+
+            .visibility-options {
+                flex-direction: column;
+            }
+
+            .visibility-option {
+                min-width: auto;
+            }
         }
 
         @@media (max-width: 576px) {
@@ -471,6 +562,15 @@
                 text-align: center;
                 gap: 10px;
                 padding: 15px;
+            }
+
+            .visibility-btn {
+                padding: 15px 10px;
+                min-height: 80px;
+            }
+
+            .visibility-icon {
+                font-size: 1.5rem;
             }
         }
 
@@ -566,6 +666,61 @@
                             <span asp-validation-for="Description" class="text-danger"></span>
                         </div>
 
+                        <!-- حقل الدولة -->
+                        <div class="form-group">
+                            <label asp-for="CountryID" class="form-label">
+                                <i class="fas fa-globe"></i>
+                                الدولة
+                            </label>
+                            <select asp-for="CountryID" class="form-control">
+                                <option value="">اختر الدولة</option>
+                                @if (ViewBag.Countries != null)
+                                {
+                                    foreach (var country in ViewBag.Countries)
+                                    {
+                                        if (country.Name.Contains("السعودية") || country.Name.Contains("Saudi"))
+                                        {
+                                            <option value="@country.Id" selected>@country.Name</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@country.Id">@country.Name</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                            <div class="form-text">اختر الدولة الرئيسية للعائلة</div>
+                            <span asp-validation-for="CountryID" class="text-danger"></span>
+                        </div>
+
+                        <!-- حقل visibility الشجرة -->
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-eye"></i>
+                                رؤية الشجرة
+                            </label>
+                            <div class="visibility-options">
+                                <div class="visibility-option">
+                                    <input type="radio" asp-for="Visibility" value="1" class="btn-check" id="Visibility_Public">
+                                    <label class="visibility-btn public" for="Visibility_Public">
+                                        <i class="fas fa-globe visibility-icon"></i>
+                                        <div class="visibility-text">عامة</div>
+                                        <div class="visibility-desc">يمكن للجميع رؤية الشجرة</div>
+                                    </label>
+                                </div>
+                                <div class="visibility-option">
+                                    <input type="radio" asp-for="Visibility" value="0" class="btn-check" id="Visibility_Private" checked>
+                                    <label class="visibility-btn private" for="Visibility_Private">
+                                        <i class="fas fa-lock visibility-icon"></i>
+                                        <div class="visibility-text">خاصة</div>
+                                        <div class="visibility-desc">يمكنك فقط رؤية الشجرة</div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-text">اختر إذا كنت تريد أن تكون الشجرة عامة أو خاصة</div>
+                            <span asp-validation-for="Visibility" class="text-danger"></span>
+                        </div>
+
                         <!-- حقل لون الشجرة -->
                         <div class="form-group">
                             <label asp-for="Color" class="form-label">
@@ -631,10 +786,19 @@
             const form = document.querySelector('form');
             form.addEventListener('submit', function(e) {
                 const nameInput = document.querySelector('#Name');
+                const countrySelect = document.querySelector('#CountryID');
+
                 if (!nameInput.value.trim()) {
                     e.preventDefault();
                     nameInput.focus();
                     nameInput.style.borderColor = 'var(--accent-color)';
+                    return false;
+                }
+
+                if (!countrySelect.value) {
+                    e.preventDefault();
+                    countrySelect.focus();
+                    countrySelect.style.borderColor = 'var(--accent-color)';
                     return false;
                 }
             });
@@ -644,10 +808,37 @@
             inputs.forEach(input => {
                 input.addEventListener('focus', function() {
                     this.style.transform = 'translateY(-2px)';
+                    this.style.borderColor = 'var(--primary-color)';
                 });
 
                 input.addEventListener('blur', function() {
                     this.style.transform = 'translateY(0)';
+                    if (!this.value) {
+                        this.style.borderColor = 'var(--border-color)';
+                    }
+                });
+            });
+
+            // التأكد من تحديد السعودية افتراضياً
+            const countrySelect = document.querySelector('#CountryID');
+            if (countrySelect) {
+                const saudiOption = Array.from(countrySelect.options).find(option =>
+                    option.text.includes('السعودية') || option.text.includes('Saudi')
+                );
+                if (saudiOption && !countrySelect.value) {
+                    saudiOption.selected = true;
+                }
+            }
+
+            // تأثيرات لأزرار visibility
+            const visibilityButtons = document.querySelectorAll('.visibility-btn');
+            visibilityButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // إضافة تأثير النقر
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
                 });
             });
 

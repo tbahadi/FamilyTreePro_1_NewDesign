@@ -29,6 +29,15 @@ namespace FamilyTreePro.Models
         public int UserId { get; set; }
         public User User { get; set; }
 
+        // الحقول الجديدة المطلوبة
+        [Required(ErrorMessage = "الدولة مطلوبة")]
+        [Display(Name = "الدولة")]
+        public int CountryID { get; set; } = 1;
+
+        [Required(ErrorMessage = "حالة visibility الشجرة مطلوبة")]
+        [Display(Name = "رؤية الشجرة")]
+        public int Visibility { get; set; } = 0; // 0 = خاصة, 1 = عامة
+
         // العلاقة مع الأشخاص في هذه الشجرة
         public virtual ICollection<Person> Persons { get; set; }
 
@@ -52,6 +61,10 @@ namespace FamilyTreePro.Models
         [Display(Name = "البيانات مستقلة")]
         public bool IsDataIndependent { get; set; }
 
+        // علاقة مع الدولة
+        [ForeignKey("CountryID")]
+        public virtual Country Country { get; set; }
+
         public FamilyTree()
         {
             Persons = new HashSet<Person>();
@@ -59,6 +72,8 @@ namespace FamilyTreePro.Models
             CreatedDate = DateTime.Now;
             Description = string.Empty;
             IsDataIndependent = true;
+            CountryID = 1; // قيمة افتراضية
+            Visibility = 0; // خاصة افتراضياً
         }
     }
 }

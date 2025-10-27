@@ -16,5 +16,13 @@ namespace FamilyTreePro.Models
         [Display(Name = "لون الشجرة")]
         [RegularExpression("^#[0-9A-Fa-f]{6}$", ErrorMessage = "اللون يجب أن يكون بصيغة HEX (مثل: #007bff)")]
         public string Color { get; set; } = "#007bff";
+
+        [Required(ErrorMessage = "حالة visibility الشجرة مطلوبة")]
+        [Display(Name = "رؤية الشجرة")]
+        public int Visibility { get; set; } = 0; // Default to Private (0)
+
+        [Required(ErrorMessage = "الدولة مطلوبة")]
+        [Display(Name = "الدولة")]
+        public int CountryID { get; set; } = 1; // Default to 1
     }
 }

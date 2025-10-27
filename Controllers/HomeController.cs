@@ -57,28 +57,44 @@ namespace FamilyTreePro.Controllers
 
             try
             {
+                // جلب الشجرات مع تضمين بيانات الدولة
                 var familyTrees = await _context.FamilyTrees
                     .Where(ft => ft.UserId == userId)
+                    .Include(ft => ft.Country) // تضمين بيانات الدولة
                     .OrderByDescending(ft => ft.CreatedDate)
                     .ToListAsync();
 
                 _logger.LogInformation($"🔍 تحميل الشجرات للمستخدم {userId}: {familyTrees.Count} شجرة");
 
-                // حساب عدد الأفراد في كل شجرة - طريقة محسنة
-                var personCounts = new Dictionary<int, int>();
-                foreach (var tree in familyTrees)
-                {
-                    var count = await _context.Persons
-                        .Where(p => p.FamilyTreeId == tree.Id)
-                        .CountAsync();
+                // تحسين أداء حساب عدد الأفراد
+                var treeIds = familyTrees.Select(ft => ft.Id).ToList();
+                var personCounts = await _context.Persons
+                    .Where(p => treeIds.Contains(p.FamilyTreeId))
+                    .GroupBy(p => p.FamilyTreeId)
+                    .Select(g => new { TreeId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.TreeId, x => x.Count);
 
-                    personCounts[tree.Id] = count;
-                    _logger.LogInformation($"   - الشجرة {tree.Id}: {tree.Name} - {count} فرد");
-                }
-
+                // تمرير البيانات للعرض
                 ViewBag.PersonCounts = personCounts;
 
-                // إذا لم يكن للمستخدم أي شجرات، نقترح إنشاء واحدة
+                // إضافة نصوص visibility للعرض
+                ViewBag.VisibilityTexts = new Dictionary<int, string>
+        {
+            { 0, "🔒 خاصة" },
+            { 1, "🌍 عامة" }
+        };
+
+                // تسجيل تفاصيل الشجرات
+                foreach (var tree in familyTrees)
+                {
+                    var count = personCounts.GetValueOrDefault(tree.Id, 0);
+                    var visibilityText = tree.Visibility == 1 ? "عامة" : "خاصة";
+                    var countryName = tree.Country?.Name ?? "غير محدد";
+
+                    _logger.LogInformation($"   - الشجرة {tree.Id}: {tree.Name} - {count} فرد - {visibilityText} - {countryName}");
+                }
+
+                // إذا لم يكن للمستخدم أي شجرات
                 if (!familyTrees.Any())
                 {
                     ViewBag.NoTrees = true;
@@ -353,6 +369,7 @@ namespace FamilyTreePro.Controllers
         }
 
         // أكشن لإنشاء شجرة افتراضية للمستخدم الجديد
+        // أكشن لإنشاء شجرة افتراضية للمستخدم الجديد
         public async Task<IActionResult> CreateDefaultTree()
         {
             var userId = GetCurrentUserId();
@@ -376,7 +393,10 @@ namespace FamilyTreePro.Controllers
                         Description = "الشجرة العائلية الرئيسية",
                         Color = "#007bff",
                         UserId = userId.Value,
-                        CreatedDate = DateTime.Now
+                        CreatedDate = DateTime.Now,
+                        CountryID = 1, // قيمة افتراضية
+                        Visibility = 0, // خاصة افتراضياً
+                        IsDataIndependent = true // أو false حسب احتياجك
                     };
 
                     _context.FamilyTrees.Add(defaultTree);
@@ -407,6 +427,11 @@ namespace FamilyTreePro.Controllers
             {
                 return RedirectToAction("Login", "Account");
             }
+
+            // جلب قائمة الدول من قاعدة البيانات
+            var countries = _context.Countries.ToList(); // تأكد من وجود جدول Countries
+            ViewBag.Countries = countries;
+
             return View(new CreateFamilyTreeViewModel());
         }
 
@@ -423,6 +448,10 @@ namespace FamilyTreePro.Controllers
 
             _logger.LogInformation("بدء عملية إنشاء شجرة جديدة للمستخدم: {UserId}", userId);
 
+            // إعادة تحميل قائمة الدول في حالة وجود أخطاء
+            var countries = _context.Countries.ToList();
+            ViewBag.Countries = countries;
+
             if (ModelState.IsValid)
             {
                 try
@@ -434,10 +463,15 @@ namespace FamilyTreePro.Controllers
                         Description = viewModel.Description ?? string.Empty,
                         Color = viewModel.Color,
                         UserId = userId.Value,
-                        CreatedDate = DateTime.Now
+                        CreatedDate = DateTime.Now,
+                        CountryID = viewModel.CountryID,
+                        Visibility = viewModel.Visibility,
+                        IsDataIndependent = true // أو false حسب احتياجك
                     };
 
                     _logger.LogInformation("إضافة الشجرة: {Name} للمستخدم: {UserId}", familyTree.Name, userId);
+                    _logger.LogInformation("تفاصيل الشجرة - الدولة: {CountryID}, الرؤية: {Visibility}",
+                        familyTree.CountryID, familyTree.Visibility);
 
                     _context.FamilyTrees.Add(familyTree);
                     await _context.SaveChangesAsync();
@@ -458,6 +492,17 @@ namespace FamilyTreePro.Controllers
             {
                 _logger.LogWarning("النموذج غير صالح. أخطاء: {Errors}",
                     string.Join("; ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+
+                // تسجيل أخطاء محددة
+                foreach (var key in ModelState.Keys)
+                {
+                    var state = ModelState[key];
+                    if (state.Errors.Count > 0)
+                    {
+                        _logger.LogWarning("خطأ في الحقل {Field}: {Error}", key,
+                            string.Join(", ", state.Errors.Select(e => e.ErrorMessage)));
+                    }
+                }
 
                 TempData["ErrorMessage"] = "البيانات غير صالحة. يرجى تصحيح الأخطاء أدناه.";
             }
