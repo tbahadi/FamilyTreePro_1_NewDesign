@@ -1,59 +1,1396 @@
 ﻿@model FamilyTreePro.Models.User
 
 @{
-    ViewData["Title"] = "تسجيل جديد";
+    ViewData["Title"] = "تسجيل جديد - شجرة العائلة";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container mt-5" dir="rtl">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-success text-white text-center">
-                    <h4><i class="fas fa-user-plus"></i> تسجيل جديد</h4>
-                </div>
-                <div class="card-body">
-                    <form asp-action="Register" method="post">
-                        <div class="mb-3">
-                            <label asp-for="Username" class="form-label"></label>
-                            <input asp-for="Username" class="form-control" placeholder="أدخل اسم المستخدم">
-                            <span asp-validation-for="Username" class="text-danger"></span>
-                        </div>
+<div class="family-login-page">
+    <!-- شريط النسخة التجريبية -->
+    <div class="trial-version-banner">
+        <div class="trial-content">
+            <i class="fas fa-flask"></i>
+            <span>هذا الموقع يعمل حاليًا في نسخة تجريبية</span>
+        </div>
+    </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Password" class="form-label"></label>
-                            <input asp-for="Password" type="password" class="form-control" placeholder="أدخل كلمة المرور">
-                            <span asp-validation-for="Password" class="text-danger"></span>
-                        </div>
+    <!-- خلفية العائلة -->
+    <div class="family-background">
+        <div class="generation-lines">
+            <div class="gen-line gen-1"></div>
+            <div class="gen-line gen-2"></div>
+            <div class="gen-line gen-3"></div>
+            <div class="gen-line gen-4"></div>
+        </div>
+    </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Email" class="form-label"></label>
-                            <input asp-for="Email" type="email" class="form-control" placeholder="أدخل البريد الإلكتروني">
-                            <span asp-validation-for="Email" class="text-danger"></span>
+    <div class="login-container">
+        <div class="family-login-card">
+            <!-- الهيدر -->
+            <div class="family-card-header">
+                <div class="header-content">
+                    <div class="logo-container">
+                        <div class="family-tree-icon">
+                            <i class="fas fa-tree"></i>
                         </div>
-
-                        <div class="mb-3">
-                            <label asp-for="FullName" class="form-label"></label>
-                            <input asp-for="FullName" class="form-control" placeholder="أدخل الاسم الكامل">
-                            <span asp-validation-for="FullName" class="text-danger"></span>
+                        <div class="title-section">
+                            <h1>شجرة العائلة</h1>
+                            <p class="tagline">حيث تلتقي الأجيال وتتواصل القلوب</p>
                         </div>
-
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-user-plus"></i> تسجيل جديد
-                            </button>
-                        </div>
-                    </form>
-
-                    <div class="text-center mt-3">
-                        <p>لديك حساب بالفعل؟ <a href="@Url.Action("Login", "Account")">سجل الدخول</a></p>
                     </div>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <!-- نموذج التسجيل -->
+                <div class="login-section">
+                    <form asp-action="Register" method="post" class="login-form" id="registerForm">
+                        @Html.AntiForgeryToken()
+
+                        @if (ViewData.ModelState.ErrorCount > 0)
+                        {
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>يرجى تصحيح الأخطاء أدناه</span>
+                            </div>
+                        }
+
+                        <div class="input-field">
+                            <div class="input-wrapper">
+                                <i class="fas fa-user icon"></i>
+                                <input asp-for="Username" type="text" required placeholder="اسم المستخدم">
+                            </div>
+                            <span asp-validation-for="Username" class="text-danger small"></span>
+                        </div>
+
+                        <div class="input-field">
+                            <div class="input-wrapper">
+                                <i class="fas fa-lock icon"></i>
+                                <input asp-for="Password" type="password" required placeholder="كلمة المرور">
+                                <button type="button" class="toggle-password" id="togglePassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="input-field">
+                            <div class="input-wrapper">
+                                <i class="fas fa-envelope icon"></i>
+                                <input asp-for="Email" type="email" required placeholder="البريد الإلكتروني">
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="input-field">
+                            <div class="input-wrapper">
+                                <i class="fas fa-id-card icon"></i>
+                                <input asp-for="FullName" type="text" required placeholder="الاسم الكامل">
+                            </div>
+                            <span asp-validation-for="FullName" class="text-danger small"></span>
+                        </div>
+
+                        <!-- حقل رقم الجوال مع اختيار رمز الدولة -->
+                        <div class="input-field">
+                            <label class="field-label">رقم الجوال</label>
+                            <div class="phone-input-wrapper">
+                                <div class="country-code-selector">
+                                    <div class="selected-country" id="selectedCountry">
+                                        <span class="country-flag">🇸🇦</span>
+                                        <span class="country-code">+966</span>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                    <div class="country-dropdown" id="countryDropdown">
+                                        <div class="search-box">
+                                            <i class="fas fa-search"></i>
+                                            <input type="text" placeholder="ابحث عن الدولة..." id="countrySearch">
+                                        </div>
+                                        <div class="country-list" id="countryList">
+                                            <!-- سيتم تعبئة القائمة بالدول عبر JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="phone-number-input">
+                                    <input type="tel" id="phoneNumber" name="phoneNumber" required placeholder="5X XXX XXXX">
+                                </div>
+                            </div>
+                            <span class="text-danger small" id="phoneError"></span>
+                        </div>
+
+                        <!-- خانة اختيار الشروط والأحكام -->
+                        <div class="form-actions">
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
+                                <span class="checkmark"></span>
+                                أوافق على <a href="#" id="termsLink">الشروط والأحكام</a> و <a href="#" id="privacyLink">سياسة الخصوصية</a>
+                            </label>
+                        </div>
+                        <span class="text-danger small" id="termsError"></span>
+
+                        <!-- قسم المزايا المدمج -->
+                        <div class="quick-benefits">
+                            <h3 class="benefits-title">
+                                <i class="fas fa-star"></i>
+                                مزايا انضمامك لشجرة العائلة
+                            </h3>
+                            <div class="benefits-list">
+                                <div class="benefit-item">
+                                    <i class="fas fa-tree benefit-icon"></i>
+                                    <span>بناء شجرة العائلة الرقمية</span>
+                                </div>
+                                <div class="benefit-item">
+                                    <i class="fas fa-users benefit-icon"></i>
+                                    <span>تواصل آمن مع الأقارب</span>
+                                </div>
+                                <div class="benefit-item">
+                                    <i class="fas fa-photo-video benefit-icon"></i>
+                                    <span>أرشيف صور وذكريات</span>
+                                </div>
+                                <div class="benefit-item">
+                                    <i class="fas fa-shield-alt benefit-icon"></i>
+                                    <span>خصوصية وأمان تام</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="submit-btn" id="submitBtn">
+                            <span>إنشاء الحساب والبدء</span>
+                            <i class="fas fa-user-plus"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- الإحصائيات -->
+                <div class="stats-section">
+                    <div class="family-stats">
+                        @{
+                            var stats = new[]
+                            {
+                                                new { Icon = "fas fa-users", Number = "١٠٠٠+", Label = "عائلة" },
+                                                new { Icon = "fas fa-network-wired", Number = "٥٠٠٠+", Label = "ترابط" },
+                                                new { Icon = "fas fa-history", Number = "١٠٠+", Label = "سنة" }
+                                                };
+                        }
+
+                        @foreach (var stat in stats)
+                        {
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="@stat.Icon"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <span class="stat-number">@stat.Number</span>
+                                    <span class="stat-label">@stat.Label</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- تسجيل الدخول -->
+                <div class="alternative-actions">
+                    <p>لديك حساب بالفعل؟ <a href="@Url.Action("Login", "Account")" class="register-link">سجل الدخول</a></p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- نافذة الشروط والأحكام -->
+<div class="modal-overlay" id="termsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>الشروط والأحكام</h3>
+            <button class="close-modal" id="closeTerms">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="terms-content">
+                <h4>شروط استخدام منصة شجرة العائلة</h4>
+                <p>مرحباً بك في منصة شجرة العائلة. من خلال إنشاء حساب أو استخدام خدماتنا، فإنك توافق على الالتزام بالشروط والأحكام التالية:</p>
+
+                <h5>١. الالتزام بالدقة</h5>
+                <p>تتحمل مسؤولية تقديم معلومات دقيقة وصحيحة عن أفراد العائلة والعلاقات بينهم.</p>
+
+                <h5>٢. احترام الخصوصية</h5>
+                <p>يجب احترام خصوصية الأحياء وعدم نشر معلومات شخصية حساسة دون موافقتهم.</p>
+
+                <h5>٣. الاستخدام المسؤول</h5>
+                <p>يجب استخدام المنصة لأغراض توثيق الأنساب والتواصل العائلي فقط، وليس لأي أغراض تجارية غير مصرح بها.</p>
+
+                <div class="terms-actions">
+                    <button class="agree-btn" id="agreeTermsBtn">أوافق على الشروط</button>
+                    <button class="cancel-btn" id="cancelTermsBtn">إلغاء</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة سياسة الخصوصية -->
+<div class="modal-overlay" id="privacyModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>سياسة الخصوصية</h3>
+            <button class="close-modal" id="closePrivacy">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="privacy-content">
+                <h4>سياسة الخصوصية لشجرة العائلة</h4>
+                <p>نحن في منصة شجرة العائلة ندرك أهمية خصوصية معلوماتك الشخصية والعائلية، ونلتزم بحمايتها.</p>
+
+                <h5>١. المعلومات التي نجمعها</h5>
+                <p>نجمع المعلومات التي تقدمها عند التسجيل وإنشاء شجرة العائلة.</p>
+
+                <h5>٢. كيفية استخدام المعلومات</h5>
+                <p>نستخدم معلوماتك لتقديم وتحسين خدماتنا وتمكين التواصل بين أفراد العائلة.</p>
+
+                <h5>٣. أمان المعلومات</h5>
+                <p>نتخذ إجراءات أمنية معقولة لحماية معلوماتك من الوصول غير المصرح به.</p>
+
+                <div class="privacy-actions">
+                    <button class="agree-btn" id="agreePrivacyBtn">موافق</button>
+                    <button class="cancel-btn" id="cancelPrivacyBtn">إلغاء</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        /* الأساسيات */
+        .family-login-page {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* شريط النسخة التجريبية */
+        .trial-version-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ffa500);
+            color: white;
+            padding: 8px 0;
+            text-align: center;
+            z-index: 1000;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .trial-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        /* الحاوية الرئيسية */
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            z-index: 2;
+            margin-top: 50px;
+        }
+
+        /* الكارت الرئيسي */
+        .family-login-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            overflow: hidden;
+            animation: cardEntrance 0.8s ease-out;
+        }
+
+        @@keyframes cardEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* الهيدر */
+        .family-card-header {
+            background: linear-gradient(135deg, #4a69bd, #1e3799);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .family-tree-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .title-section {
+            text-align: center;
+        }
+
+            .title-section h1 {
+                color: white;
+                font-size: 28px;
+                font-weight: 700;
+                margin: 0 0 5px 0;
+            }
+
+        .tagline {
+            color: rgba(255,255,255,0.9);
+            margin: 0;
+            font-size: 14px;
+        }
+
+        /* الجسم */
+        .card-body {
+            padding: 30px;
+        }
+
+        /* الأقسام */
+        .login-section {
+            margin-bottom: 25px;
+        }
+
+        .stats-section {
+            margin-bottom: 25px;
+        }
+
+        /* نموذج التسجيل */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field-label {
+            font-size: 14px;
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+            .input-wrapper .icon {
+                position: absolute;
+                right: 15px;
+                color: #7f8c8d;
+                font-size: 16px;
+            }
+
+            .input-wrapper input {
+                width: 100%;
+                padding: 15px 45px 15px 15px;
+                border: 2px solid #ecf0f1;
+                border-radius: 12px;
+                font-size: 16px;
+                transition: all 0.3s ease;
+                background: #f8f9fa;
+            }
+
+                .input-wrapper input:focus {
+                    outline: none;
+                    border-color: #4a69bd;
+                    background: white;
+                    box-shadow: 0 0 0 3px rgba(74, 105, 189, 0.1);
+                }
+
+        /* تصميم حقل رقم الجوال */
+        .phone-input-wrapper {
+            display: flex;
+            border: 2px solid #ecf0f1;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+            .phone-input-wrapper:focus-within {
+                border-color: #4a69bd;
+                background: white;
+                box-shadow: 0 0 0 3px rgba(74, 105, 189, 0.1);
+            }
+
+        .country-code-selector {
+            position: relative;
+            min-width: 120px;
+            border-left: 1px solid #ecf0f1;
+        }
+
+        .selected-country {
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            height: 100%;
+            cursor: pointer;
+            background: white;
+            height: 52px;
+            transition: background 0.3s ease;
+        }
+
+            .selected-country:hover {
+                background: #f8f9fa;
+            }
+
+        .country-flag {
+            font-size: 18px;
+            margin-left: 8px;
+        }
+
+        .country-code {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .selected-country i {
+            margin-right: 5px;
+            color: #7f8c8d;
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .country-code-selector.active .selected-country i {
+            transform: rotate(180deg);
+        }
+
+        .country-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 280px;
+            background: white;
+            border: 1px solid #ecf0f1;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: none;
+            max-height: 300px;
+            overflow: hidden;
+        }
+
+        .country-code-selector.active .country-dropdown {
+            display: block;
+        }
+
+        .search-box {
+            position: relative;
+            padding: 12px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+            .search-box i {
+                position: absolute;
+                right: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #7f8c8d;
+            }
+
+            .search-box input {
+                width: 100%;
+                padding: 8px 35px 8px 10px;
+                border: 1px solid #ecf0f1;
+                border-radius: 8px;
+                font-size: 14px;
+            }
+
+        .country-list {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .country-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+            .country-item:hover {
+                background: #f8f9fa;
+            }
+
+            .country-item.active {
+                background: #e3f2fd;
+            }
+
+        .country-item-flag {
+            font-size: 18px;
+            margin-left: 10px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .country-item-name {
+            flex: 1;
+            font-size: 14px;
+            color: #2c3e50;
+        }
+
+        .country-item-code {
+            font-size: 14px;
+            color: #7f8c8d;
+            font-weight: 600;
+        }
+
+        .phone-number-input {
+            flex: 1;
+        }
+
+            .phone-number-input input {
+                width: 100%;
+                border: none;
+                padding: 15px;
+                background: transparent;
+                font-size: 16px;
+                height: 52px;
+            }
+
+                .phone-number-input input:focus {
+                    outline: none;
+                }
+
+        .toggle-password {
+            position: absolute;
+            left: 15px;
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .text-danger.small {
+            font-size: 12px;
+            padding-right: 10px;
+        }
+
+        /* خانة اختيار الشروط */
+        .form-actions {
+            display: flex;
+            align-items: flex-start;
+            margin: 10px 0 5px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #2c3e50;
+            line-height: 1.4;
+        }
+
+            .checkbox-wrapper input {
+                display: none;
+            }
+
+        .checkmark {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #bdc3c7;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .checkbox-wrapper input:checked + .checkmark {
+            background: #4a69bd;
+            border-color: #4a69bd;
+        }
+
+            .checkbox-wrapper input:checked + .checkmark::after {
+                content: '✓';
+                color: white;
+                font-size: 12px;
+            }
+
+        .checkbox-wrapper a {
+            color: #4a69bd;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+            .checkbox-wrapper a:hover {
+                text-decoration: underline;
+            }
+
+        /* قسم المزايا السريع */
+        .quick-benefits {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            margin: 15px 0;
+        }
+
+        .benefits-title {
+            color: #2c3e50;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .benefits-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+            .benefit-item:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                border-color: #4a69bd;
+            }
+
+        .benefit-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #4a69bd, #1e3799);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .benefit-item span {
+            color: #2c3e50;
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 1.3;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #4a69bd, #1e3799);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+            .submit-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(74, 105, 189, 0.3);
+            }
+
+            .submit-btn:disabled {
+                background: #bdc3c7;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+
+        /* الإحصائيات */
+        .family-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            padding: 20px 0;
+            border-top: 1px solid #ecf0f1;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-align: center;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #4a69bd, #1e3799);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .stat-number {
+            font-weight: 700;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+
+        /* التسجيل الجديد */
+        .alternative-actions {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+        }
+
+            .alternative-actions p {
+                color: #7f8c8d;
+                margin: 0;
+            }
+
+        .register-link {
+            color: #4a69bd;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* الخلفية والنسيج */
+        .family-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .generation-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: space-around;
+            opacity: 0.1;
+        }
+
+        .gen-line {
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, #fff, transparent);
+        }
+
+        /* رسالة الخطأ */
+        .error-message {
+            background: #ffeaea;
+            color: #d63031;
+            padding: 12px 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-right: 4px solid #d63031;
+        }
+
+            .error-message i {
+                font-size: 18px;
+            }
+
+        /* نافذة الشروط والأحكام */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: modalEntrance 0.3s ease-out;
+        }
+
+        @@keyframes modalEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #ecf0f1;
+            background: linear-gradient(135deg, #4a69bd, #1e3799);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+
+            .modal-header h3 {
+                margin: 0;
+                font-size: 18px;
+            }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .terms-content h4, .privacy-content h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .terms-content h5, .privacy-content h5 {
+            color: #4a69bd;
+            margin: 12px 0 6px;
+            font-size: 14px;
+        }
+
+        .terms-content p, .privacy-content p {
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .terms-actions, .privacy-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #ecf0f1;
+        }
+
+        .agree-btn {
+            background: #4a69bd;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .cancel-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* شريط التمرير المخصص */
+        .country-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .country-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .country-list::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+            .country-list::-webkit-scrollbar-thumb:hover {
+                background: #a8a8a8;
+            }
+
+        /* الاستجابة للشاشات الصغيرة */
+        @@media (max-width: 480px) {
+            .login-container {
+                margin-top: 40px;
+                max-width: 100%;
+            }
+
+            .family-login-card {
+                border-radius: 15px;
+            }
+
+            .card-body {
+                padding: 20px;
+            }
+
+            .family-card-header {
+                padding: 25px 20px;
+            }
+
+            .title-section h1 {
+                font-size: 24px;
+            }
+
+            .benefits-list {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .benefit-item {
+                padding: 10px;
+            }
+
+                .benefit-item span {
+                    font-size: 12px;
+                }
+
+            .family-stats {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+                padding: 15px 0;
+            }
+
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .country-dropdown {
+                width: 100%;
+                right: 0;
+                left: auto;
+            }
+
+            .phone-input-wrapper {
+                flex-direction: column;
+            }
+
+            .country-code-selector {
+                border-left: none;
+                border-bottom: 1px solid #ecf0f1;
+                min-width: auto;
+            }
+
+            .selected-country {
+                height: 45px;
+                justify-content: space-between;
+            }
+
+            .phone-number-input input {
+                height: 45px;
+            }
+
+            .modal-content {
+                margin: 10px;
+                max-height: 85vh;
+            }
+        }
+    </style>
+}
+
 @section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // إظهار/إخفاء كلمة المرور
+            const togglePassword = document.getElementById('togglePassword');
+            const password = document.getElementById('Password');
+
+            if (togglePassword && password) {
+                togglePassword.addEventListener('click', function() {
+                    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                    password.setAttribute('type', type);
+                    this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+                });
+            }
+
+            // تأثيرات بسيطة للحقول
+            const inputs = document.querySelectorAll('.input-wrapper input');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.style.transform = 'translateY(-2px)';
+                });
+
+                input.addEventListener('blur', function() {
+                    this.parentElement.style.transform = 'translateY(0)';
+                });
+            });
+
+            // بيانات رموز الدول
+            const countryCodes = [
+                { code: '+966', name: 'المملكة العربية السعودية', flag: '🇸🇦' },
+                { code: '+971', name: 'الإمارات العربية المتحدة', flag: '🇦🇪' },
+                { code: '+965', name: 'الكويت', flag: '🇰🇼' },
+                { code: '+973', name: 'البحرين', flag: '🇧🇭' },
+                { code: '+968', name: 'عُمان', flag: '🇴🇲' },
+                { code: '+974', name: 'قطر', flag: '🇶🇦' },
+                { code: '+20', name: 'مصر', flag: '🇪🇬' },
+                { code: '+962', name: 'الأردن', flag: '🇯🇴' },
+                { code: '+963', name: 'سوريا', flag: '🇸🇾' },
+                { code: '+961', name: 'لبنان', flag: '🇱🇧' },
+                { code: '+964', name: 'العراق', flag: '🇮🇶' },
+                { code: '+967', name: 'اليمن', flag: '🇾🇪' },
+                { code: '+213', name: 'الجزائر', flag: '🇩🇿' },
+                { code: '+212', name: 'المغرب', flag: '🇲🇦' },
+                { code: '+216', name: 'تونس', flag: '🇹🇳' },
+                { code: '+218', name: 'ليبيا', flag: '🇱🇾' },
+                { code: '+249', name: 'السودان', flag: '🇸🇩' },
+                { code: '+1', name: 'الولايات المتحدة', flag: '🇺🇸' },
+                { code: '+44', name: 'المملكة المتحدة', flag: '🇬🇧' },
+                { code: '+33', name: 'فرنسا', flag: '🇫🇷' },
+                { code: '+49', name: 'ألمانيا', flag: '🇩🇪' },
+                { code: '+39', name: 'إيطاليا', flag: '🇮🇹' },
+                { code: '+34', name: 'إسبانيا', flag: '🇪🇸' },
+                { code: '+90', name: 'تركيا', flag: '🇹🇷' },
+                { code: '+7', name: 'روسيا', flag: '🇷🇺' },
+                { code: '+86', name: 'الصين', flag: '🇨🇳' },
+                { code: '+81', name: 'اليابان', flag: '🇯🇵' },
+                { code: '+82', name: 'كوريا الجنوبية', flag: '🇰🇷' },
+                { code: '+91', name: 'الهند', flag: '🇮🇳' },
+                { code: '+61', name: 'أستراليا', flag: '🇦🇺' }
+            ];
+
+            // تهيئة اختيار رمز الدولة
+            const countrySelector = document.querySelector('.country-code-selector');
+            const selectedCountry = document.getElementById('selectedCountry');
+            const countryDropdown = document.getElementById('countryDropdown');
+            const countryList = document.getElementById('countryList');
+            const countrySearch = document.getElementById('countrySearch');
+            const phoneNumber = document.getElementById('phoneNumber');
+            const phoneError = document.getElementById('phoneError');
+
+            let selectedCountryData = countryCodes[0]; // السعودية كافتراضي
+
+            // تعبئة قائمة الدول
+            function populateCountryList(countries) {
+                countryList.innerHTML = '';
+                countries.forEach(country => {
+                    const countryItem = document.createElement('div');
+                    countryItem.className = 'country-item';
+                    if (country.code === selectedCountryData.code) {
+                        countryItem.classList.add('active');
+                    }
+                    countryItem.innerHTML = `
+                        <span class="country-item-flag">${country.flag}</span>
+                        <span class="country-item-name">${country.name}</span>
+                        <span class="country-item-code">${country.code}</span>
+                    `;
+                    countryItem.addEventListener('click', () => {
+                        selectCountry(country);
+                    });
+                    countryList.appendChild(countryItem);
+                });
+            }
+
+            // اختيار دولة
+            function selectCountry(country) {
+                selectedCountryData = country;
+                selectedCountry.innerHTML = `
+                    <span class="country-flag">${country.flag}</span>
+                    <span class="country-code">${country.code}</span>
+                    <i class="fas fa-chevron-down"></i>
+                `;
+                countrySelector.classList.remove('active');
+
+                // تحديث النص التوضيحي بناءً على الدولة المختارة
+                if (country.code === '+966') {
+                    phoneNumber.placeholder = '5X XXX XXXX';
+                } else {
+                    phoneNumber.placeholder = 'أدخل رقم الجوال';
+                }
+            }
+
+            // فتح/إغلاق قائمة الدول
+            selectedCountry.addEventListener('click', (e) => {
+                e.stopPropagation();
+                countrySelector.classList.toggle('active');
+            });
+
+            // البحث في قائمة الدول
+            countrySearch.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredCountries = countryCodes.filter(country =>
+                    country.name.toLowerCase().includes(searchTerm) ||
+                    country.code.includes(searchTerm)
+                );
+                populateCountryList(filteredCountries);
+            });
+
+            // إغلاق قائمة الدول عند النقر خارجها
+            document.addEventListener('click', () => {
+                countrySelector.classList.remove('active');
+            });
+
+            // منع إغلاق القائمة عند النقر داخلها
+            countryDropdown.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+
+            // التحقق من صحة رقم الجوال بناءً على رمز الدولة
+            function validatePhoneNumber(phone, countryCode) {
+                let regex;
+                switch (countryCode) {
+                    case '+966': // السعودية
+                        regex = /^(5)([0-9]{8})$/;
+                        break;
+                    case '+971': // الإمارات
+                        regex = /^(5)([0-9]{8})$/;
+                        break;
+                    case '+965': // الكويت
+                        regex = /^[569][0-9]{7}$/;
+                        break;
+                    case '+973': // البحرين
+                        regex = /^(3)([0-9]{7})$/;
+                        break;
+                    case '+968': // عمان
+                        regex = /^(9)([0-9]{7})$/;
+                        break;
+                    case '+974': // قطر
+                        regex = /^[35-7][0-9]{7}$/;
+                        break;
+                    default:
+                        // تنسيق عام للأرقام الدولية
+                        regex = /^[0-9]{7,15}$/;
+                }
+                return regex.test(phone.replace(/\s/g, ''));
+            }
+
+            // التحقق من الشروط والأحكام
+            const agreeTerms = document.getElementById('agreeTerms');
+            const termsError = document.getElementById('termsError');
+            const submitBtn = document.getElementById('submitBtn');
+            const registerForm = document.getElementById('registerForm');
+
+            if (registerForm) {
+                registerForm.addEventListener('submit', function(e) {
+                    let isValid = true;
+
+                    // التحقق من رقم الجوال
+                    const phoneValue = phoneNumber.value.trim().replace(/\s/g, '');
+                    if (!validatePhoneNumber(phoneValue, selectedCountryData.code)) {
+                        phoneError.textContent = 'يرجى إدخال رقم جوال صحيح';
+                        phoneNumber.parentElement.parentElement.style.borderColor = '#e74c3c';
+                        isValid = false;
+                    } else {
+                        phoneError.textContent = '';
+                        phoneNumber.parentElement.parentElement.style.borderColor = '#4a69bd';
+                    }
+
+                    // التحقق من الشروط والأحكام
+                    if (!agreeTerms.checked) {
+                        termsError.textContent = 'يجب الموافقة على الشروط والأحكام';
+                        isValid = false;
+                    } else {
+                        termsError.textContent = '';
+                    }
+
+                    if (!isValid) {
+                        e.preventDefault();
+                    } else {
+                        // إضافة رمز الدولة إلى قيمة رقم الجوال قبل الإرسال
+                        const fullPhoneNumber = selectedCountryData.code + phoneValue;
+                        phoneNumber.value = fullPhoneNumber;
+                    }
+                });
+            }
+
+            // التحقق أثناء الكتابة
+            if (phoneNumber) {
+                phoneNumber.addEventListener('input', function() {
+                    const phoneValue = this.value.trim().replace(/\s/g, '');
+                    if (validatePhoneNumber(phoneValue, selectedCountryData.code)) {
+                        phoneError.textContent = '';
+                        this.parentElement.parentElement.style.borderColor = '#4a69bd';
+                    } else {
+                        this.parentElement.parentElement.style.borderColor = '#e74c3c';
+                    }
+                });
+            }
+
+            if (agreeTerms) {
+                agreeTerms.addEventListener('change', function() {
+                    if (this.checked) {
+                        termsError.textContent = '';
+                    }
+                });
+            }
+
+            // فتح نافذة الشروط والأحكام
+            const termsLink = document.getElementById('termsLink');
+            const termsModal = document.getElementById('termsModal');
+            const closeTerms = document.getElementById('closeTerms');
+            const agreeTermsBtn = document.getElementById('agreeTermsBtn');
+            const cancelTermsBtn = document.getElementById('cancelTermsBtn');
+
+            if (termsLink && termsModal) {
+                termsLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    termsModal.style.display = 'flex';
+                });
+            }
+
+            if (closeTerms && termsModal) {
+                closeTerms.addEventListener('click', function() {
+                    termsModal.style.display = 'none';
+                });
+            }
+
+            if (agreeTermsBtn && termsModal && agreeTerms) {
+                agreeTermsBtn.addEventListener('click', function() {
+                    agreeTerms.checked = true;
+                    termsModal.style.display = 'none';
+                    termsError.textContent = '';
+                });
+            }
+
+            if (cancelTermsBtn && termsModal) {
+                cancelTermsBtn.addEventListener('click', function() {
+                    termsModal.style.display = 'none';
+                });
+            }
+
+            // فتح نافذة سياسة الخصوصية
+            const privacyLink = document.getElementById('privacyLink');
+            const privacyModal = document.getElementById('privacyModal');
+            const closePrivacy = document.getElementById('closePrivacy');
+            const agreePrivacyBtn = document.getElementById('agreePrivacyBtn');
+            const cancelPrivacyBtn = document.getElementById('cancelPrivacyBtn');
+
+            if (privacyLink && privacyModal) {
+                privacyLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    privacyModal.style.display = 'flex';
+                });
+            }
+
+            if (closePrivacy && privacyModal) {
+                closePrivacy.addEventListener('click', function() {
+                    privacyModal.style.display = 'none';
+                });
+            }
+
+            if (agreePrivacyBtn && privacyModal) {
+                agreePrivacyBtn.addEventListener('click', function() {
+                    privacyModal.style.display = 'none';
+                });
+            }
+
+            if (cancelPrivacyBtn && privacyModal) {
+                cancelPrivacyBtn.addEventListener('click', function() {
+                    privacyModal.style.display = 'none';
+                });
+            }
+
+            // إغلاق النوافذ عند النقر خارجها
+            window.addEventListener('click', function(e) {
+                if (e.target === termsModal) {
+                    termsModal.style.display = 'none';
+                }
+                if (e.target === privacyModal) {
+                    privacyModal.style.display = 'none';
+                }
+            });
+
+            // تهيئة المؤثرات
+            setTimeout(function() {
+                document.querySelector('.family-login-card').style.opacity = '1';
+            }, 100);
+
+            populateCountryList(countryCodes);
+        });
+    </script>
+
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
