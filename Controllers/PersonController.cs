@@ -69,11 +69,16 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
+            // التحقق من وجود مؤسس في هذه الشجرة
+            var hasFounder = _context.Persons.Any(p => p.FamilyTreeId == familyTreeId && p.IsFounder);
+            ViewBag.HasFounder = hasFounder;
+
             var viewModel = new CreatePersonViewModel
             {
                 FamilyTreeId = familyTreeId,
                 FatherId = fatherId,
-                MotherId = motherId
+                MotherId = motherId,
+                IsFounder = false // قيمة افتراضية
             };
 
             await RepopulateViewBags(familyTreeId);
@@ -130,12 +135,19 @@ namespace FamilyTreePro.Controllers
             if (string.IsNullOrWhiteSpace(viewModel.Photo)) viewModel.Photo = "";
             if (string.IsNullOrWhiteSpace(viewModel.AdditionReason)) viewModel.AdditionReason = "";
 
-            // ⭐⭐ إصلاح أخطاء ModelState لهذه الحقول ⭐⭐
+            // ⭐⭐ الإصلاح الجذري: إزالة أخطاء التحقق للحقول الغير مطلوبة ⭐⭐
             ModelState.Remove("Nickname");
             ModelState.Remove("City");
             ModelState.Remove("Notes");
             ModelState.Remove("Photo");
             ModelState.Remove("AdditionReason");
+            ModelState.Remove("IsFounder");
+            ModelState.Remove("AddType");
+
+            // ⭐⭐ إزالة أخطاء التحقق للحقول التي لم تعد مطلوبة ⭐⭐
+            ModelState.Remove("FatherName");
+            ModelState.Remove("GrandFatherName");
+            ModelState.Remove("LastName");
 
             _logger.LogInformation($"🔍 بيانات النموذج المستلمة بعد التنظيف:");
             _logger.LogInformation($"   - الاسم: '{viewModel.FirstName}'");
@@ -147,8 +159,10 @@ namespace FamilyTreePro.Controllers
             _logger.LogInformation($"   - الشجرة: {viewModel.FamilyTreeId}");
             _logger.LogInformation($"   - المدينة: '{viewModel.City}'");
             _logger.LogInformation($"   - الملاحظات: '{viewModel.Notes}'");
+            _logger.LogInformation($"   - مؤسس: '{viewModel.IsFounder}'");
+            _logger.LogInformation($"   - نوع الإضافة: '{viewModel.AddType}'");
 
-            // التحقق اليدوي من الحقول المطلوبة
+            // ⭐⭐ التحقق اليدوي المحسن من الحقول المطلوبة فقط ⭐⭐
             bool hasErrors = false;
 
             if (string.IsNullOrWhiteSpace(viewModel.FirstName))
@@ -157,28 +171,24 @@ namespace FamilyTreePro.Controllers
                 hasErrors = true;
             }
 
-            if (string.IsNullOrWhiteSpace(viewModel.FatherName))
-            {
-                ModelState.AddModelError("FatherName", "اسم الأب مطلوب");
-                hasErrors = true;
-            }
-
-            if (string.IsNullOrWhiteSpace(viewModel.GrandFatherName))
-            {
-                ModelState.AddModelError("GrandFatherName", "اسم الجد مطلوب");
-                hasErrors = true;
-            }
-
-            if (string.IsNullOrWhiteSpace(viewModel.LastName))
-            {
-                ModelState.AddModelError("LastName", "اسم العائلة مطلوب");
-                hasErrors = true;
-            }
-
             if (string.IsNullOrWhiteSpace(viewModel.Gender))
             {
                 ModelState.AddModelError("Gender", "الجنس مطلوب");
                 hasErrors = true;
+            }
+
+            // ⭐⭐ التحقق من المؤسس ⭐⭐
+            if (viewModel.IsFounder)
+            {
+                // تحقق إذا كان هناك مؤسس بالفعل في هذه الشجرة
+                var existingFounder = await _context.Persons
+                    .FirstOrDefaultAsync(p => p.FamilyTreeId == viewModel.FamilyTreeId && p.IsFounder);
+                if (existingFounder != null)
+                {
+                    ModelState.AddModelError("IsFounder", "يوجد مؤسس بالفعل في الشجرة العائلية. لا يمكن إضافة أكثر من مؤسس واحد.");
+                    hasErrors = true;
+                    _logger.LogWarning($"❌ محاولة إضافة مؤسس جديد مع وجود مؤسس موجود: {existingFounder.Id}");
+                }
             }
 
             if (!ModelState.IsValid || hasErrors)
@@ -203,6 +213,9 @@ namespace FamilyTreePro.Controllers
                 TempData["ErrorMessage"] = "البيانات غير صالحة. يرجى تصحيح الأخطاء أدناه.";
 
                 await RepopulateViewBags(viewModel.FamilyTreeId);
+                // ⭐⭐ إعادة تحميل حالة وجود مؤسس للعرض ⭐⭐
+                var hasFounder = _context.Persons.Any(p => p.FamilyTreeId == viewModel.FamilyTreeId && p.IsFounder);
+                ViewBag.HasFounder = hasFounder;
                 return View(viewModel);
             }
 
@@ -218,6 +231,11 @@ namespace FamilyTreePro.Controllers
 
             try
             {
+                // ⭐⭐ تعيين القيم الافتراضية للحقول الاختيارية ⭐⭐
+                if (string.IsNullOrWhiteSpace(viewModel.FatherName)) viewModel.FatherName = "غير معروف";
+                if (string.IsNullOrWhiteSpace(viewModel.GrandFatherName)) viewModel.GrandFatherName = "غير معروف";
+                if (string.IsNullOrWhiteSpace(viewModel.LastName)) viewModel.LastName = "غير معروف";
+
                 var person = new Person
                 {
                     FirstName = viewModel.FirstName,
@@ -237,6 +255,7 @@ namespace FamilyTreePro.Controllers
                     MotherId = viewModel.MotherId,
                     AdditionReason = viewModel.AdditionReason,
                     Photo = viewModel.Photo,
+                    IsFounder = viewModel.IsFounder,
                     IsOriginalRecord = true,
                     IsConnectionPoint = false,
                     CreatedDate = DateTime.Now,
@@ -244,14 +263,33 @@ namespace FamilyTreePro.Controllers
                 };
 
                 var fullName = GetFullName(person);
-                _logger.LogInformation($"💾 محاولة حفظ الشخص: {fullName}");
+                _logger.LogInformation($"💾 محاولة حفظ الشخص: {fullName}، مؤسس: {person.IsFounder}");
 
                 _context.Persons.Add(person);
                 int recordsAffected = await _context.SaveChangesAsync();
 
                 _logger.LogInformation($"✅ تم حفظ الشخص بنجاح! السجلات المتأثرة: {recordsAffected}, الرقم: {person.Id}");
 
-                TempData["SuccessMessage"] = $"تم إضافة الفرد {fullName} بنجاح!";
+                // إذا كان طلب AJAX، إرجاع JSON
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new
+                    {
+                        success = true,
+                        personName = fullName,
+                        isFounder = person.IsFounder
+                    });
+                }
+
+                if (person.IsFounder)
+                {
+                    TempData["SuccessMessage"] = $"تم إضافة المؤسس {fullName} بنجاح!";
+                }
+                else
+                {
+                    TempData["SuccessMessage"] = $"تم إضافة الفرد {fullName} بنجاح!";
+                }
+
                 return RedirectToAction("Index", new { familyTreeId = viewModel.FamilyTreeId });
             }
             catch (DbUpdateException dbEx)
@@ -259,15 +297,39 @@ namespace FamilyTreePro.Controllers
                 _logger.LogError(dbEx, "❌ خطأ في قاعدة البيانات أثناء إضافة الفرد");
                 _logger.LogError($"تفاصيل الخطأ الداخلية: {dbEx.InnerException?.Message}");
 
+                // إذا كان طلب AJAX، إرجاع JSON للخطأ
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "حدث خطأ في قاعدة البيانات أثناء الحفظ"
+                    });
+                }
+
                 TempData["ErrorMessage"] = "حدث خطأ في قاعدة البيانات. قد تكون البيانات مكررة أو غير صالحة.";
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ خطأ غير متوقع أثناء إضافة الفرد");
+
+                // إذا كان طلب AJAX، إرجاع JSON للخطأ
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "حدث خطأ غير متوقع أثناء الحفظ"
+                    });
+                }
+
                 TempData["ErrorMessage"] = $"حدث خطأ غير متوقع: {ex.Message}";
             }
 
             await RepopulateViewBags(viewModel.FamilyTreeId);
+            // ⭐⭐ إعادة تحميل حالة وجود مؤسس للعرض ⭐⭐
+            var hasFounderInTree = _context.Persons.Any(p => p.FamilyTreeId == viewModel.FamilyTreeId && p.IsFounder);
+            ViewBag.HasFounder = hasFounderInTree;
             return View(viewModel);
         }
 

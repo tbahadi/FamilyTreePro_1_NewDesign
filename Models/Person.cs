@@ -90,6 +90,7 @@ namespace FamilyTreePro.Models
         public int FamilyTreeId { get; set; }
         public FamilyTree FamilyTree { get; set; }
 
+        public bool IsFounder { get; set; } = false;
         public int? OccupationId { get; set; }
         public Occupation Occupation { get; set; }
 

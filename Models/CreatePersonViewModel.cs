@@ -11,17 +11,15 @@ namespace FamilyTreePro.ViewModels
         [StringLength(50, ErrorMessage = "الاسم الأول يجب ألا يتجاوز 50 حرفاً")]
         public string FirstName { get; set; }
 
-        [Required(ErrorMessage = "حقل اسم الأب مطلوب")]
+        // ⭐⭐ تغيير هذه الحقول من Required إلى غير مطلوبة ⭐⭐
         [Display(Name = "اسم الأب")]
         [StringLength(50, ErrorMessage = "اسم الأب يجب ألا يتجاوز 50 حرفاً")]
         public string FatherName { get; set; }
 
-        [Required(ErrorMessage = "حقل اسم الجد مطلوب")]
         [Display(Name = "اسم الجد")]
         [StringLength(50, ErrorMessage = "اسم الجد يجب ألا يتجاوز 50 حرفاً")]
         public string GrandFatherName { get; set; }
 
-        [Required(ErrorMessage = "حقل اسم العائلة مطلوب")]
         [Display(Name = "اسم العائلة")]
         [StringLength(50, ErrorMessage = "اسم العائلة يجب ألا يتجاوز 50 حرفاً")]
         public string LastName { get; set; }
@@ -88,6 +86,14 @@ namespace FamilyTreePro.ViewModels
         [StringLength(500, ErrorMessage = "سبب الإضافة يجب ألا يتجاوز 500 حرف")]
         public string AdditionReason { get; set; }
 
+        // أضف هذه الخاصية الجديدة هنا
+        [Display(Name = "مؤسس الشجرة")]
+        public bool IsFounder { get; set; }
+
+        // ⭐⭐ إضافة خاصية AddType ⭐⭐
+        [Display(Name = "نوع الإضافة")]
+        public string AddType { get; set; }
+
         public CreatePersonViewModel()
         {
             // قيم افتراضية
@@ -96,6 +102,10 @@ namespace FamilyTreePro.ViewModels
             Notes = string.Empty;
             Nickname = string.Empty;
             AdditionReason = string.Empty;
+            IsFounder = false;
+            FatherName = string.Empty;
+            GrandFatherName = string.Empty;
+            LastName = string.Empty;
         }
     }
 }

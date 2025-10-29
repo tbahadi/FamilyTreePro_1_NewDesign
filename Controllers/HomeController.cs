@@ -5,6 +5,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+// التأكد من وجود هذه الـ using statements
 
 namespace FamilyTreePro.Controllers
 {
@@ -61,6 +66,7 @@ namespace FamilyTreePro.Controllers
                 var familyTrees = await _context.FamilyTrees
                     .Where(ft => ft.UserId == userId)
                     .Include(ft => ft.Country) // تضمين بيانات الدولة
+                     .Include(ft => ft.ParentTree) // ⭐ أضف هذا السطر
                     .OrderByDescending(ft => ft.CreatedDate)
                     .ToListAsync();
 
@@ -252,7 +258,9 @@ namespace FamilyTreePro.Controllers
 
             var tree = await _context.FamilyTrees
                 .Include(ft => ft.Persons)
-                .Include(ft => ft.ChildTrees)
+                 .Include(ft => ft.ChildTrees) // ⭐ تأكد من تضمين ChildTrees
+                 .Include(ft => ft.ParentTree) // ⭐ أضف هذا أيضاً إذا كنت تحتاجه
+                
                 .FirstOrDefaultAsync(ft => ft.Id == id && ft.UserId == userId);
 
             if (tree == null)
@@ -514,7 +522,8 @@ namespace FamilyTreePro.Controllers
         // عرض صفحة تعديل الشجرة العائلية - GET
         // عرض صفحة تعديل الشجرة العائلية - GET
         // في الـ Controller - GET
-        public IActionResult EditFamilyTree(int id)
+        // في الـ Controller - GET
+        public async Task<IActionResult> EditFamilyTree(int id) // ⭐ غيرها إلى async
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -522,10 +531,10 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            var familyTree = _context.FamilyTrees
+            var familyTree = await _context.FamilyTrees // ⭐ استخدم await
                 .Include(ft => ft.Country)
                 .Include(ft => ft.Persons)
-                .FirstOrDefault(ft => ft.Id == id && ft.UserId == userId);
+                .FirstOrDefaultAsync(ft => ft.Id == id && ft.UserId == userId);
 
             if (familyTree == null)
             {
@@ -533,7 +542,7 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction("Index");
             }
 
-            var countries = _context.Countries.ToList();
+            var countries = await _context.Countries.ToListAsync(); // ⭐ استخدم await
             ViewBag.Countries = countries;
 
             var viewModel = new EditFamilyTreeViewModel
@@ -546,7 +555,7 @@ namespace FamilyTreePro.Controllers
                 Visibility = familyTree.Visibility,
                 CreatedDate = familyTree.CreatedDate,
                 PersonCount = familyTree.Persons?.Count ?? 0,
-                CountryName = familyTree.Country?.Name // تعيين اسم الدولة
+                CountryName = familyTree.Country?.Name
             };
 
             return View(viewModel);
@@ -564,7 +573,7 @@ namespace FamilyTreePro.Controllers
             }
 
             // إعادة تحميل قائمة الدول
-            var countries = _context.Countries.ToList();
+            var countries = await _context.Countries.ToListAsync(); // ⭐ استخدم await
             ViewBag.Countries = countries;
 
             // الحل الشامل: إزالة جميع الأخطاء من الحقول غير الأساسية
@@ -599,7 +608,6 @@ namespace FamilyTreePro.Controllers
                 return View(viewModel);
             }
 
-            // باقي الكود...
             try
             {
                 var existingTree = await _context.FamilyTrees
@@ -612,7 +620,7 @@ namespace FamilyTreePro.Controllers
                 }
 
                 // تحديث البيانات
-                existingTree.Name = viewModel.Name.Trim();
+                existingTree.Name = viewModel.Name?.Trim() ?? string.Empty; // ⭐ تحقق من null
                 existingTree.Description = viewModel.Description?.Trim() ?? string.Empty;
                 existingTree.Color = viewModel.Color;
                 existingTree.CountryID = viewModel.CountryID;
@@ -642,7 +650,8 @@ namespace FamilyTreePro.Controllers
         }
 
         // عرض الـ Logs مباشرة في المتصفح
-        public IActionResult ViewLogs()
+        // عرض الـ Logs مباشرة في المتصفح
+        public async Task<IActionResult> ViewLogs() // ⭐ اجعلها async
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -659,16 +668,16 @@ namespace FamilyTreePro.Controllers
                 logEntries.Add($"=== سجلات النظام - {DateTime.Now} ===");
                 logEntries.Add($"المستخدم: {userId}");
 
-                var trees = _context.FamilyTrees.Where(ft => ft.UserId == userId).ToList();
+                var trees = await _context.FamilyTrees.Where(ft => ft.UserId == userId).ToListAsync(); // ⭐ استخدم await
                 logEntries.Add($"عدد الشجرات: {trees.Count}");
 
-                var persons = _context.Persons.Where(p => p.FamilyTree.UserId == userId).ToList();
+                var persons = await _context.Persons.Where(p => p.FamilyTree.UserId == userId).ToListAsync(); // ⭐ استخدم await
                 logEntries.Add($"عدد الأفراد: {persons.Count}");
 
                 // إضافة معلومات عن كل شجرة
                 foreach (var tree in trees)
                 {
-                    var personCount = _context.Persons.Count(p => p.FamilyTreeId == tree.Id);
+                    var personCount = await _context.Persons.CountAsync(p => p.FamilyTreeId == tree.Id); // ⭐ استخدم await
                     logEntries.Add($"الشجرة '{tree.Name}' (ID: {tree.Id}): {personCount} فرد");
                 }
 
@@ -678,11 +687,11 @@ namespace FamilyTreePro.Controllers
             catch (Exception ex)
             {
                 var errorLogs = new List<string>
-                {
-                    "خطأ في تحميل السجلات:",
-                    ex.Message,
-                    ex.StackTrace ?? "لا يوجد Stack Trace"
-                };
+        {
+            "خطأ في تحميل السجلات:",
+            ex.Message,
+            ex.StackTrace ?? "لا يوجد Stack Trace"
+        };
                 ViewBag.Logs = errorLogs;
                 return View();
             }
