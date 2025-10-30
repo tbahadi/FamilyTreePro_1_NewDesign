@@ -410,8 +410,9 @@
         .btn-group-custom {
             display: flex;
             gap: 6px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             justify-content: center;
+            min-width: 120px;
         }
 
         /* حالة عدم وجود بيانات */
@@ -559,7 +560,11 @@
             }
 
                 .btn-group-custom .hilal-btn {
-                    width: 100%;
+                    min-width: 36px;
+                    height: 36px;
+                    padding: 8px;
+                    display: flex;
+                    align-items: center;
                     justify-content: center;
                 }
 
@@ -821,9 +826,8 @@
                                         <th>تاريخ الميلاد</th>
                                         <th>المهنة</th>
                                         <th>الدولة</th>
-                                        <th>الأب</th>
                                         <th>تاريخ الإضافة</th>
-                                        <th>الإجراءات</th>
+                                        <th width="150">الإجراءات</th> <!-- ⭐ إضافة عرض ثابت -->
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -848,7 +852,7 @@
                                                 {
                                                     <span class="badge bg-gold">مؤسس</span>
                                                 }
-                                                @if (!string.IsNullOrEmpty(person.Nickname))
+                                                @if (!string.IsNullOrEmpty(person.Nickname) && person.Nickname != "لا يوجد")
                                                 {
                                                     <br>
                                                     <small class="text-muted">(@person.Nickname)</small>
@@ -892,20 +896,6 @@
                                                 }
                                             </td>
                                             <td>
-                                                @if (person.IsFounder)
-                                                {
-                                                    <span class="text-muted">-</span>
-                                                }
-                                                else if (!string.IsNullOrEmpty(person.Father?.FullName))
-                                                {
-                                                    @person.Father.FullName
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">غير محدد</span>
-                                                }
-                                            </td>
-                                            <td>
                                                 @if (person.CreatedDate != default(DateTime))
                                                 {
                                                     @person.CreatedDate.ToString("yyyy/MM/dd")
@@ -918,27 +908,31 @@
                                                 }
                                             </td>
                                             <td>
-                                                @if (person.Id > 0)
-                                                {
-                                                    <div class="btn-group-custom">
-                                                        <a href="@Url.Action("Details", "Person", new { id = person.Id })" class="hilal-btn btn-info btn-sm" title="عرض التفاصيل">
-                                                            <i class="fas fa-eye"></i>
+                                                <!-- ⭐⭐ إصلاح أزرار الإجراءات ⭐⭐ -->
+                                                <div class="btn-group-custom">
+                                                    <a href="@Url.Action("Details", "Person", new { id = person.Id })" class="hilal-btn btn-info btn-sm" title="عرض التفاصيل">
+                                                        <i class="fas fa-eye"></i>
+                                                        <span class="sr-only">عرض</span>
+                                                    </a>
+                                                    <a href="@Url.Action("Edit", "Person", new { id = person.Id })" class="hilal-btn btn-warning btn-sm" title="تعديل البيانات">
+                                                        <i class="fas fa-edit"></i>
+                                                        <span class="sr-only">تعديل</span>
+                                                    </a>
+                                                    @if (!person.IsFounder)
+                                                    {
+                                                        <a href="@Url.Action("Delete", "Person", new { id = person.Id })" class="hilal-btn btn-danger btn-sm" title="حذف الفرد"
+                                                           onclick="return confirm('هل أنت متأكد من حذف @GetFullName(person)؟')">
+                                                            <i class="fas fa-trash"></i>
+                                                            <span class="sr-only">حذف</span>
                                                         </a>
-                                                        <a href="@Url.Action("Edit", "Person", new { id = person.Id })" class="hilal-btn btn-warning btn-sm" title="تعديل البيانات">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        @if (!person.IsFounder)
-                                                        {
-                                                            <a href="@Url.Action("Delete", "Person", new { id = person.Id })" class="hilal-btn btn-danger btn-sm" title="حذف الفرد" onclick="return confirm('هل أنت متأكد من حذف @GetFullName(person)؟')">
-                                                                <i class="fas fa-trash"></i>
-                                                            </a>
-                                                        }
-                                                    </div>
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">لا توجد إجراءات</span>
-                                                }
+                                                    }
+                                                    else
+                                                    {
+                                                        <button class="hilal-btn btn-secondary btn-sm" title="لا يمكن حذف المؤسس" disabled>
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    }
+                                                </div>
                                             </td>
                                         </tr>
                                     }
@@ -977,74 +971,72 @@
         }
 
         // دالة لبناء الاسم الكامل مع مراعاة المؤسس
+        // ⭐⭐ التعديل: نفس منطق الدالة في الكود الخلفي ⭐⭐
+        // ⭐⭐ الإصلاح النهائي: إزالة كلمة "غير معروف" تماماً ⭐⭐
         public string GetFullName(FamilyTreePro.Models.Person person)
         {
             if (person == null) return "غير معروف";
 
             var names = new List<string>();
 
-            // الاسم الأول مطلوب دائماً
+            // الاسم الأول فقط
             if (!string.IsNullOrEmpty(person.FirstName))
                 names.Add(person.FirstName.Trim());
 
-            // للمؤسس، قد تكون باقي الأسماء NULL
-            if (!string.IsNullOrEmpty(person.FatherName))
+            // ⭐⭐ نعرض فقط الحقول التي تحتوي على بيانات فعلية ⭐⭐
+            // ⭐⭐ بدون إضافة أي نص افتراضي ⭐⭐
+            if (!string.IsNullOrEmpty(person.FatherName) && person.FatherName.Trim() != "غير معروف")
                 names.Add(person.FatherName.Trim());
-            else if (!person.IsFounder) // لغير المؤسس نعرض "غير معروف"
-                names.Add("غير معروف");
 
-            if (!string.IsNullOrEmpty(person.GrandFatherName))
+            if (!string.IsNullOrEmpty(person.GrandFatherName) && person.GrandFatherName.Trim() != "غير معروف")
                 names.Add(person.GrandFatherName.Trim());
-            else if (!person.IsFounder)
-                names.Add("غير معروف");
 
-            if (!string.IsNullOrEmpty(person.LastName))
+            if (!string.IsNullOrEmpty(person.LastName) && person.LastName.Trim() != "غير معروف")
                 names.Add(person.LastName.Trim());
-            else if (!person.IsFounder)
-                names.Add("غير معروف");
 
             return names.Any() ? string.Join(" ", names) : "غير معروف";
         }
+    
     }
 
     <!-- JavaScript المحسن -->
     <script>
         // تصفية الجدول
         function filterTable() {
-            const searchText = document.getElementById('searchInput').value.toLowerCase();
-            const genderFilter = document.getElementById('genderFilter').value;
-            const founderFilter = document.getElementById('founderFilter').value;
-            const rows = document.querySelectorAll('#peopleTable tbody tr');
+                const searchText = document.getElementById('searchInput').value.toLowerCase();
+        const genderFilter = document.getElementById('genderFilter').value;
+        const founderFilter = document.getElementById('founderFilter').value;
+        const rows = document.querySelectorAll('#peopleTable tbody tr');
 
-            let visibleCount = 0;
+        let visibleCount = 0;
 
-            rows.forEach(row => {
-                const name = row.getAttribute('data-name');
-                const gender = row.getAttribute('data-gender');
-                const founder = row.getAttribute('data-founder');
-                let showRow = true;
+        rows.forEach(row => {
+            const name = row.getAttribute('data-name');
+            const gender = row.getAttribute('data-gender');
+            const founder = row.getAttribute('data-founder');
+            let showRow = true;
 
-                if (searchText && !name.includes(searchText)) {
-                    showRow = false;
-                }
-
-                if (genderFilter && gender !== genderFilter) {
-                    showRow = false;
-                }
-
-                if (founderFilter && founder !== founderFilter) {
-                    showRow = false;
-                }
-
-                row.style.display = showRow ? '' : 'none';
-                if (showRow) visibleCount++;
-            });
-
-            // تحديث العداد
-            const counter = document.querySelector('.text-center small');
-            if (counter) {
-                counter.textContent = `عرض ${visibleCount} فرد من أصل ${@totalPeople}`;
+            if (searchText && !name.includes(searchText)) {
+                showRow = false;
             }
+
+            if (genderFilter && gender !== genderFilter) {
+                showRow = false;
+            }
+
+            if (founderFilter && founder !== founderFilter) {
+                showRow = false;
+            }
+
+            row.style.display = showRow ? '' : 'none';
+            if (showRow) visibleCount++;
+        });
+
+        // تحديث العداد
+        const counter = document.querySelector('.text-center small');
+        if (counter) {
+            counter.textContent = `عرض ${visibleCount} فرد من أصل ${@totalPeople}`;
+        }
         }
 
         // تصدير إلى Excel

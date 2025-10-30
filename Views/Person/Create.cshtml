@@ -333,12 +333,15 @@
                             {
                                 foreach (var father in ViewBag.PotentialFathers)
                                 {
+                                    // ⭐ أبسط حل: استبدال "غير معروف" بفراغ ⭐
+                                    var displayName = father.FullName?.Replace("غير معروف", "")?.Trim();
+
                                     <option value="@father.Id"
-                                            data-firstname="@father.FirstName"
-                                            data-fathername="@father.FatherName"
-                                            data-grandfathername="@father.GrandFatherName"
-                                            data-lastname="@father.LastName">
-                                        @father.FullName
+                                            data-firstname="@father.FirstName?.Replace("غير معروف", "")"
+                                            data-fathername="@father.FatherName?.Replace("غير معروف", "")"
+                                            data-grandfathername="@father.GrandFatherName?.Replace("غير معروف", "")"
+                                            data-lastname="@father.LastName?.Replace("غير معروف", "")">
+                                        @displayName
                                     </option>
                                 }
                             }
@@ -648,26 +651,39 @@
         }
 
         // التعامل مع اختيار الأب
+               // التعامل مع اختيار الأب
         document.getElementById('fatherSelect').addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
 
             if (selectedOption.value) {
                 selectedFatherId = selectedOption.value;
 
+                // ⭐⭐ استخدام البيانات النظيفة ⭐⭐
+                const firstName = selectedOption.getAttribute('data-firstname') || '';
+                const fatherName = selectedOption.getAttribute('data-fathername') || '';
+                const grandFatherName = selectedOption.getAttribute('data-grandfathername') || '';
+                const lastName = selectedOption.getAttribute('data-lastname') || '';
+
                 // تعبئة الحقول التلقائية
-                document.getElementById('sonFatherName').value = selectedOption.getAttribute('data-firstname');
-                document.getElementById('sonGrandFatherName').value = selectedOption.getAttribute('data-fathername');
-                document.getElementById('sonLastName').value = selectedOption.getAttribute('data-lastname');
+                document.getElementById('sonFatherName').value = firstName;
+                document.getElementById('sonGrandFatherName').value = fatherName;
+                document.getElementById('sonLastName').value = lastName;
 
                 // تعبئة الحقول المخفية
-                document.getElementById('hiddenSonFatherName').value = selectedOption.getAttribute('data-firstname');
-                document.getElementById('hiddenSonGrandFatherName').value = selectedOption.getAttribute('data-fathername');
-                document.getElementById('hiddenSonLastName').value = selectedOption.getAttribute('data-lastname');
+                document.getElementById('hiddenSonFatherName').value = firstName;
+                document.getElementById('hiddenSonGrandFatherName').value = fatherName;
+                document.getElementById('hiddenSonLastName').value = lastName;
 
                 // إظهار معاينة الأب
                 document.getElementById('fatherPreview').classList.remove('hidden');
+
+                // ⭐⭐ بناء الاسم النظيف للمعاينة ⭐⭐
+                const fullName = [firstName, fatherName, grandFatherName, lastName]
+                    .filter(part => part && part.trim() !== '')
+                    .join(' ');
+
                 document.getElementById('fatherDetails').innerHTML = `
-                    <strong>الاسم:</strong> ${selectedOption.getAttribute('data-firstname')} ${selectedOption.getAttribute('data-fathername')} ${selectedOption.getAttribute('data-grandfathername')} ${selectedOption.getAttribute('data-lastname')}
+                    <strong>الاسم:</strong> ${fullName || 'لا يوجد اسم'}
                 `;
 
                 // تفعيل زر التالي
@@ -679,6 +695,7 @@
         });
 
         // التحقق من النموذج قبل الإرسال
+               // التحقق من النموذج قبل الإرسال
         document.getElementById('personForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
@@ -701,28 +718,14 @@
                 const grandFatherName = document.getElementById('grandFatherName').value.trim();
                 const lastName = document.getElementById('lastName').value.trim();
 
+                // ⭐⭐ السماح بترك جميع الحقول فارغة للمؤسس ⭐⭐
                 if (!fatherName && !grandFatherName && !lastName) {
-                    if (!confirm('أنت على وشك إضافة مؤسس بدون معلومات الأب والجد والعائلة. هل تريد المتابعة؟')) {
-                        return false;
-                    }
+                    // لا نقوم بأي تحذير، نسمح بالمتابعة
                 }
             }
 
-            // تعبئة الحقول المخفية للابن إذا كان النوع "ابن"
-            if (selectedAddType === 'son') {
-                document.getElementById('hiddenSonFatherName').value = document.getElementById('sonFatherName').value;
-                document.getElementById('hiddenSonGrandFatherName').value = document.getElementById('sonGrandFatherName').value;
-                document.getElementById('hiddenSonLastName').value = document.getElementById('sonLastName').value;
-            }
-
-            // تعبئة القيم الافتراضية للحقول المطلوبة
-            const form = this;
-            if (!form.FatherName.value) form.FatherName.value = "غير معروف";
-            if (!form.GrandFatherName.value) form.GrandFatherName.value = "غير معروف";
-            if (!form.LastName.value) form.LastName.value = "غير معروف";
-            if (!form.Nickname.value) form.Nickname.value = "لا يوجد";
-            if (!form.City.value) form.City.value = "غير معروفة";
-            if (!form.Notes.value) form.Notes.value = "لا توجد ملاحظات";
+            // ⭐⭐ إزالة تعيين القيم الافتراضية ⭐⭐
+            // لا نقوم بتعبئة أي قيم افتراضية للحقول الفارغة
 
             const confirmMessage = selectedAddType === 'founder'
                 ? 'هل تريد إضافة الجد المؤسس للشجرة؟ (لن يمكنك إضافة مؤسس آخر بعد ذلك)'
@@ -730,6 +733,13 @@
 
             if (!confirm(confirmMessage)) {
                 return false;
+            }
+
+            // تعبئة الحقول المخفية للابن إذا كان النوع "ابن"
+            if (selectedAddType === 'son') {
+                document.getElementById('hiddenSonFatherName').value = document.getElementById('sonFatherName').value;
+                document.getElementById('hiddenSonGrandFatherName').value = document.getElementById('sonGrandFatherName').value;
+                document.getElementById('hiddenSonLastName').value = document.getElementById('sonLastName').value;
             }
 
             // إذا كان مؤسساً، نعرض شاشة النجاح الخاصة

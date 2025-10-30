@@ -41,26 +41,17 @@ namespace FamilyTreePro.Controllers
                 if (!string.IsNullOrEmpty(person.FirstName))
                     names.Add(person.FirstName.Trim());
 
-                // معالجة خاصة للمؤسس
-                if (person.IsFounder)
-                {
-                    // للمؤسس: نعرض فقط الحقول التي تحتوي على بيانات
-                    if (!string.IsNullOrEmpty(person.FatherName) && person.FatherName != "غير معروف")
-                        names.Add(person.FatherName.Trim());
+                // ⭐⭐ الإصلاح: معاملة جميع الأفراد بنفس الطريقة ⭐⭐
+                // نعرض فقط الحقول التي تحتوي على بيانات فعلية
 
-                    if (!string.IsNullOrEmpty(person.GrandFatherName) && person.GrandFatherName != "غير معروف")
-                        names.Add(person.GrandFatherName.Trim());
+                if (!string.IsNullOrEmpty(person.FatherName) && person.FatherName != "غير معروف")
+                    names.Add(person.FatherName.Trim());
 
-                    if (!string.IsNullOrEmpty(person.LastName) && person.LastName != "غير معروف")
-                        names.Add(person.LastName.Trim());
-                }
-                else
-                {
-                    // لغير المؤسس: نعرض جميع الحقول مع قيم افتراضية
-                    names.Add(!string.IsNullOrEmpty(person.FatherName) ? person.FatherName.Trim() : "غير معروف");
-                    names.Add(!string.IsNullOrEmpty(person.GrandFatherName) ? person.GrandFatherName.Trim() : "غير معروف");
-                    names.Add(!string.IsNullOrEmpty(person.LastName) ? person.LastName.Trim() : "غير معروف");
-                }
+                if (!string.IsNullOrEmpty(person.GrandFatherName) && person.GrandFatherName != "غير معروف")
+                    names.Add(person.GrandFatherName.Trim());
+
+                if (!string.IsNullOrEmpty(person.LastName) && person.LastName != "غير معروف")
+                    names.Add(person.LastName.Trim());
 
                 return names.Any() ? string.Join(" ", names) : "غير معروف";
             }
@@ -133,144 +124,82 @@ namespace FamilyTreePro.Controllers
         public async Task<IActionResult> Create(CreatePersonViewModel viewModel)
         {
             var userId = GetCurrentUserId();
-            if (userId == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            _logger.LogInformation($"🔍 بدء عملية إضافة فرد جديد - مؤسس: {viewModel.IsFounder}");
-
-            // تنظيف البيانات من المسافات الزائدة
-            viewModel.FirstName = viewModel.FirstName?.Trim();
-            viewModel.FatherName = viewModel.FatherName?.Trim();
-            viewModel.GrandFatherName = viewModel.GrandFatherName?.Trim();
-            viewModel.LastName = viewModel.LastName?.Trim();
-            viewModel.Nickname = viewModel.Nickname?.Trim();
-            viewModel.City = viewModel.City?.Trim();
-            viewModel.Notes = viewModel.Notes?.Trim();
-            viewModel.AdditionReason = viewModel.AdditionReason?.Trim();
-
-            // ⭐⭐ معالجة خاصة للمؤسس ⭐⭐
-            if (viewModel.IsFounder)
-            {
-                // إزالة التحقق من الحقول للمؤسس
-                ModelState.Remove("FatherName");
-                ModelState.Remove("GrandFatherName");
-                ModelState.Remove("LastName");
-
-                // جعل الحقول NULL للمؤسس إذا كانت فارغة
-                viewModel.FatherName = string.IsNullOrWhiteSpace(viewModel.FatherName) ? null : viewModel.FatherName;
-                viewModel.GrandFatherName = string.IsNullOrWhiteSpace(viewModel.GrandFatherName) ? null : viewModel.GrandFatherName;
-                viewModel.LastName = string.IsNullOrWhiteSpace(viewModel.LastName) ? null : viewModel.LastName;
-
-                // إزالة الأب والأم للمؤسس
-                viewModel.FatherId = null;
-                viewModel.MotherId = null;
-
-                _logger.LogInformation("⭐ معالجة بيانات المؤسس - السماح بالقيم NULL");
-            }
-            else
-            {
-                // لغير المؤسس: استخدام "غير معروف" للحقول الفارغة
-                viewModel.FatherName = string.IsNullOrWhiteSpace(viewModel.FatherName) ? "غير معروف" : viewModel.FatherName;
-                viewModel.GrandFatherName = string.IsNullOrWhiteSpace(viewModel.GrandFatherName) ? "غير معروف" : viewModel.GrandFatherName;
-                viewModel.LastName = string.IsNullOrWhiteSpace(viewModel.LastName) ? "غير معروف" : viewModel.LastName;
-
-                _logger.LogInformation("👤 معالجة بيانات الفرد العادي - استخدام 'غير معروف' للقيم الفارغة");
-            }
-
-            // ⭐⭐ إزالة أخطاء التحقق للحقول المشروطة ⭐⭐
-            ModelState.Remove("FatherName");
-            ModelState.Remove("GrandFatherName");
-            ModelState.Remove("LastName");
-            ModelState.Remove("Nickname");
-            ModelState.Remove("City");
-            ModelState.Remove("Notes");
-            ModelState.Remove("Photo");
-            ModelState.Remove("AdditionReason");
-            ModelState.Remove("IsFounder");
-
-            // التحقق من وجود مؤسس
-            if (viewModel.IsFounder)
-            {
-                var existingFounder = await _context.Persons
-                    .FirstOrDefaultAsync(p => p.FamilyTreeId == viewModel.FamilyTreeId && p.IsFounder);
-                if (existingFounder != null)
-                {
-                    ModelState.AddModelError("IsFounder", "يوجد مؤسس بالفعل في الشجرة العائلية. لا يمكن إضافة أكثر من مؤسس واحد.");
-                    _logger.LogWarning($"❌ محاولة إضافة مؤسس جديد مع وجود مؤسس موجود: {existingFounder.Id}");
-                }
-            }
-
-            // التحقق من الحقول المطلوبة
-            bool hasErrors = false;
-            if (string.IsNullOrWhiteSpace(viewModel.FirstName))
-            {
-                ModelState.AddModelError("FirstName", "الاسم الأول مطلوب");
-                hasErrors = true;
-            }
-
-            if (string.IsNullOrWhiteSpace(viewModel.Gender))
-            {
-                ModelState.AddModelError("Gender", "الجنس مطلوب");
-                hasErrors = true;
-            }
-
-            // التحقق من أن غير المؤسس لديه أب محدد
-            if (!viewModel.IsFounder && !viewModel.FatherId.HasValue && string.IsNullOrWhiteSpace(viewModel.FatherName))
-            {
-                ModelState.AddModelError("FatherName", "اسم الأب مطلوب للأفراد العاديين");
-                hasErrors = true;
-            }
-
-            if (!ModelState.IsValid || hasErrors)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-
-                _logger.LogWarning($"❌ أخطاء التحقق: {string.Join(", ", errors)}");
-
-                TempData["ErrorMessage"] = "البيانات غير صالحة. يرجى تصحيح الأخطاء أدناه.";
-
-                await RepopulateViewBags(viewModel.FamilyTreeId);
-                var hasFounder = await _context.Persons
-                    .AnyAsync(p => p.FamilyTreeId == viewModel.FamilyTreeId && p.IsFounder);
-                ViewBag.HasFounder = hasFounder;
-                ViewBag.CanBeFounder = !hasFounder && !viewModel.FatherId.HasValue;
-                return View(viewModel);
-            }
-
-            var tree = await _context.FamilyTrees
-                .FirstOrDefaultAsync(ft => ft.Id == viewModel.FamilyTreeId && ft.UserId == userId);
-
-            if (tree == null)
-            {
-                _logger.LogWarning($"❌ الشجرة غير موجودة: {viewModel.FamilyTreeId} للمستخدم: {userId}");
-                TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
-                return RedirectToAction("Index", "Home");
-            }
+            if (userId == null) return RedirectToAction("Login", "Account");
 
             try
             {
+                // ⭐⭐ الإصلاح: معالجة حقل Photo ⭐⭐
+                viewModel.Photo = string.IsNullOrWhiteSpace(viewModel.Photo) ? "" : viewModel.Photo.Trim();
+
+                // تنظيف باقي البيانات
+                viewModel.FirstName = viewModel.FirstName?.Trim();
+                viewModel.FatherName = viewModel.FatherName?.Trim();
+                viewModel.GrandFatherName = viewModel.GrandFatherName?.Trim(); // ⭐ سيصبح null إذا كان فارغاً
+                viewModel.LastName = viewModel.LastName?.Trim();
+                viewModel.Nickname = viewModel.Nickname?.Trim();
+                viewModel.City = viewModel.City?.Trim();
+                viewModel.Notes = viewModel.Notes?.Trim();
+                viewModel.AdditionReason = viewModel.AdditionReason?.Trim();
+
+                // ⭐⭐ الإصلاح: معالجة ابن المؤسس ⭐⭐
+                if (viewModel.FatherId.HasValue)
+                {
+                    var father = await _context.Persons.FindAsync(viewModel.FatherId.Value);
+                    if (father != null && father.IsFounder)
+                    {
+                        viewModel.FatherName = father.FirstName;
+                        // ⭐⭐ التغيير هنا: عدم إجبار قيمة الجد ⭐⭐
+                        // viewModel.GrandFatherName = "غير معروف"; // ❌ هذا السطر هو المشكلة
+                        viewModel.GrandFatherName = viewModel.GrandFatherName; // ⭐ الاحتفاظ بالقيمة المدخلة
+                        viewModel.LastName = father.LastName ?? "غير معروف";
+                        viewModel.IsFounder = false;
+                    }
+                }
+
+                if (viewModel.IsFounder)
+                {
+                    viewModel.FatherName = string.IsNullOrWhiteSpace(viewModel.FatherName) ? null : viewModel.FatherName;
+                    viewModel.GrandFatherName = string.IsNullOrWhiteSpace(viewModel.GrandFatherName) ? null : viewModel.GrandFatherName;
+                    viewModel.LastName = string.IsNullOrWhiteSpace(viewModel.LastName) ? null : viewModel.LastName;
+                    viewModel.FatherId = null;
+                    viewModel.MotherId = null;
+                }
+
+                // إزالة التحقق من الحقول غير الأساسية
+                ModelState.Remove("FatherName");
+                ModelState.Remove("GrandFatherName");
+                ModelState.Remove("LastName");
+                ModelState.Remove("Nickname");
+                ModelState.Remove("City");
+                ModelState.Remove("Notes");
+                ModelState.Remove("Photo");
+                ModelState.Remove("AdditionReason");
+                ModelState.Remove("IsFounder");
+
+                if (!ModelState.IsValid)
+                {
+                    await RepopulateViewBags(viewModel.FamilyTreeId);
+                    return View(viewModel);
+                }
+
+                // ⭐⭐ إنشاء الشخص مع معالجة الحقول الفارغة ⭐⭐
                 var person = new Person
                 {
                     FirstName = viewModel.FirstName,
-                    FatherName = viewModel.FatherName, // قد تكون NULL للمؤسس
-                    GrandFatherName = viewModel.GrandFatherName, // قد تكون NULL للمؤسس
-                    LastName = viewModel.LastName, // قد تكون NULL للمؤسس
-                    Nickname = string.IsNullOrWhiteSpace(viewModel.Nickname) ? "لا يوجد" : viewModel.Nickname,
+                    FatherName = viewModel.FatherName,
+                    GrandFatherName = viewModel.GrandFatherName, // ⭐ الآن سيحتفظ بالقيمة المدخلة (قد تكون null)
+                    LastName = viewModel.LastName,
+                    Nickname = string.IsNullOrWhiteSpace(viewModel.Nickname) ? null : viewModel.Nickname, // ⭐ null بدلاً من "لا يوجد"
                     Gender = viewModel.Gender,
                     BirthDate = viewModel.BirthDate,
                     DeathDate = viewModel.DeathDate,
                     OccupationId = viewModel.OccupationId,
                     CountryId = viewModel.CountryId,
-                    City = string.IsNullOrWhiteSpace(viewModel.City) ? "غير محدد" : viewModel.City,
-                    Notes = string.IsNullOrWhiteSpace(viewModel.Notes) ? "لا يوجد" : viewModel.Notes,
+                    City = string.IsNullOrWhiteSpace(viewModel.City) ? null : viewModel.City, // ⭐ null بدلاً من "غير محدد"
+                    Notes = string.IsNullOrWhiteSpace(viewModel.Notes) ? null : viewModel.Notes, // ⭐ null بدلاً من "لا يوجد"
                     FamilyTreeId = viewModel.FamilyTreeId,
-                    FatherId = viewModel.FatherId, // سيكون NULL للمؤسس
-                    MotherId = viewModel.MotherId, // سيكون NULL للمؤسس
+                    FatherId = viewModel.FatherId,
+                    MotherId = viewModel.MotherId,
                     AdditionReason = viewModel.AdditionReason,
                     Photo = viewModel.Photo,
                     IsFounder = viewModel.IsFounder,
@@ -280,147 +209,18 @@ namespace FamilyTreePro.Controllers
                     LastUpdated = DateTime.Now
                 };
 
-                var fullName = GetFullName(person);
-                _logger.LogInformation($"💾 محاولة حفظ الشخص: {fullName}، مؤسس: {person.IsFounder}");
-
                 _context.Persons.Add(person);
-                int recordsAffected = await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
 
-                _logger.LogInformation($"✅ تم حفظ الشخص بنجاح! السجلات المتأثرة: {recordsAffected}, الرقم: {person.Id}");
-
-                // إذا كان طلب AJAX، إرجاع JSON
-                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                {
-                    return Json(new
-                    {
-                        success = true,
-                        personName = fullName,
-                        isFounder = person.IsFounder,
-                        personId = person.Id
-                    });
-                }
-
-                if (person.IsFounder)
-                {
-                    TempData["SuccessMessage"] = $"تم إضافة المؤسس {fullName} بنجاح!";
-                }
-                else
-                {
-                    TempData["SuccessMessage"] = $"تم إضافة الفرد {fullName} بنجاح!";
-                }
-
+                TempData["SuccessMessage"] = $"تم إضافة {GetFullName(person)} بنجاح!";
                 return RedirectToAction("Index", new { familyTreeId = viewModel.FamilyTreeId });
             }
-            catch (DbUpdateException dbEx)
-            {
-                _logger.LogError(dbEx, "❌ خطأ في قاعدة البيانات أثناء إضافة الفرد");
-                _logger.LogError($"تفاصيل الخطأ الداخلية: {dbEx.InnerException?.Message}");
-
-                // إذا كان طلب AJAX، إرجاع JSON للخطأ
-                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "حدث خطأ في قاعدة البيانات أثناء الحفظ"
-                    });
-                }
-
-                TempData["ErrorMessage"] = "حدث خطأ في قاعدة البيانات. قد تكون البيانات مكررة أو غير صالحة.";
-            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ خطأ غير متوقع أثناء إضافة الفرد");
-
-                // إذا كان طلب AJAX، إرجاع JSON للخطأ
-                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "حدث خطأ غير متوقع أثناء الحفظ"
-                    });
-                }
-
-                TempData["ErrorMessage"] = $"حدث خطأ غير متوقع: {ex.Message}";
-            }
-
-            await RepopulateViewBags(viewModel.FamilyTreeId);
-            var hasFounderInTree = await _context.Persons
-                .AnyAsync(p => p.FamilyTreeId == viewModel.FamilyTreeId && p.IsFounder);
-            ViewBag.HasFounder = hasFounderInTree;
-            ViewBag.CanBeFounder = !hasFounderInTree && !viewModel.FatherId.HasValue;
-            return View(viewModel);
-        }
-
-        // GET: تعديل فرد
-        // في PersonController - تحديث إجراء Edit
-        [HttpGet]
-        public async Task<IActionResult> Edit(int id)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == null)
-                {
-                    return RedirectToAction("Login", "Account");
-                }
-
-                var person = await _context.Persons
-                    .Include(p => p.FamilyTree)
-                    .Include(p => p.Father)
-                    .Include(p => p.Mother)
-                    .Include(p => p.Occupation)
-                    .Include(p => p.Country)
-                    .FirstOrDefaultAsync(p => p.Id == id && p.FamilyTree.UserId == userId);
-
-                if (person == null)
-                {
-                    TempData["ErrorMessage"] = "الفرد غير موجود أو لا تملك صلاحية الوصول له";
-                    return RedirectToAction("Index", "Home");
-                }
-
-                var viewModel = new EditPersonViewModel
-                {
-                    Id = person.Id,
-                    FirstName = person.FirstName,
-                    FatherName = person.FatherName,
-                    GrandFatherName = person.GrandFatherName,
-                    LastName = person.LastName,
-                    Nickname = person.Nickname,
-                    Gender = person.Gender,
-                    BirthDate = person.BirthDate,
-                    DeathDate = person.DeathDate,
-                    OccupationId = person.OccupationId,
-                    CountryId = person.CountryId,
-                    City = person.City,
-                    Notes = person.Notes,
-                    Photo = person.Photo,
-                    AdditionReason = person.AdditionReason,
-                    IsOriginalRecord = person.IsOriginalRecord,
-                    IsConnectionPoint = person.IsConnectionPoint,
-                    IsFounder = person.IsFounder, // تعيين حقل المؤسس
-                    FamilyTreeId = person.FamilyTreeId,
-                    FatherId = person.FatherId,
-                    MotherId = person.MotherId,
-                    CreatedDate = person.CreatedDate,
-                    LastUpdated = person.LastUpdated,
-                    // تعيين خصائص العرض
-                    FatherNameDisplay = person.Father?.FullName ?? "غير معروف",
-                    MotherNameDisplay = person.Mother?.FullName ?? "غير معروف",
-                    OccupationName = person.Occupation?.Name ?? "غير محدد",
-                    CountryName = person.Country?.Name ?? "غير محدد",
-                    FamilyTreeName = person.FamilyTree?.Name ?? "غير معروف"
-                };
-
-                await RepopulateViewBags(person.FamilyTreeId, person.Id);
+                _logger.LogError(ex, "خطأ في إضافة الفرد");
+                TempData["ErrorMessage"] = $"حدث خطأ أثناء الإضافة: {ex.Message}";
+                await RepopulateViewBags(viewModel.FamilyTreeId);
                 return View(viewModel);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "خطأ في تحميل صفحة التعديل");
-                TempData["ErrorMessage"] = "حدث خطأ في تحميل صفحة التعديل";
-                return RedirectToAction("Index", "Home");
             }
         }
 

@@ -87,7 +87,7 @@ namespace FamilyTreePro.Models
         public string City { get; set; } = "غير محدد";
 
         [Display(Name = "الصورة")]
-        public string Photo { get; set; } = "";
+        public string Photo { get; set; } = ""; // ⭐ قيمة افتراضية ⭐
 
         [Display(Name = "ملاحظات")]
         public string Notes { get; set; } = "لا يوجد";
