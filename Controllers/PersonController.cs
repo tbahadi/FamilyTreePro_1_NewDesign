@@ -153,12 +153,17 @@ namespace FamilyTreePro.Controllers
             // ⭐⭐ معالجة خاصة للمؤسس ⭐⭐
             if (viewModel.IsFounder)
             {
-                // للمؤسس: السماح بالقيم الفارغة (ستصبح NULL)
+                // إزالة التحقق من الحقول للمؤسس
+                ModelState.Remove("FatherName");
+                ModelState.Remove("GrandFatherName");
+                ModelState.Remove("LastName");
+
+                // جعل الحقول NULL للمؤسس إذا كانت فارغة
                 viewModel.FatherName = string.IsNullOrWhiteSpace(viewModel.FatherName) ? null : viewModel.FatherName;
                 viewModel.GrandFatherName = string.IsNullOrWhiteSpace(viewModel.GrandFatherName) ? null : viewModel.GrandFatherName;
                 viewModel.LastName = string.IsNullOrWhiteSpace(viewModel.LastName) ? null : viewModel.LastName;
 
-                // إزالة FatherId و MotherId للمؤسس
+                // إزالة الأب والأم للمؤسس
                 viewModel.FatherId = null;
                 viewModel.MotherId = null;
 
