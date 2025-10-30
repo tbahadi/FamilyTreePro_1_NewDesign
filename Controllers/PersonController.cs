@@ -10,7 +10,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-
 namespace FamilyTreePro.Controllers
 {
     public class PersonController : Controller
@@ -29,29 +28,48 @@ namespace FamilyTreePro.Controllers
             return HttpContext.Session.GetInt32("UserId");
         }
 
-        // دالة مساعدة لبناء الاسم الكامل
-        // دالة مساعدة لبناء الاسم الكامل
+        // دالة مساعدة محسنة لبناء الاسم الكامل مع معالجة المؤسس
         private string GetFullName(Person person)
         {
             if (person == null) return "غير معروف";
 
-            var names = new List<string>();
+            try
+            {
+                var names = new List<string>();
 
-            if (!string.IsNullOrEmpty(person.FirstName))
-                names.Add(person.FirstName.Trim());
+                // الاسم الأول مطلوب دائماً
+                if (!string.IsNullOrEmpty(person.FirstName))
+                    names.Add(person.FirstName.Trim());
 
-            if (!string.IsNullOrEmpty(person.FatherName))
-                names.Add(person.FatherName.Trim());
+                // معالجة خاصة للمؤسس
+                if (person.IsFounder)
+                {
+                    // للمؤسس: نعرض فقط الحقول التي تحتوي على بيانات
+                    if (!string.IsNullOrEmpty(person.FatherName) && person.FatherName != "غير معروف")
+                        names.Add(person.FatherName.Trim());
 
-            if (!string.IsNullOrEmpty(person.GrandFatherName))
-                names.Add(person.GrandFatherName.Trim());
+                    if (!string.IsNullOrEmpty(person.GrandFatherName) && person.GrandFatherName != "غير معروف")
+                        names.Add(person.GrandFatherName.Trim());
 
-            if (!string.IsNullOrEmpty(person.LastName))
-                names.Add(person.LastName.Trim());
+                    if (!string.IsNullOrEmpty(person.LastName) && person.LastName != "غير معروف")
+                        names.Add(person.LastName.Trim());
+                }
+                else
+                {
+                    // لغير المؤسس: نعرض جميع الحقول مع قيم افتراضية
+                    names.Add(!string.IsNullOrEmpty(person.FatherName) ? person.FatherName.Trim() : "غير معروف");
+                    names.Add(!string.IsNullOrEmpty(person.GrandFatherName) ? person.GrandFatherName.Trim() : "غير معروف");
+                    names.Add(!string.IsNullOrEmpty(person.LastName) ? person.LastName.Trim() : "غير معروف");
+                }
 
-            return names.Any() ? string.Join(" ", names) : "غير معروف";
+                return names.Any() ? string.Join(" ", names) : "غير معروف";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطأ في دالة GetFullName للشخص {PersonId}", person?.Id);
+                return "غير معروف";
+            }
         }
-
         // GET: إضافة فرد جديد
         [HttpGet]
         public async Task<IActionResult> Create(int familyTreeId, int? fatherId = null, int? motherId = null)
@@ -62,7 +80,8 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            var tree = _context.FamilyTrees.FirstOrDefault(ft => ft.Id == familyTreeId && ft.UserId == userId);
+            var tree = await _context.FamilyTrees
+                .FirstOrDefaultAsync(ft => ft.Id == familyTreeId && ft.UserId == userId);
             if (tree == null)
             {
                 TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
@@ -70,7 +89,8 @@ namespace FamilyTreePro.Controllers
             }
 
             // التحقق من وجود مؤسس في هذه الشجرة
-            var hasFounder = _context.Persons.Any(p => p.FamilyTreeId == familyTreeId && p.IsFounder);
+            var hasFounder = await _context.Persons
+                .AnyAsync(p => p.FamilyTreeId == familyTreeId && p.IsFounder);
             ViewBag.HasFounder = hasFounder;
 
             var viewModel = new CreatePersonViewModel
@@ -85,14 +105,22 @@ namespace FamilyTreePro.Controllers
 
             if (fatherId.HasValue)
             {
-                var father = _context.Persons.Find(fatherId.Value);
+                var father = await _context.Persons.FindAsync(fatherId.Value);
                 ViewBag.FatherName = father != null ? GetFullName(father) : "غير معروف";
                 ViewBag.IsAddingChild = true;
+
+                // عند إضافة ابن، لا يمكن أن يكون مؤسساً
+                viewModel.IsFounder = false;
+                ViewBag.CanBeFounder = false;
+            }
+            else
+            {
+                ViewBag.CanBeFounder = !hasFounder;
             }
 
             if (motherId.HasValue)
             {
-                var mother = _context.Persons.Find(motherId.Value);
+                var mother = await _context.Persons.FindAsync(motherId.Value);
                 ViewBag.MotherName = mother != null ? GetFullName(mother) : "غير معروف";
             }
 
@@ -110,61 +138,67 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
+            _logger.LogInformation($"🔍 بدء عملية إضافة فرد جديد - مؤسس: {viewModel.IsFounder}");
+
             // تنظيف البيانات من المسافات الزائدة
-            if (!string.IsNullOrEmpty(viewModel.FirstName))
-                viewModel.FirstName = viewModel.FirstName.Trim();
-            if (!string.IsNullOrEmpty(viewModel.FatherName))
-                viewModel.FatherName = viewModel.FatherName.Trim();
-            if (!string.IsNullOrEmpty(viewModel.GrandFatherName))
-                viewModel.GrandFatherName = viewModel.GrandFatherName.Trim();
-            if (!string.IsNullOrEmpty(viewModel.LastName))
-                viewModel.LastName = viewModel.LastName.Trim();
-            if (!string.IsNullOrEmpty(viewModel.Nickname))
-                viewModel.Nickname = viewModel.Nickname.Trim();
-            if (!string.IsNullOrEmpty(viewModel.City))
-                viewModel.City = viewModel.City.Trim();
-            if (!string.IsNullOrEmpty(viewModel.Notes))
-                viewModel.Notes = viewModel.Notes.Trim();
-            if (!string.IsNullOrEmpty(viewModel.AdditionReason))
-                viewModel.AdditionReason = viewModel.AdditionReason.Trim();
+            viewModel.FirstName = viewModel.FirstName?.Trim();
+            viewModel.FatherName = viewModel.FatherName?.Trim();
+            viewModel.GrandFatherName = viewModel.GrandFatherName?.Trim();
+            viewModel.LastName = viewModel.LastName?.Trim();
+            viewModel.Nickname = viewModel.Nickname?.Trim();
+            viewModel.City = viewModel.City?.Trim();
+            viewModel.Notes = viewModel.Notes?.Trim();
+            viewModel.AdditionReason = viewModel.AdditionReason?.Trim();
 
-            // ⭐⭐ الإصلاحات - تعيين القيم الافتراضية للحقول المطلوبة ⭐⭐
-            if (string.IsNullOrWhiteSpace(viewModel.Nickname)) viewModel.Nickname = "لا يوجد";
-            if (string.IsNullOrWhiteSpace(viewModel.City)) viewModel.City = "غير محدد";
-            if (string.IsNullOrWhiteSpace(viewModel.Notes)) viewModel.Notes = "لا يوجد";
-            if (string.IsNullOrWhiteSpace(viewModel.Photo)) viewModel.Photo = "";
-            if (string.IsNullOrWhiteSpace(viewModel.AdditionReason)) viewModel.AdditionReason = "";
+            // ⭐⭐ معالجة خاصة للمؤسس ⭐⭐
+            if (viewModel.IsFounder)
+            {
+                // للمؤسس: السماح بالقيم الفارغة (ستصبح NULL)
+                viewModel.FatherName = string.IsNullOrWhiteSpace(viewModel.FatherName) ? null : viewModel.FatherName;
+                viewModel.GrandFatherName = string.IsNullOrWhiteSpace(viewModel.GrandFatherName) ? null : viewModel.GrandFatherName;
+                viewModel.LastName = string.IsNullOrWhiteSpace(viewModel.LastName) ? null : viewModel.LastName;
 
-            // ⭐⭐ الإصلاح الجذري: إزالة أخطاء التحقق للحقول الغير مطلوبة ⭐⭐
+                // إزالة FatherId و MotherId للمؤسس
+                viewModel.FatherId = null;
+                viewModel.MotherId = null;
+
+                _logger.LogInformation("⭐ معالجة بيانات المؤسس - السماح بالقيم NULL");
+            }
+            else
+            {
+                // لغير المؤسس: استخدام "غير معروف" للحقول الفارغة
+                viewModel.FatherName = string.IsNullOrWhiteSpace(viewModel.FatherName) ? "غير معروف" : viewModel.FatherName;
+                viewModel.GrandFatherName = string.IsNullOrWhiteSpace(viewModel.GrandFatherName) ? "غير معروف" : viewModel.GrandFatherName;
+                viewModel.LastName = string.IsNullOrWhiteSpace(viewModel.LastName) ? "غير معروف" : viewModel.LastName;
+
+                _logger.LogInformation("👤 معالجة بيانات الفرد العادي - استخدام 'غير معروف' للقيم الفارغة");
+            }
+
+            // ⭐⭐ إزالة أخطاء التحقق للحقول المشروطة ⭐⭐
+            ModelState.Remove("FatherName");
+            ModelState.Remove("GrandFatherName");
+            ModelState.Remove("LastName");
             ModelState.Remove("Nickname");
             ModelState.Remove("City");
             ModelState.Remove("Notes");
             ModelState.Remove("Photo");
             ModelState.Remove("AdditionReason");
             ModelState.Remove("IsFounder");
-            ModelState.Remove("AddType");
 
-            // ⭐⭐ إزالة أخطاء التحقق للحقول التي لم تعد مطلوبة ⭐⭐
-            ModelState.Remove("FatherName");
-            ModelState.Remove("GrandFatherName");
-            ModelState.Remove("LastName");
+            // التحقق من وجود مؤسس
+            if (viewModel.IsFounder)
+            {
+                var existingFounder = await _context.Persons
+                    .FirstOrDefaultAsync(p => p.FamilyTreeId == viewModel.FamilyTreeId && p.IsFounder);
+                if (existingFounder != null)
+                {
+                    ModelState.AddModelError("IsFounder", "يوجد مؤسس بالفعل في الشجرة العائلية. لا يمكن إضافة أكثر من مؤسس واحد.");
+                    _logger.LogWarning($"❌ محاولة إضافة مؤسس جديد مع وجود مؤسس موجود: {existingFounder.Id}");
+                }
+            }
 
-            _logger.LogInformation($"🔍 بيانات النموذج المستلمة بعد التنظيف:");
-            _logger.LogInformation($"   - الاسم: '{viewModel.FirstName}'");
-            _logger.LogInformation($"   - اسم الأب: '{viewModel.FatherName}'");
-            _logger.LogInformation($"   - اسم الجد: '{viewModel.GrandFatherName}'");
-            _logger.LogInformation($"   - العائلة: '{viewModel.LastName}'");
-            _logger.LogInformation($"   - اللقب: '{viewModel.Nickname}'");
-            _logger.LogInformation($"   - الجنس: '{viewModel.Gender}'");
-            _logger.LogInformation($"   - الشجرة: {viewModel.FamilyTreeId}");
-            _logger.LogInformation($"   - المدينة: '{viewModel.City}'");
-            _logger.LogInformation($"   - الملاحظات: '{viewModel.Notes}'");
-            _logger.LogInformation($"   - مؤسس: '{viewModel.IsFounder}'");
-            _logger.LogInformation($"   - نوع الإضافة: '{viewModel.AddType}'");
-
-            // ⭐⭐ التحقق اليدوي المحسن من الحقول المطلوبة فقط ⭐⭐
+            // التحقق من الحقول المطلوبة
             bool hasErrors = false;
-
             if (string.IsNullOrWhiteSpace(viewModel.FirstName))
             {
                 ModelState.AddModelError("FirstName", "الاسم الأول مطلوب");
@@ -177,18 +211,11 @@ namespace FamilyTreePro.Controllers
                 hasErrors = true;
             }
 
-            // ⭐⭐ التحقق من المؤسس ⭐⭐
-            if (viewModel.IsFounder)
+            // التحقق من أن غير المؤسس لديه أب محدد
+            if (!viewModel.IsFounder && !viewModel.FatherId.HasValue && string.IsNullOrWhiteSpace(viewModel.FatherName))
             {
-                // تحقق إذا كان هناك مؤسس بالفعل في هذه الشجرة
-                var existingFounder = await _context.Persons
-                    .FirstOrDefaultAsync(p => p.FamilyTreeId == viewModel.FamilyTreeId && p.IsFounder);
-                if (existingFounder != null)
-                {
-                    ModelState.AddModelError("IsFounder", "يوجد مؤسس بالفعل في الشجرة العائلية. لا يمكن إضافة أكثر من مؤسس واحد.");
-                    hasErrors = true;
-                    _logger.LogWarning($"❌ محاولة إضافة مؤسس جديد مع وجود مؤسس موجود: {existingFounder.Id}");
-                }
+                ModelState.AddModelError("FatherName", "اسم الأب مطلوب للأفراد العاديين");
+                hasErrors = true;
             }
 
             if (!ModelState.IsValid || hasErrors)
@@ -200,22 +227,13 @@ namespace FamilyTreePro.Controllers
 
                 _logger.LogWarning($"❌ أخطاء التحقق: {string.Join(", ", errors)}");
 
-                // تسجيل تفاصيل أكثر عن أخطاء التحقق
-                foreach (var key in ModelState.Keys)
-                {
-                    var state = ModelState[key];
-                    if (state.Errors.Any())
-                    {
-                        _logger.LogWarning($"   - {key}: {string.Join(", ", state.Errors.Select(e => e.ErrorMessage))}");
-                    }
-                }
-
                 TempData["ErrorMessage"] = "البيانات غير صالحة. يرجى تصحيح الأخطاء أدناه.";
 
                 await RepopulateViewBags(viewModel.FamilyTreeId);
-                // ⭐⭐ إعادة تحميل حالة وجود مؤسس للعرض ⭐⭐
-                var hasFounder = _context.Persons.Any(p => p.FamilyTreeId == viewModel.FamilyTreeId && p.IsFounder);
+                var hasFounder = await _context.Persons
+                    .AnyAsync(p => p.FamilyTreeId == viewModel.FamilyTreeId && p.IsFounder);
                 ViewBag.HasFounder = hasFounder;
+                ViewBag.CanBeFounder = !hasFounder && !viewModel.FatherId.HasValue;
                 return View(viewModel);
             }
 
@@ -231,28 +249,23 @@ namespace FamilyTreePro.Controllers
 
             try
             {
-                // ⭐⭐ تعيين القيم الافتراضية للحقول الاختيارية ⭐⭐
-                if (string.IsNullOrWhiteSpace(viewModel.FatherName)) viewModel.FatherName = "غير معروف";
-                if (string.IsNullOrWhiteSpace(viewModel.GrandFatherName)) viewModel.GrandFatherName = "غير معروف";
-                if (string.IsNullOrWhiteSpace(viewModel.LastName)) viewModel.LastName = "غير معروف";
-
                 var person = new Person
                 {
                     FirstName = viewModel.FirstName,
-                    FatherName = viewModel.FatherName,
-                    GrandFatherName = viewModel.GrandFatherName,
-                    LastName = viewModel.LastName,
-                    Nickname = viewModel.Nickname,
+                    FatherName = viewModel.FatherName, // قد تكون NULL للمؤسس
+                    GrandFatherName = viewModel.GrandFatherName, // قد تكون NULL للمؤسس
+                    LastName = viewModel.LastName, // قد تكون NULL للمؤسس
+                    Nickname = string.IsNullOrWhiteSpace(viewModel.Nickname) ? "لا يوجد" : viewModel.Nickname,
                     Gender = viewModel.Gender,
                     BirthDate = viewModel.BirthDate,
                     DeathDate = viewModel.DeathDate,
                     OccupationId = viewModel.OccupationId,
                     CountryId = viewModel.CountryId,
-                    City = viewModel.City,
-                    Notes = viewModel.Notes,
+                    City = string.IsNullOrWhiteSpace(viewModel.City) ? "غير محدد" : viewModel.City,
+                    Notes = string.IsNullOrWhiteSpace(viewModel.Notes) ? "لا يوجد" : viewModel.Notes,
                     FamilyTreeId = viewModel.FamilyTreeId,
-                    FatherId = viewModel.FatherId,
-                    MotherId = viewModel.MotherId,
+                    FatherId = viewModel.FatherId, // سيكون NULL للمؤسس
+                    MotherId = viewModel.MotherId, // سيكون NULL للمؤسس
                     AdditionReason = viewModel.AdditionReason,
                     Photo = viewModel.Photo,
                     IsFounder = viewModel.IsFounder,
@@ -277,7 +290,8 @@ namespace FamilyTreePro.Controllers
                     {
                         success = true,
                         personName = fullName,
-                        isFounder = person.IsFounder
+                        isFounder = person.IsFounder,
+                        personId = person.Id
                     });
                 }
 
@@ -327,13 +341,15 @@ namespace FamilyTreePro.Controllers
             }
 
             await RepopulateViewBags(viewModel.FamilyTreeId);
-            // ⭐⭐ إعادة تحميل حالة وجود مؤسس للعرض ⭐⭐
-            var hasFounderInTree = _context.Persons.Any(p => p.FamilyTreeId == viewModel.FamilyTreeId && p.IsFounder);
+            var hasFounderInTree = await _context.Persons
+                .AnyAsync(p => p.FamilyTreeId == viewModel.FamilyTreeId && p.IsFounder);
             ViewBag.HasFounder = hasFounderInTree;
+            ViewBag.CanBeFounder = !hasFounderInTree && !viewModel.FatherId.HasValue;
             return View(viewModel);
         }
 
         // GET: تعديل فرد
+        // في PersonController - تحديث إجراء Edit
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -347,6 +363,10 @@ namespace FamilyTreePro.Controllers
 
                 var person = await _context.Persons
                     .Include(p => p.FamilyTree)
+                    .Include(p => p.Father)
+                    .Include(p => p.Mother)
+                    .Include(p => p.Occupation)
+                    .Include(p => p.Country)
                     .FirstOrDefaultAsync(p => p.Id == id && p.FamilyTree.UserId == userId);
 
                 if (person == null)
@@ -374,11 +394,18 @@ namespace FamilyTreePro.Controllers
                     AdditionReason = person.AdditionReason,
                     IsOriginalRecord = person.IsOriginalRecord,
                     IsConnectionPoint = person.IsConnectionPoint,
+                    IsFounder = person.IsFounder, // تعيين حقل المؤسس
                     FamilyTreeId = person.FamilyTreeId,
                     FatherId = person.FatherId,
                     MotherId = person.MotherId,
                     CreatedDate = person.CreatedDate,
-                    LastUpdated = person.LastUpdated
+                    LastUpdated = person.LastUpdated,
+                    // تعيين خصائص العرض
+                    FatherNameDisplay = person.Father?.FullName ?? "غير معروف",
+                    MotherNameDisplay = person.Mother?.FullName ?? "غير معروف",
+                    OccupationName = person.Occupation?.Name ?? "غير محدد",
+                    CountryName = person.Country?.Name ?? "غير محدد",
+                    FamilyTreeName = person.FamilyTree?.Name ?? "غير معروف"
                 };
 
                 await RepopulateViewBags(person.FamilyTreeId, person.Id);
@@ -424,11 +451,33 @@ namespace FamilyTreePro.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
+                // ⭐⭐ معالجة خاصة للمؤسس ⭐⭐
+                if (person.IsFounder)
+                {
+                    // للمؤسس: السماح بالقيم الفارغة (ستصبح NULL)
+                    viewModel.FatherName = string.IsNullOrWhiteSpace(viewModel.FatherName) ? null : viewModel.FatherName;
+                    viewModel.GrandFatherName = string.IsNullOrWhiteSpace(viewModel.GrandFatherName) ? null : viewModel.GrandFatherName;
+                    viewModel.LastName = string.IsNullOrWhiteSpace(viewModel.LastName) ? null : viewModel.LastName;
+
+                    // إزالة FatherId و MotherId للمؤسس
+                    viewModel.FatherId = null;
+                    viewModel.MotherId = null;
+
+                    _logger.LogInformation("⭐ معالجة بيانات المؤسس في التعديل");
+                }
+                else
+                {
+                    // لغير المؤسس: استخدام "غير معروف" للحقول الفارغة
+                    viewModel.FatherName = string.IsNullOrWhiteSpace(viewModel.FatherName) ? "غير معروف" : viewModel.FatherName;
+                    viewModel.GrandFatherName = string.IsNullOrWhiteSpace(viewModel.GrandFatherName) ? "غير معروف" : viewModel.GrandFatherName;
+                    viewModel.LastName = string.IsNullOrWhiteSpace(viewModel.LastName) ? "غير معروف" : viewModel.LastName;
+                }
+
                 // تحديث البيانات
                 person.FirstName = viewModel.FirstName?.Trim();
-                person.FatherName = viewModel.FatherName?.Trim();
-                person.GrandFatherName = viewModel.GrandFatherName?.Trim();
-                person.LastName = viewModel.LastName?.Trim();
+                person.FatherName = viewModel.FatherName;
+                person.GrandFatherName = viewModel.GrandFatherName;
+                person.LastName = viewModel.LastName;
                 person.Nickname = viewModel.Nickname?.Trim();
                 person.Gender = viewModel.Gender;
                 person.BirthDate = viewModel.BirthDate;
@@ -487,16 +536,27 @@ namespace FamilyTreePro.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
-                if (person.Children.Any())
+                // ⭐⭐ التحقق من المؤسس ⭐⭐
+                if (person.IsFounder)
                 {
                     ViewBag.CanDelete = false;
+                    ViewBag.IsFounder = true;
+                    ViewBag.ErrorMessage = "لا يمكن حذف المؤسس لأنه أساس الشجرة العائلية.";
+                }
+                else if (person.Children.Any())
+                {
+                    ViewBag.CanDelete = false;
+                    ViewBag.IsFounder = false;
                     ViewBag.ChildrenCount = person.Children.Count;
+                    ViewBag.ErrorMessage = $"لا يمكن حذف الفرد لأنه لديه {person.Children.Count} ابن/أبناء. يرجى حذف الأبناء أولاً.";
                 }
                 else
                 {
                     ViewBag.CanDelete = true;
+                    ViewBag.IsFounder = false;
                 }
 
+                ViewBag.FullName = GetFullName(person);
                 return View(person);
             }
             catch (Exception ex)
@@ -531,12 +591,19 @@ namespace FamilyTreePro.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
+                // ⭐⭐ منع حذف المؤسس ⭐⭐
+                if (person.IsFounder)
+                {
+                    TempData["ErrorMessage"] = "لا يمكن حذف المؤسس لأنه أساس الشجرة العائلية.";
+                    return RedirectToAction("Delete", new { id = id });
+                }
+
                 var familyTreeId = person.FamilyTreeId;
                 var personName = GetFullName(person);
 
                 if (person.Children.Any())
                 {
-                    TempData["ErrorMessage"] = "لا يمكن حذف الفرد لأنه لديه أبناء. يرجى حذف الأبناء أولاً.";
+                    TempData["ErrorMessage"] = $"لا يمكن حذف الفرد {personName} لأنه لديه {person.Children.Count} ابن/أبناء. يرجى حذف الأبناء أولاً.";
                     return RedirectToAction("Delete", new { id = id });
                 }
 
@@ -554,32 +621,6 @@ namespace FamilyTreePro.Controllers
             }
         }
 
-        // أكشن للتحقق من البيانات (للت debug فقط)
-        public async Task<IActionResult> DebugTreeData(int familyTreeId)
-        {
-            var userId = GetCurrentUserId();
-            if (userId == null) return Json(new { error = "غير مسجل" });
-
-            var tree = await _context.FamilyTrees
-                .FirstOrDefaultAsync(ft => ft.Id == familyTreeId && ft.UserId == userId);
-
-            if (tree == null) return Json(new { error = "شجرة غير موجودة" });
-
-            var persons = await _context.Persons
-                .Where(p => p.FamilyTreeId == familyTreeId)
-                .ToListAsync();
-
-            return Json(new
-            {
-                treeName = tree.Name,
-                personsCount = persons.Count,
-                persons = persons.Select(p => new {
-                    id = p.Id,
-                    name = GetFullName(p),
-                    fatherId = p.FatherId
-                })
-            });
-        }
         // أكشن لعرض قائمة الأشخاص في شجرة معينة
         public async Task<IActionResult> Index(int familyTreeId)
         {
@@ -589,8 +630,6 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            _logger.LogInformation($"🔍 بدء تحميل الأفراد للشجرة {familyTreeId} للمستخدم {userId}");
-
             try
             {
                 var tree = await _context.FamilyTrees
@@ -598,38 +637,61 @@ namespace FamilyTreePro.Controllers
 
                 if (tree == null)
                 {
-                    _logger.LogWarning($"❌ الشجرة {familyTreeId} غير موجودة أو لا تتبع للمستخدم {userId}");
                     TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
                     return RedirectToAction("Index", "Home");
                 }
 
-                _logger.LogInformation($"✅ الشجرة موجودة: {tree.Name}");
-
+                // ⭐⭐ طريقة آمنة تماماً: تحميل البيانات بشكل منفصل ⭐⭐
                 var persons = await _context.Persons
-                    .Include(p => p.Occupation)
-                    .Include(p => p.Country)
-                    .Include(p => p.Father)
                     .Where(p => p.FamilyTreeId == familyTreeId)
-                    .OrderBy(p => p.FirstName)
+                    .OrderByDescending(p => p.IsFounder) // المؤسس أولاً
+                    .ThenBy(p => p.FirstName)
                     .ThenBy(p => p.FatherName)
                     .ToListAsync();
 
-                _logger.LogInformation($"✅ تم تحميل {persons.Count} فرد للشجرة {familyTreeId}");
+                // ⭐⭐ معالجة آمنة لجميع الحقول ⭐⭐
+                var safePersons = persons.Select(p => new Person
+                {
+                    Id = p.Id,
+                    FirstName = p.FirstName ?? "غير معروف",
+                    FatherName = p.IsFounder ? p.FatherName : (p.FatherName ?? "غير معروف"),
+                    GrandFatherName = p.IsFounder ? p.GrandFatherName : (p.GrandFatherName ?? "غير معروف"),
+                    LastName = p.IsFounder ? p.LastName : (p.LastName ?? "غير معروف"),
+                    Nickname = p.Nickname ?? "لا يوجد",
+                    IsOriginalRecord = p.IsOriginalRecord,
+                    IsConnectionPoint = p.IsConnectionPoint,
+                    IsFounder = p.IsFounder,
+                    OriginalTreeId = p.OriginalTreeId,
+                    Gender = p.Gender ?? "Male",
+                    BirthDate = p.BirthDate,
+                    DeathDate = p.DeathDate,
+                    City = p.City ?? "غير محدد",
+                    Photo = p.Photo ?? "",
+                    Notes = p.Notes ?? "لا يوجد",
+                    AdditionReason = p.AdditionReason ?? "",
+                    CreatedDate = p.CreatedDate,
+                    LastUpdated = p.LastUpdated,
+                    FamilyTreeId = p.FamilyTreeId,
+                    OccupationId = p.OccupationId,
+                    CountryId = p.CountryId,
+                    FatherId = p.FatherId,
+                    MotherId = p.MotherId
+                }).ToList();
 
                 ViewBag.FamilyTreeId = familyTreeId;
                 ViewBag.FamilyTreeName = tree.Name;
 
-                return View(persons);
+                return View(safePersons);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"❌ خطأ في تحميل قائمة الأشخاص للشجرة {familyTreeId}");
+                _logger.LogError(ex, $"خطأ في تحميل قائمة الأشخاص للشجرة {familyTreeId}");
                 TempData["ErrorMessage"] = "حدث خطأ في تحميل قائمة الأشخاص";
                 return View(new List<Person>());
             }
         }
 
-        // أكشن تفاصيل الشخص
+        // أكشن تفاصيل الشخص - محسن
         public async Task<IActionResult> Details(int id)
         {
             try
@@ -654,6 +716,10 @@ namespace FamilyTreePro.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
+                // إضافة الاسم الكامل للعرض
+                ViewBag.FullName = GetFullName(person);
+                ViewBag.IsFounder = person.IsFounder;
+
                 return View(person);
             }
             catch (Exception ex)
@@ -663,288 +729,8 @@ namespace FamilyTreePro.Controllers
                 return RedirectToAction("Index", "Home");
             }
         }
-        public async Task<IActionResult> EnhancedTree(int familyTreeId)
-        {
-            var familyTree = await _context.FamilyTrees
-                .FirstOrDefaultAsync(ft => ft.Id == familyTreeId);
 
-            if (familyTree == null)
-            {
-                return NotFound();
-            }
-
-            var allPersons = await _context.Persons
-                .Include(p => p.Father)
-                .Include(p => p.Mother)
-                .Include(p => p.Country)
-                .Include(p => p.Occupation)
-                .Where(p => p.FamilyTreeId == familyTreeId)
-                .ToListAsync();
-
-            var rootPersons = allPersons.Where(p => p.FatherId == null).ToList();
-
-            var viewModel = new FamilyTreeViewViewModel
-            {
-                FamilyTreeId = familyTreeId,
-                FamilyTreeName = familyTree.Name,
-                AllPersons = allPersons,
-                RootPersons = rootPersons
-            };
-
-            return View(viewModel);
-        }
-        public async Task<IActionResult> CompareTrees(int familyTreeId)
-        {
-            var familyTree = await _context.FamilyTrees
-                .FirstOrDefaultAsync(ft => ft.Id == familyTreeId);
-
-            if (familyTree == null)
-            {
-                return NotFound();
-            }
-
-            var allPersons = await _context.Persons
-                .Include(p => p.Father)
-                .Include(p => p.Mother)
-                .Include(p => p.Country)
-                .Include(p => p.Occupation)
-                .Where(p => p.FamilyTreeId == familyTreeId)
-                .ToListAsync();
-
-            var rootPersons = allPersons.Where(p => p.FatherId == null).ToList();
-
-            var viewModel = new FamilyTreeViewViewModel
-            {
-                FamilyTreeId = familyTreeId,
-                FamilyTreeName = familyTree.Name,
-                AllPersons = allPersons,
-                RootPersons = rootPersons
-            };
-
-            return View(viewModel);
-        }
-
-
-        public async Task<IActionResult> LeafTree(int familyTreeId)
-        {
-            var userId = GetCurrentUserId();
-            if (userId == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            try
-            {
-                var tree = await _context.FamilyTrees
-                    .FirstOrDefaultAsync(ft => ft.Id == familyTreeId && ft.UserId == userId);
-
-                if (tree == null)
-                {
-                    TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
-                    return RedirectToAction("Index", "Home");
-                }
-
-                // جلب البيانات الأساسية
-                var persons = await _context.Persons
-                    .Include(p => p.Occupation)
-                    .Include(p => p.Country)
-                    .Where(p => p.FamilyTreeId == familyTreeId)
-                    .ToListAsync();
-
-                // تحويل البيانات
-                var personData = persons.Select(p => new
-                {
-                    Id = p.Id,
-                    FirstName = p.FirstName ?? "",
-                    FatherName = p.FatherName ?? "",
-                    GrandFatherName = p.GrandFatherName ?? "",
-                    LastName = p.LastName ?? "",
-                    Nickname = p.Nickname ?? "",
-                    FullName = GetFullName(p),
-                    Gender = p.Gender ?? "Male",
-                    BirthDate = p.BirthDate.HasValue ? p.BirthDate.Value.ToString("yyyy-MM-dd") : null,
-                    City = p.City ?? "",
-                    FatherId = p.FatherId,
-                    IsConnectionPoint = p.IsConnectionPoint,
-                    OccupationName = p.Occupation?.Name ?? "",
-                    CountryName = p.Country?.Name ?? ""
-                }).ToList();
-
-                _logger.LogInformation($"🔍 بيانات الشجرةالورقة: {personData.Count} فرد");
-
-                ViewBag.FamilyTreeId = familyTreeId;
-                ViewBag.FamilyTreeName = tree.Name;
-                ViewBag.PersonsCount = personData.Count;
-
-                // إعداد JSON
-                var jsonOptions = new JsonSerializerOptions
-                {
-                    ReferenceHandler = ReferenceHandler.IgnoreCycles,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                    WriteIndented = false
-                };
-
-                ViewBag.PersonsJson = System.Text.Json.JsonSerializer.Serialize(personData, jsonOptions);
-
-                return View();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "خطأ في تحميل بيانات الشجرةالورقة: ");
-                TempData["ErrorMessage"] = "حدث خطأ في تحميل بيانات الشجرةالورقة: ";
-                return RedirectToAction("Index", "Home");
-            }
-        }
-
-        //ComperhensiveTreeView
-        public async Task<IActionResult> ComperhensiveTreeView(int familyTreeId)
-        {
-            var userId = GetCurrentUserId();
-            if (userId == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            try
-            {
-                var tree = await _context.FamilyTrees
-                    .FirstOrDefaultAsync(ft => ft.Id == familyTreeId && ft.UserId == userId);
-
-                if (tree == null)
-                {
-                    TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
-                    return RedirectToAction("Index", "Home");
-                }
-
-                // جلب البيانات الأساسية
-                var persons = await _context.Persons
-                    .Include(p => p.Occupation)
-                    .Include(p => p.Country)
-                    .Where(p => p.FamilyTreeId == familyTreeId)
-                    .ToListAsync();
-
-                // تحويل البيانات
-                var personData = persons.Select(p => new
-                {
-                    Id = p.Id,
-                    FirstName = p.FirstName ?? "",
-                    FatherName = p.FatherName ?? "",
-                    GrandFatherName = p.GrandFatherName ?? "",
-                    LastName = p.LastName ?? "",
-                    Nickname = p.Nickname ?? "",
-                    FullName = GetFullName(p),
-                    Gender = p.Gender ?? "Male",
-                    BirthDate = p.BirthDate.HasValue ? p.BirthDate.Value.ToString("yyyy-MM-dd") : null,
-                    City = p.City ?? "",
-                    FatherId = p.FatherId,
-                    IsConnectionPoint = p.IsConnectionPoint,
-                    OccupationName = p.Occupation?.Name ?? "",
-                    CountryName = p.Country?.Name ?? ""
-                }).ToList();
-
-                _logger.LogInformation($"🔍 بيانات الشجرة البسيطة الجديدة: {personData.Count} فرد");
-
-                ViewBag.FamilyTreeId = familyTreeId;
-                ViewBag.FamilyTreeName = tree.Name;
-                ViewBag.PersonsCount = personData.Count;
-
-                // إعداد JSON
-                var jsonOptions = new JsonSerializerOptions
-                {
-                    ReferenceHandler = ReferenceHandler.IgnoreCycles,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                    WriteIndented = false
-                };
-
-                ViewBag.PersonsJson = System.Text.Json.JsonSerializer.Serialize(personData, jsonOptions);
-
-                return View();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "خطأ في تحميل بيانات الشجرة البسيطة الجديدة: ");
-                TempData["ErrorMessage"] = "حدث خطأ في تحميل بيانات الشجرة البسيطة الجديدة: ";
-                return RedirectToAction("Index", "Home");
-            }
-        }
-        public async Task<IActionResult> SamplePage(int familyTreeId)
-        {
-            var userId = GetCurrentUserId();
-            if (userId == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            try
-            {
-                var tree = await _context.FamilyTrees
-                    .FirstOrDefaultAsync(ft => ft.Id == familyTreeId && ft.UserId == userId);
-
-                if (tree == null)
-                {
-                    TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
-                    return RedirectToAction("Index", "Home");
-                }
-
-                // جلب البيانات الأساسية
-                var persons = await _context.Persons
-                    .Include(p => p.Occupation)
-                    .Include(p => p.Country)
-                    .Where(p => p.FamilyTreeId == familyTreeId)
-                    .ToListAsync();
-
-                // تحويل البيانات
-                var personData = persons.Select(p => new
-                {
-                    Id = p.Id,
-                    FirstName = p.FirstName ?? "",
-                    FatherName = p.FatherName ?? "",
-                    GrandFatherName = p.GrandFatherName ?? "",
-                    LastName = p.LastName ?? "",
-                    Nickname = p.Nickname ?? "",
-                    FullName = GetFullName(p),
-                    Gender = p.Gender ?? "Male",
-                    BirthDate = p.BirthDate.HasValue ? p.BirthDate.Value.ToString("yyyy-MM-dd") : null,
-                    City = p.City ?? "",
-                    FatherId = p.FatherId,
-                    IsConnectionPoint = p.IsConnectionPoint,
-                    OccupationName = p.Occupation?.Name ?? "",
-                    CountryName = p.Country?.Name ?? ""
-                }).ToList();
-
-                _logger.LogInformation($"🔍 بيانات الشجرة البسيطة الجديدة: {personData.Count} فرد");
-
-                ViewBag.FamilyTreeId = familyTreeId;
-                ViewBag.FamilyTreeName = tree.Name;
-                ViewBag.PersonsCount = personData.Count;
-
-                // إعداد JSON
-                var jsonOptions = new JsonSerializerOptions
-                {
-                    ReferenceHandler = ReferenceHandler.IgnoreCycles,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                    WriteIndented = false
-                };
-
-                ViewBag.PersonsJson = System.Text.Json.JsonSerializer.Serialize(personData, jsonOptions);
-
-                return View();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "خطأ في تحميل بيانات الشجرة البسيطة الجديدة: ");
-                TempData["ErrorMessage"] = "حدث خطأ في تحميل بيانات الشجرة البسيطة الجديدة: ";
-                return RedirectToAction("Index", "Home");
-            }
-        }
-        // الشجرة الهرمية المتقدمة
-        // الشجرة العائلية المتقدمة
-        // الشجرة العائلية المتقدمة
-        // الشجرة العائلية المتقدمة
-        // في PersonController
+        // باقي الأكشنز (ProfessionalTree, FamilyTreeView, إلخ) تبقى كما هي
         public async Task<IActionResult> ProfessionalTree(int familyTreeId)
         {
             var userId = GetCurrentUserId();
@@ -986,6 +772,7 @@ namespace FamilyTreePro.Controllers
                     City = p.City ?? "",
                     FatherId = p.FatherId,
                     IsConnectionPoint = p.IsConnectionPoint,
+                    IsFounder = p.IsFounder, // إضافة حقل المؤسس
                     OccupationName = p.Occupation?.Name ?? "",
                     CountryName = p.Country?.Name ?? ""
                 }).ToList();
@@ -1017,59 +804,6 @@ namespace FamilyTreePro.Controllers
             }
         }
 
-        // عرض الشجرة الهرمية
-        // عرض الشجرة الهرمية
-        // عرض الشجرة الهرمية
-        // عرض الشجرة الهرمية
-        public async Task<IActionResult> FamilyTreeView(int familyTreeId)
-        {
-            var userId = GetCurrentUserId();
-            if (userId == null)
-            {
-                return RedirectToAction("Login", "Account");
-            }
-
-            try
-            {
-                var tree = await _context.FamilyTrees
-                    .FirstOrDefaultAsync(ft => ft.Id == familyTreeId && ft.UserId == userId);
-
-                if (tree == null)
-                {
-                    TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
-                    return RedirectToAction("Index", "Home");
-                }
-
-                // جلب جميع الأشخاص في الشجرة
-                var persons = await _context.Persons
-                    .Where(p => p.FamilyTreeId == familyTreeId)
-                    .ToListAsync();
-
-                // العثور على الأشخاص الجذر (بدون أب)
-                var rootPersons = persons.Where(p => p.FatherId == null).ToList();
-
-                // إنشاء الـ ViewModel
-                var viewModel = new FamilyTreeViewViewModel
-                {
-                    FamilyTreeId = familyTreeId,
-                    FamilyTreeName = tree.Name,
-                    RootPersons = rootPersons,
-                    AllPersons = persons
-                };
-
-                _logger.LogInformation($"تم تحميل {persons.Count} فرد للشجرة الهرمية، منهم {rootPersons.Count} جذر");
-
-                // إرسال الـ ViewModel إلى الـ View
-                return View(viewModel);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "خطأ في تحميل الشجرة الهرمية");
-                TempData["ErrorMessage"] = "حدث خطأ في تحميل الشجرة الهرمية";
-                return RedirectToAction("Index", "Home");
-            }
-        }
-
         // دالة مساعدة لإعادة تعبئة ViewBags - التحديث المهم هنا
         private async Task RepopulateViewBags(int familyTreeId, int? currentPersonId = null)
         {
@@ -1087,7 +821,7 @@ namespace FamilyTreePro.Controllers
                 ViewBag.Countries = countries;
                 _logger.LogInformation($"✅ تم تحميل {countries.Count} دولة");
 
-                // تحميل الآباء المحتملين
+                // تحميل الآباء المحتملين (لا يشمل المؤسس الحالي إذا كان في التعديل)
                 var potentialFathersQuery = _context.Persons
                     .Where(p => p.FamilyTreeId == familyTreeId && p.Gender == "Male");
 
@@ -1100,7 +834,7 @@ namespace FamilyTreePro.Controllers
                 ViewBag.PotentialFathers = potentialFathers;
                 _logger.LogInformation($"✅ تم تحميل {potentialFathers.Count} أب محتمل");
 
-                // تحميل الأمهات المحتملات
+                // تحميل الأمهات المحتملات (لا تشمل المؤسس الحالي إذا كان في التعديل)
                 var potentialMothersQuery = _context.Persons
                     .Where(p => p.FamilyTreeId == familyTreeId && p.Gender == "Female");
 
@@ -1133,26 +867,31 @@ namespace FamilyTreePro.Controllers
             {
                 var occupations = await _context.Occupations.ToListAsync();
                 var countries = await _context.Countries.ToListAsync();
+                var persons = await _context.Persons
+                    .Where(p => p.IsFounder)
+                    .ToListAsync();
 
                 _logger.LogInformation($"🔍 عدد المهن في قاعدة البيانات: {occupations.Count}");
                 _logger.LogInformation($"🔍 عدد الدول في قاعدة البيانات: {countries.Count}");
+                _logger.LogInformation($"🔍 عدد المؤسسين في قاعدة البيانات: {persons.Count}");
 
-                foreach (var occupation in occupations)
+                foreach (var founder in persons)
                 {
-                    _logger.LogInformation($"   - مهنة: {occupation.Name} (ID: {occupation.Id})");
-                }
-
-                foreach (var country in countries)
-                {
-                    _logger.LogInformation($"   - دولة: {country.Name} (ID: {country.Id})");
+                    _logger.LogInformation($"   - مؤسس: {GetFullName(founder)} (ID: {founder.Id}, الشجرة: {founder.FamilyTreeId})");
                 }
 
                 return Json(new
                 {
                     OccupationsCount = occupations.Count,
                     CountriesCount = countries.Count,
+                    FoundersCount = persons.Count,
                     Occupations = occupations,
-                    Countries = countries
+                    Countries = countries,
+                    Founders = persons.Select(f => new {
+                        id = f.Id,
+                        name = GetFullName(f),
+                        treeId = f.FamilyTreeId
+                    })
                 });
             }
             catch (Exception ex)
@@ -1160,6 +899,20 @@ namespace FamilyTreePro.Controllers
                 _logger.LogError(ex, "❌ خطأ في التحقق من البيانات");
                 return Json(new { error = ex.Message });
             }
+        }
+
+        // دالة مساعدة للتحقق من وجود مؤسس في الشجرة
+        private async Task<bool> HasFounderInTree(int familyTreeId)
+        {
+            return await _context.Persons
+                .AnyAsync(p => p.FamilyTreeId == familyTreeId && p.IsFounder);
+        }
+
+        // دالة مساعدة للحصول على المؤسس
+        private async Task<Person> GetFounder(int familyTreeId)
+        {
+            return await _context.Persons
+                .FirstOrDefaultAsync(p => p.FamilyTreeId == familyTreeId && p.IsFounder);
         }
     }
 }

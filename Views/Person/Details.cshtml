@@ -2,52 +2,295 @@
 
 @{
     ViewData["Title"] = "تفاصيل الفرد";
+    var fullName = GetFullName(Model);
 }
 
 <div class="container mt-4" dir="rtl">
-    <h2 class="text-center mb-4">تفاصيل الفرد</h2>
-
-    <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h4>@Model.FullName</h4>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>المعلومات الشخصية</h5>
-                    <p><strong>الاسم الأول:</strong> @Model.FirstName</p>
-                    <p><strong>اسم الأب:</strong> @Model.FatherName</p>
-                    <p><strong>اسم الجد:</strong> @Model.GrandFatherName</p>
-                    <p><strong>اسم العائلة:</strong> @Model.LastName</p>
-                    <p><strong>اللقب:</strong> @(Model.Nickname ?? "لا يوجد")</p>
-                    <p><strong>الجنس:</strong> @(Model.Gender == "Male" ? "ذكر" : "أنثى")</p>
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-3">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-circle me-2"></i>@fullName
+                    </h4>
+                    @if (Model.IsFounder)
+                    {
+                        <span class="badge bg-warning fs-6">
+                            <i class="fas fa-crown me-1"></i>مؤسس الشجرة
+                        </span>
+                    }
                 </div>
-                <div class="col-md-6">
-                    <h5>معلومات إضافية</h5>
-                    <p><strong>تاريخ الميلاد:</strong> @(Model.BirthDate?.ToString("yyyy/MM/dd") ?? "غير معروف")</p>
-                    <p><strong>المهنة:</strong> @(Model.Occupation?.Name ?? "غير محدد")</p>
-                    <p><strong>الدولة:</strong> @(Model.Country?.Name ?? "غير محدد")</p>
-                    <p><strong>المدينة:</strong> @(Model.City ?? "غير محدد")</p>
-                    <p><strong>الأب:</strong> @(Model.Father?.FullName ?? "غير محدد")</p>
-                    <p><strong>تاريخ الإضافة:</strong> @Model.CreatedDate.ToString("yyyy/MM/dd")</p>
+
+                <div class="card-body p-4">
+                    @if (Model.IsFounder)
+                    {
+                        <div class="alert alert-info d-flex align-items-center mb-4">
+                            <i class="fas fa-info-circle fa-2x me-3"></i>
+                            <div>
+                                <strong>معلومة:</strong> هذا الشخص هو مؤسس الشجرة العائلية.
+                                قد لا يحتوي على بيانات الأب أو الجد أو العائلة.
+                            </div>
+                        </div>
+                    }
+
+                    <div class="row">
+                        <!-- المعلومات الشخصية -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border-0 bg-light">
+                                <div class="card-header bg-secondary text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-id-card me-2"></i>المعلومات الشخصية
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-primary">الاسم الأول:</label>
+                                        <p class="fs-5">@Model.FirstName</p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-primary">اسم الأب:</label>
+                                        <p class="fs-6">@(Model.FatherName ?? (Model.IsFounder ? "-" : "غير معروف"))</p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-primary">اسم الجد:</label>
+                                        <p class="fs-6">@(Model.GrandFatherName ?? (Model.IsFounder ? "-" : "غير معروف"))</p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-primary">اسم العائلة:</label>
+                                        <p class="fs-6">@(Model.LastName ?? (Model.IsFounder ? "-" : "غير معروف"))</p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-primary">اللقب:</label>
+                                        <p class="fs-6">@(Model.Nickname ?? "لا يوجد")</p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-primary">الجنس:</label>
+                                        <span class="badge @(Model.Gender == "Male" ? "bg-primary" : "bg-pink") fs-6">
+                                            @(Model.Gender == "Male" ? "ذكر" : "أنثى")
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- المعلومات الإضافية -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border-0 bg-light">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>معلومات إضافية
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-primary">تاريخ الميلاد:</label>
+                                        <p class="fs-6">
+                                            @if (Model.BirthDate.HasValue)
+                                            {
+                                                @Model.BirthDate.Value.ToString("yyyy/MM/dd")
+                                                <small class="text-muted d-block">(@CalculateAge(Model.BirthDate.Value) سنة)</small>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">غير معروف</span>
+                                            }
+                                        </p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-primary">المهنة:</label>
+                                        <p class="fs-6">@(Model.Occupation?.Name ?? "غير محدد")</p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-primary">الدولة:</label>
+                                        <p class="fs-6">@(Model.Country?.Name ?? "غير محدد")</p>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-primary">المدينة:</label>
+                                        <p class="fs-6">@(Model.City ?? "غير محدد")</p>
+                                    </div>
+
+                                    @if (!Model.IsFounder)
+                                    {
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold text-primary">الأب:</label>
+                                            <p class="fs-6">@(Model.Father?.FullName ?? "غير محدد")</p>
+                                        </div>
+                                    }
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-primary">تاريخ الإضافة:</label>
+                                        <p class="fs-6">
+                                            @Model.CreatedDate.ToString("yyyy/MM/dd")
+                                            <small class="text-muted d-block">@Model.CreatedDate.ToString("HH:mm")</small>
+                                        </p>
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(Model.AdditionReason))
+                                    {
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold text-primary">سبب الإضافة:</label>
+                                            <p class="fs-6">@Model.AdditionReason</p>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- الملاحظات -->
+                    @if (!string.IsNullOrEmpty(Model.Notes))
+                    {
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card border-0 bg-light">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-sticky-note me-2"></i>ملاحظات
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="fs-6 mb-0">@Model.Notes</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- معلومات السجل -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-database me-2"></i>معلومات السجل
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-bold text-primary">سجل أصلي:</label>
+                                            <span class="badge @(Model.IsOriginalRecord ? "bg-success" : "bg-secondary")">
+                                                @(Model.IsOriginalRecord ? "نعم" : "لا")
+                                            </span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-bold text-primary">نقطة اتصال:</label>
+                                            <span class="badge @(Model.IsConnectionPoint ? "bg-success" : "bg-secondary")">
+                                                @(Model.IsConnectionPoint ? "نعم" : "لا")
+                                            </span>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-bold text-primary">آخر تحديث:</label>
+                                            <p class="fs-6 mb-0">@(Model.LastUpdated?.ToString("yyyy/MM/dd HH:mm") ?? "غير محدد")</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-light py-3">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <a href="@Url.Action("Index", "Person", new { familyTreeId = Model.FamilyTreeId })" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right me-2"></i>العودة للقائمة
+                            </a>
+                            <a href="@Url.Action("ProfessionalTree", "Person", new { familyTreeId = Model.FamilyTreeId })" class="btn btn-info">
+                                <i class="fas fa-sitemap me-2"></i>عرض الشجرة
+                            </a>
+                        </div>
+                        <div>
+                            <a href="@Url.Action("Edit", "Person", new { id = Model.Id })" class="btn btn-warning">
+                                <i class="fas fa-edit me-2"></i>تعديل
+                            </a>
+                            @if (!Model.IsFounder)
+                            {
+                                <a href="@Url.Action("Delete", "Person", new { id = Model.Id })" class="btn btn-danger"
+                                   onclick="return confirm('هل أنت متأكد من حذف @fullName؟')">
+                                    <i class="fas fa-trash me-2"></i>حذف
+                                </a>
+                            }
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            @if (!string.IsNullOrEmpty(Model.Notes))
-            {
-                <div class="mt-3">
-                    <h5>ملاحظات</h5>
-                    <p>@Model.Notes</p>
-                </div>
-            }
-        </div>
-        <div class="card-footer">
-            <a href="@Url.Action("Index", "Person", new { familyTreeId = Model.FamilyTreeId })" class="btn btn-secondary">
-                <i class="fas fa-arrow-right"></i> العودة للقائمة
-            </a>
-            <a href="@Url.Action("Edit", "Person", new { id = Model.Id })" class="btn btn-warning">
-                <i class="fas fa-edit"></i> تعديل
-            </a>
         </div>
     </div>
 </div>
+
+@functions {
+    public string CalculateAge(DateTime birthDate)
+    {
+        var today = DateTime.Today;
+        var age = today.Year - birthDate.Year;
+        if (birthDate.Date > today.AddYears(-age)) age--;
+        return age.ToString();
+    }
+
+    // دالة لبناء الاسم الكامل مع مراعاة المؤسس
+    public string GetFullName(FamilyTreePro.Models.Person person)
+    {
+        if (person == null) return "غير معروف";
+
+        var names = new List<string>();
+
+        // الاسم الأول مطلوب دائماً
+        if (!string.IsNullOrEmpty(person.FirstName))
+            names.Add(person.FirstName.Trim());
+
+        // للمؤسس، قد تكون باقي الأسماء NULL
+        if (!string.IsNullOrEmpty(person.FatherName))
+            names.Add(person.FatherName.Trim());
+        else if (!person.IsFounder) // لغير المؤسس نعرض "غير معروف"
+            names.Add("غير معروف");
+
+        if (!string.IsNullOrEmpty(person.GrandFatherName))
+            names.Add(person.GrandFatherName.Trim());
+        else if (!person.IsFounder)
+            names.Add("غير معروف");
+
+        if (!string.IsNullOrEmpty(person.LastName))
+            names.Add(person.LastName.Trim());
+        else if (!person.IsFounder)
+            names.Add("غير معروف");
+
+        return names.Any() ? string.Join(" ", names) : "غير معروف";
+    }
+}
+
+<style>
+    .card {
+        border-radius: 15px;
+        transition: transform 0.2s ease-in-out;
+    }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+    .form-label {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .bg-pink {
+        background-color: #ec4899 !important;
+    }
+
+    .fs-6 {
+        font-size: 1rem !important;
+    }
+
+    .fs-5 {
+        font-size: 1.25rem !important;
+    }
+</style>

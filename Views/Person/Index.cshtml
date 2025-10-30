@@ -5,13 +5,14 @@
     var familyTreeId = ViewBag.FamilyTreeId;
     var familyTreeName = ViewBag.FamilyTreeName;
 
-    // ترتيب الأفراد حسب تاريخ الإنشاء (من الأقدم إلى الأحدث)
-    var sortedPeople = Model?.OrderBy(p => p.CreatedDate);
+    // ترتيب الأفراد: المؤسس أولاً، ثم الباقين حسب تاريخ الإنشاء
+    var sortedPeople = Model?.OrderByDescending(p => p.IsFounder).ThenBy(p => p.CreatedDate);
 
     // إحصائيات سريعة
     var totalPeople = Model?.Count() ?? 0;
     var males = Model?.Count(p => p.Gender == "Male") ?? 0;
     var females = Model?.Count(p => p.Gender == "Female") ?? 0;
+    var founders = Model?.Count(p => p.IsFounder) ?? 0;
 }
 
 <!DOCTYPE html>
@@ -172,6 +173,10 @@
 
         .stat-recent {
             background: var(--warning-color);
+        }
+
+        .stat-founder {
+            background: var(--secondary-color);
         }
 
         .stat-number {
@@ -396,6 +401,11 @@
             color: white;
         }
 
+        .bg-gold {
+            background: var(--secondary-color) !important;
+            color: white;
+        }
+
         /* مجموعة الأزرار المحسنة */
         .btn-group-custom {
             display: flex;
@@ -507,7 +517,7 @@
             }
 
             .hilal-subtitle {
-                fontSize: 1rem;
+                font-size: 1rem;
             }
 
             .hilal-body {
@@ -734,11 +744,11 @@
                         <span class="stat-label">عدد الإناث</span>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon stat-recent">
-                            <i class="fas fa-calendar-plus"></i>
+                        <div class="stat-icon stat-founder">
+                            <i class="fas fa-crown"></i>
                         </div>
-                        <span class="stat-number">@(Model?.Count(p => p.CreatedDate.Date == DateTime.Today) ?? 0)</span>
-                        <span class="stat-label">مضافين اليوم</span>
+                        <span class="stat-number">@founders</span>
+                        <span class="stat-label">المؤسسين</span>
                     </div>
                 </div>
 
@@ -755,6 +765,14 @@
                                 <option value="">جميع الأنواع</option>
                                 <option value="Male">ذكر</option>
                                 <option value="Female">أنثى</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">النوع</label>
+                            <select class="filter-input" id="founderFilter">
+                                <option value="">جميع الأفراد</option>
+                                <option value="true">المؤسسون فقط</option>
+                                <option value="false">الأفراد العاديون</option>
                             </select>
                         </div>
                         <div class="filter-group">
@@ -811,7 +829,7 @@
                                 <tbody>
                                     @foreach (var person in sortedPeople)
                                     {
-                                        <tr data-gender="@person.Gender" data-name="@person.FullName.ToLower()">
+                                        <tr data-gender="@person.Gender" data-name="@GetFullName(person).ToLower()" data-founder="@person.IsFounder.ToString().ToLower()">
                                             <td>
                                                 <div class="member-avatar">
                                                     @if (person.Gender == "Male")
@@ -825,11 +843,14 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <strong>@person.FullName</strong>
+                                                <strong>@GetFullName(person)</strong>
+                                                @if (person.IsFounder)
+                                                {
+                                                    <span class="badge bg-gold">مؤسس</span>
+                                                }
                                                 @if (!string.IsNullOrEmpty(person.Nickname))
                                                 {
                                                     <br>
-                                        
                                                     <small class="text-muted">(@person.Nickname)</small>
                                                 }
                                             </td>
@@ -871,7 +892,11 @@
                                                 }
                                             </td>
                                             <td>
-                                                @if (!string.IsNullOrEmpty(person.Father?.FullName))
+                                                @if (person.IsFounder)
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                                else if (!string.IsNullOrEmpty(person.Father?.FullName))
                                                 {
                                                     @person.Father.FullName
                                                 }
@@ -902,9 +927,12 @@
                                                         <a href="@Url.Action("Edit", "Person", new { id = person.Id })" class="hilal-btn btn-warning btn-sm" title="تعديل البيانات">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
-                                                        <a href="@Url.Action("Delete", "Person", new { id = person.Id })" class="hilal-btn btn-danger btn-sm" title="حذف الفرد" onclick="return confirm('هل أنت متأكد من حذف @person.FullName؟')">
-                                                            <i class="fas fa-trash"></i>
-                                                        </a>
+                                                        @if (!person.IsFounder)
+                                                        {
+                                                            <a href="@Url.Action("Delete", "Person", new { id = person.Id })" class="hilal-btn btn-danger btn-sm" title="حذف الفرد" onclick="return confirm('هل أنت متأكد من حذف @GetFullName(person)؟')">
+                                                                <i class="fas fa-trash"></i>
+                                                            </a>
+                                                        }
                                                     </div>
                                                 }
                                                 else
@@ -947,6 +975,36 @@
             if (birthDate.Date > today.AddYears(-age)) age--;
             return age.ToString();
         }
+
+        // دالة لبناء الاسم الكامل مع مراعاة المؤسس
+        public string GetFullName(FamilyTreePro.Models.Person person)
+        {
+            if (person == null) return "غير معروف";
+
+            var names = new List<string>();
+
+            // الاسم الأول مطلوب دائماً
+            if (!string.IsNullOrEmpty(person.FirstName))
+                names.Add(person.FirstName.Trim());
+
+            // للمؤسس، قد تكون باقي الأسماء NULL
+            if (!string.IsNullOrEmpty(person.FatherName))
+                names.Add(person.FatherName.Trim());
+            else if (!person.IsFounder) // لغير المؤسس نعرض "غير معروف"
+                names.Add("غير معروف");
+
+            if (!string.IsNullOrEmpty(person.GrandFatherName))
+                names.Add(person.GrandFatherName.Trim());
+            else if (!person.IsFounder)
+                names.Add("غير معروف");
+
+            if (!string.IsNullOrEmpty(person.LastName))
+                names.Add(person.LastName.Trim());
+            else if (!person.IsFounder)
+                names.Add("غير معروف");
+
+            return names.Any() ? string.Join(" ", names) : "غير معروف";
+        }
     }
 
     <!-- JavaScript المحسن -->
@@ -955,6 +1013,7 @@
         function filterTable() {
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             const genderFilter = document.getElementById('genderFilter').value;
+            const founderFilter = document.getElementById('founderFilter').value;
             const rows = document.querySelectorAll('#peopleTable tbody tr');
 
             let visibleCount = 0;
@@ -962,6 +1021,7 @@
             rows.forEach(row => {
                 const name = row.getAttribute('data-name');
                 const gender = row.getAttribute('data-gender');
+                const founder = row.getAttribute('data-founder');
                 let showRow = true;
 
                 if (searchText && !name.includes(searchText)) {
@@ -969,6 +1029,10 @@
                 }
 
                 if (genderFilter && gender !== genderFilter) {
+                    showRow = false;
+                }
+
+                if (founderFilter && founder !== founderFilter) {
                     showRow = false;
                 }
 

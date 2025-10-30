@@ -573,7 +573,7 @@ namespace FamilyTreePro.Controllers
             }
 
             // إعادة تحميل قائمة الدول
-            var countries = await _context.Countries.ToListAsync(); // ⭐ استخدم await
+            var countries = await _context.Countries.ToListAsync();
             ViewBag.Countries = countries;
 
             // الحل الشامل: إزالة جميع الأخطاء من الحقول غير الأساسية
@@ -620,10 +620,13 @@ namespace FamilyTreePro.Controllers
                 }
 
                 // تحديث البيانات
-                existingTree.Name = viewModel.Name?.Trim() ?? string.Empty; // ⭐ تحقق من null
+                existingTree.Name = viewModel.Name?.Trim() ?? string.Empty;
                 existingTree.Description = viewModel.Description?.Trim() ?? string.Empty;
                 existingTree.Color = viewModel.Color;
-                existingTree.CountryID = viewModel.CountryID;
+
+                // ⭐⭐ التصحيح: تحويل int? إلى int باستخدام القيمة الافتراضية ⭐⭐
+                existingTree.CountryID = viewModel.CountryID ?? 0; // استخدم 0 أو قيمة افتراضية مناسبة
+
                 existingTree.Visibility = viewModel.Visibility;
                 existingTree.ModifiedDate = DateTime.Now;
 
