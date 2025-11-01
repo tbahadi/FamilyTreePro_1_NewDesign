@@ -5,7 +5,7 @@
     var familyTreeId = ViewBag.FamilyTreeId;
     var familyTreeName = ViewBag.FamilyTreeName;
 
-    // ترتيب الأفراد: المؤسس أولاً، ثم الباقين حسب تاريخ الإنشاء
+    // ترتيب الأفراد: الجد الأكبر أولاً، ثم الباقين حسب تاريخ الإنشاء
     var sortedPeople = Model?.OrderByDescending(p => p.IsFounder).ThenBy(p => p.CreatedDate);
 
     // إحصائيات سريعة
@@ -750,10 +750,10 @@
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon stat-founder">
-                            <i class="fas fa-crown"></i>
+                            <i class="fas fa-user-tie"></i>
                         </div>
                         <span class="stat-number">@founders</span>
-                        <span class="stat-label">المؤسسين</span>
+                        <span class="stat-label">الأجداد الكبار</span>
                     </div>
                 </div>
 
@@ -776,7 +776,7 @@
                             <label class="filter-label">النوع</label>
                             <select class="filter-input" id="founderFilter">
                                 <option value="">جميع الأفراد</option>
-                                <option value="true">المؤسسون فقط</option>
+                                <option value="true">الأجداد الكبار فقط</option>
                                 <option value="false">الأفراد العاديون</option>
                             </select>
                         </div>
@@ -798,6 +798,10 @@
                         <a href="@Url.Action("ProfessionalTree", "Person", new { familyTreeId = familyTreeId })" class="hilal-btn btn-success">
                             <i class="fas fa-sitemap"></i> الشجرة المتقدمة
                         </a>
+                        <a href="@Url.Action("ComperhensiveTreeView", "Person", new { familyTreeId = familyTreeId })" class="hilal-btn btn-success">
+                            <i class="fas fa-sitemap"></i> الشجرة الكاملة
+                        </a>
+
                         <a href="@Url.Action("Index", "Home")" class="hilal-btn btn-light">
                             <i class="fas fa-arrow-right"></i> العودة للرئيسية
                         </a>
@@ -850,7 +854,7 @@
                                                 <strong>@GetFullName(person)</strong>
                                                 @if (person.IsFounder)
                                                 {
-                                                    <span class="badge bg-gold">مؤسس</span>
+                                                    <span class="badge bg-gold">الجد الأكبر</span>
                                                 }
                                                 @if (!string.IsNullOrEmpty(person.Nickname) && person.Nickname != "لا يوجد")
                                                 {
@@ -928,7 +932,7 @@
                                                     }
                                                     else
                                                     {
-                                                        <button class="hilal-btn btn-secondary btn-sm" title="لا يمكن حذف المؤسس" disabled>
+                                                        <button class="hilal-btn btn-secondary btn-sm" title="لا يمكن حذف الجد الأكبر" disabled>
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                     }
@@ -970,7 +974,7 @@
             return age.ToString();
         }
 
-        // دالة لبناء الاسم الكامل مع مراعاة المؤسس
+        // دالة لبناء الاسم الكامل مع مراعاة الجد الأكبر
         // ⭐⭐ التعديل: نفس منطق الدالة في الكود الخلفي ⭐⭐
         // ⭐⭐ الإصلاح النهائي: إزالة كلمة "غير معروف" تماماً ⭐⭐
         public string GetFullName(FamilyTreePro.Models.Person person)
@@ -996,7 +1000,7 @@
 
             return names.Any() ? string.Join(" ", names) : "غير معروف";
         }
-    
+
     }
 
     <!-- JavaScript المحسن -->

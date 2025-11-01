@@ -535,6 +535,8 @@ namespace FamilyTreePro.Controllers
             }
         }
 
+
+
         // باقي الأكشنز (ProfessionalTree, FamilyTreeView, إلخ) تبقى كما هي
         public async Task<IActionResult> ProfessionalTree(int familyTreeId)
         {
@@ -605,6 +607,89 @@ namespace FamilyTreePro.Controllers
             {
                 _logger.LogError(ex, "خطأ في تحميل الشجرة المتقدمة");
                 TempData["ErrorMessage"] = "حدث خطأ في تحميل الشجرة المتقدمة";
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
+        //ComperhensiveTreeView
+        public async Task<IActionResult> ComperhensiveTreeView(int familyTreeId)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                var tree = await _context.FamilyTrees
+                    .FirstOrDefaultAsync(ft => ft.Id == familyTreeId && ft.UserId == userId);
+
+                if (tree == null)
+                {
+                    TempData["ErrorMessage"] = "الشجرة غير موجودة أو لا تملك صلاحية الوصول لها";
+                    return RedirectToAction("Index", "Home");
+                }
+
+                // جلب البيانات الأساسية مع تضمين العلاقات
+                var persons = await _context.Persons
+                    .Include(p => p.Occupation)
+                    .Include(p => p.Country)
+                    .Where(p => p.FamilyTreeId == familyTreeId)
+                    .ToListAsync();
+
+                // تحويل البيانات مع إضافة الحقول المطلوبة
+                var personData = persons.Select(p => new
+                {
+                    Id = p.Id,
+                    FirstName = p.FirstName ?? "",
+                    FatherName = p.FatherName ?? "",
+                    GrandFatherName = p.GrandFatherName ?? "",
+                    LastName = p.LastName ?? "",
+                    Nickname = p.Nickname ?? "",
+                    FullName = GetFullName(p),
+                    Gender = p.Gender ?? "Male",
+                    BirthDate = p.BirthDate.HasValue ? p.BirthDate.Value.ToString("yyyy-MM-dd") : null,
+                    DeathDate = p.DeathDate.HasValue ? p.DeathDate.Value.ToString("yyyy-MM-dd") : null, // إضافة تاريخ الوفاة
+                    City = p.City ?? "",
+                    FatherId = p.FatherId,
+                    MotherId = p.MotherId, // إضافة معرف الأم
+                    IsConnectionPoint = p.IsConnectionPoint,
+                    IsFounder = p.IsFounder, // إضافة حقل المؤسس
+                    //IsAlive = p.IsAlive, // إضافة حقل على قيد الحياة
+                    OccupationName = p.Occupation?.Name ?? "",
+                    CountryName = p.Country?.Name ?? "",
+                    //Email = p.Email ?? "", // إضافة البريد الإلكتروني
+                    //Phone = p.Phone ?? "", // إضافة رقم الهاتف
+                    Notes = p.Notes ?? "", // إضافة الملاحظات
+                                           // إضافة الحقول الأخرى التي قد تحتاجها
+                   // ProfilePicture = p.ProfilePicture ?? "",
+                   // EducationLevel = p.EducationLevel ?? ""
+                }).ToList();
+
+                _logger.LogInformation($"🔍 بيانات الشجرة الشاملة المحدثة: {personData.Count} فرد");
+
+                ViewBag.FamilyTreeId = familyTreeId;
+                ViewBag.FamilyTreeName = tree.Name;
+                ViewBag.PersonsCount = personData.Count;
+
+                // إعداد JSON
+                var jsonOptions = new JsonSerializerOptions
+                {
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    WriteIndented = false
+                };
+
+                ViewBag.PersonsJson = System.Text.Json.JsonSerializer.Serialize(personData, jsonOptions);
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "خطأ في تحميل بيانات الشجرة الشاملة المحدثة");
+                TempData["ErrorMessage"] = "حدث خطأ في تحميل بيانات الشجرة الشاملة المحدثة";
                 return RedirectToAction("Index", "Home");
             }
         }

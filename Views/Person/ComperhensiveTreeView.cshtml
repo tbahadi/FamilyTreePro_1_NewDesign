@@ -1,348 +1,212 @@
-﻿@model FamilyTreePro.ViewModels.FamilyTreeViewViewModel
-@{
-    // القيم الافتراضية لمنع NullReferenceException
-    var familyTreeId = Model?.FamilyTreeId ?? 0;
-    var familyTreeName = Model?.FamilyTreeName ?? ViewBag.FamilyTreeName ?? "شجرة عائلية";
-    var personsCount = Model?.AllPersons?.Count ?? ViewBag.PersonsCount ?? 0;
+﻿@{
+    ViewData["Title"] = "الشجرة العائلية - العرض المتكامل";
+    var familyTreeId = ViewBag.FamilyTreeId;
+    var familyTreeName = ViewBag.FamilyTreeName ?? "شجرة عائلية";
+    var personsCount = ViewBag.PersonsCount ?? 0;
     var personsJson = ViewBag.PersonsJson ?? "[]";
-
-    ViewData["Title"] = "الشجرة العائلية - " + familyTreeName;
 }
 
-<!-- مكتبات JavaScript -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+@if (personsCount == 0)
+{
+    <div class="container-fluid mt-4" dir="rtl">
+        <div class="alert alert-info text-center">
+            <h4>ℹ️ لا توجد بيانات</h4>
+            <p>لم يتم إضافة أي أفراد إلى هذه الشجرة العائلية بعد.</p>
+            <a href="@Url.Action("Create", "Person", new { familyTreeId = familyTreeId })" class="btn btn-primary">
+                <i class="fas fa-plus"></i> إضافة أول فرد
+            </a>
+        </div>
+    </div>
+    return;
+}
+
+<!-- إضافة خطوط عربية من Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=El+Messiri:wght@400;700&family=Tajawal:wght@400;700&family=Lateef&family=Reem+Kufi&family=Scheherazade+New&family=Noto+Naskh+Arabic&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <div class="container-fluid mt-4" dir="rtl">
-    <!-- النجوم المتحركة -->
-    <div class="star star-1"></div>
-    <div class="star star-2"></div>
-    <div class="star star-3"></div>
-    <div class="star star-4"></div>
-
-    <!-- عرض الأخطاء إذا وجدت -->
-    @if (ViewBag.Error != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <strong>خطأ:</strong> @ViewBag.Error
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
-
     <div class="text-center mb-4">
-        <h2 class="page-title">@familyTreeName</h2>
-        <p class="page-subtitle">اختر نمط العرض المفضل للشجرة العائلية</p>
+        <h2 class="text-primary">@familyTreeName</h2>
+        <p class="text-muted">عدد الأفراد: @personsCount</p>
     </div>
 
-    <!-- أزرار التحكم الرئيسية -->
-    <div class="d-flex justify-content-between mb-4 flex-wrap gap-2">
-        <div class="d-flex gap-2">
-            <a href="@Url.Action("Index", "Person", new { familyTreeId = familyTreeId })" class="btn btn-view-normal">
-                <i class="fas fa-list me-2"></i> العرض العادي
-            </a>
-            <a href="@Url.Action("Create", "Person", new { familyTreeId = familyTreeId })" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i> إضافة فرد جديد
-            </a>
-        </div>
+    <!-- شريط التحكم الرئيسي -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <!-- اختيار نمط العرض -->
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">📊 نمط العرض:</label>
+                    <select id="viewStyle" class="form-select">
+                        <option value="leaf">🌿 الشجرة الورقية</option>
+                        <option value="card">🃏 البطاقات</option>
+                    </select>
+                </div>
 
-        <div class="d-flex gap-2 print-controls">
-            <button id="btnPrint" class="btn btn-print">
-                <i class="fas fa-print me-2"></i> طباعة
+                <!-- اختيار الخط -->
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">🔤 الخط:</label>
+                    <select id="fontSelector" class="form-select">
+                        <option value="Tajawal">Tajawal - واضح</option>
+                        <option value="Amiri">Amiri - كلاسيكي</option>
+                        <option value="El Messiri">El Messiri - عصري</option>
+                        <option value="Lateef">Lateef - أنيق</option>
+                        <option value="Reem Kufi">Reem Kufi - زخرفي</option>
+                        <option value="Scheherazade New">Scheherazade - تقليدي</option>
+                        <option value="Noto Naskh Arabic">Noto Arabic - حديث</option>
+                    </select>
+                </div>
+
+                <!-- خيارات العرض - محسّن -->
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">⚙️ خيارات العرض:</label>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="showFullName" checked>
+                        <label class="form-check-label" for="showFullName">
+                            <span id="nameDisplayText">الاسم الكامل</span>
+                        </label>
+                    </div>
+                    <small class="text-muted" id="nameDisplayDesc">يعرض: محمد أحمد علي</small>
+
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="colorfulMode" checked>
+                        <label class="form-check-label" for="colorfulMode">النمط الملوّن</label>
+                    </div>
+                </div>
+
+                <!-- خيارات متقدمة -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">🔍 خيارات متقدمة:</label>
+                    
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="showConnections" checked>
+                        <label class="form-check-label" for="showConnections">إظهار الروابط</label>
+                    </div>
+                    
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="showPhotos" checked>
+                        <label class="form-check-label" for="showPhotos">إظهار الصور</label>
+                    </div>
+                    
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="animateTree" checked>
+                        <label class="form-check-label" for="animateTree">الحركات المتحركة</label>
+                    </div>
+                </div>
+
+                <!-- أزرار التصدير -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">📤 تصدير:</label>
+                    <div class="btn-group w-100">
+                        <button id="exportPdf" class="btn btn-danger">
+                            <i class="fas fa-file-pdf me-1"></i> PDF
+                        </button>
+                        <button id="exportImage" class="btn btn-success">
+                            <i class="fas fa-image me-1"></i> صورة
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- أزرار التحكم الإضافية -->
+    <div class="text-center mb-3">
+        <div class="btn-group" role="group">
+            <!-- التحكم بالتكبير -->
+            <button id="zoomIn" class="btn btn-outline-primary" title="تكبير">
+                <i class="fas fa-search-plus"></i>
             </button>
-            <button id="btnExportPDF" class="btn btn-pdf">
-                <i class="fas fa-file-pdf me-2"></i> تصدير PDF
+            <button id="zoomOut" class="btn btn-outline-primary" title="تصغير">
+                <i class="fas fa-search-minus"></i>
             </button>
-            <button id="btnExportImage" class="btn btn-image">
-                <i class="fas fa-image me-2"></i> تصدير صورة
+            <button id="resetZoom" class="btn btn-outline-secondary" title="إعادة الضبط">
+                <i class="fas fa-sync-alt"></i>
             </button>
-            <button id="btnFullscreen" class="btn btn-fullscreen">
-                <i class="fas fa-expand me-2"></i> ملء الشاشة
+
+            <!-- توسيط الشجرة -->
+            <button id="centerTree" class="btn btn-outline-info" title="توسيط الشجرة">
+                <i class="fas fa-crosshairs"></i>
+            </button>
+
+            <!-- تبديل النمط السريع -->
+            <button id="quickToggle" class="btn btn-outline-warning">
+                <i class="fas fa-palette"></i> تبديل النمط
+            </button>
+
+            <!-- 🔥 زر تبديل عرض الاسم السريع -->
+            <button id="toggleNameQuick" class="btn btn-outline-info" title="تبديل عرض الاسم">
+                <i class="fas fa-user-tag me-1"></i>
+                <span id="nameToggleText">الاسم الأول</span>
             </button>
         </div>
     </div>
 
-    <!-- إحصائيات سريعة -->
-    <div class="tree-stats mb-4">
-        <div class="row text-center">
-            <div class="col-md-3 col-6">
-                <div class="stat-card stat-total">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>@personsCount</h3>
-                        <span>إجمالي الأفراد</span>
-                    </div>
-                </div>
+    <!-- حاوية الشجرة -->
+    <div id="tree-container" style="width: 100%; height: 800px; border: 2px solid #e9ecef; border-radius: 15px; background: linear-gradient(135deg, #f8f9fa, #e9ecef); overflow: auto; position: relative;">
+
+        <!-- نمط الشجرة الورقية -->
+        <div id="leaf-view" style="display: block;">
+            <div id="canvas-wrapper" style="position: relative; width: 4000px; height: 3000px; transform-origin: 0 0;">
+                <canvas id="tree-canvas" width="4000" height="3000" style="position: absolute; top: 0; left: 0;"></canvas>
+                <div id="clickable-areas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-card stat-female">
-                    <div class="stat-icon">
-                        <i class="fas fa-venus"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>@(Model?.AllPersons?.Count(p => p.Gender == "Female") ?? 0)</h3>
-                        <span>الإناث</span>
-                    </div>
-                </div>
+        </div>
+
+        <!-- نمط البطاقات -->
+        <div id="card-view" style="display: none;">
+            <div id="cards-wrapper" style="position: relative; width: 4000px; height: 3000px; transform-origin: 0 0;">
+                <!-- سيتم إضافة البطاقات والخطوط هنا -->
             </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-card stat-male">
-                    <div class="stat-icon">
-                        <i class="fas fa-mars"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>@(Model?.AllPersons?.Count(p => p.Gender == "Male") ?? 0)</h3>
-                        <span>الذكور</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="stat-card stat-roots">
-                    <div class="stat-icon">
-                        <i class="fas fa-layer-group"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3>@(Model?.RootPersons?.Count ?? 0)</h3>
-                        <span>الجذور</span>
-                    </div>
-                </div>
-            </div>
+            <!-- SVG للخطوط -->
+            <svg id="connections-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></svg>
         </div>
     </div>
 
-    @if (personsCount == 0)
-    {
-        <div class="empty-state text-center py-5">
-            <div class="empty-icon mb-4">
-                <i class="fas fa-project-diagram"></i>
-            </div>
-            <h4 class="mb-3">لا توجد بيانات للعرض</h4>
-            <p class="text-muted mb-4">لم يتم إضافة أي أفراد إلى هذه الشجرة العائلية بعد.</p>
-            <a href="@Url.Action("Create", "Person", new { familyTreeId = familyTreeId })" class="btn btn-primary btn-lg">
-                <i class="fas fa-plus me-2"></i> إضافة أول فرد
-            </a>
+    <!-- الكارت الجانبي للمعلومات -->
+    <div id="node-info" class="card mt-3 shadow-lg" style="display: none; position: fixed; top: 80px; right: 20px; width: 400px; z-index: 999; max-height: 80vh; overflow-y: auto;">
+        <div class="card-header bg-primary text-white">
+            <h6 class="mb-0">معلومات العضو</h6>
+            <button type="button" class="btn-close btn-close-white float-start" onclick="$('#node-info').fadeOut();"></button>
         </div>
-        return;
-    }
-
-    <!-- أزرار التبديل بين أنماط العرض -->
-    <div class="view-mode-selector mb-4">
-        <div class="card shadow-sm">
-            <div class="card-body text-center">
-                <h5 class="card-title mb-3">اختر نمط العرض</h5>
-                <div class="btn-group" role="group">
-                    <input type="radio" class="btn-check" name="viewMode" id="leafView" autocomplete="off" checked>
-                    <label class="btn btn-outline-success" for="leafView">
-                        <i class="fas fa-leaf me-2"></i> شكل الأوراق
-                    </label>
-
-                    <input type="radio" class="btn-check" name="viewMode" id="hierarchicalView" autocomplete="off">
-                    <label class="btn btn-outline-primary" for="hierarchicalView">
-                        <i class="fas fa-sitemap me-2"></i> الهيكل الهرمي
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- منطقة العرض الديناميكية -->
-    <div id="viewContainer">
-        <!-- عرض شكل الأوراق (الافتراضي) -->
-        <div id="leafViewContainer" class="view-mode-content">
-            <div class="text-center mb-3">
-                <button id="toggleStyle" class="btn btn-secondary me-2">
-                    <i class="fas fa-palette me-2"></i> النمط الملوّن
-                </button>
-                <!-- أزرار التحكم بالتكبير والتصغير -->
-                <div class="btn-group me-2" role="group">
-                    <button id="zoomIn" class="btn btn-outline-primary" title="تكبير">
-                        <i class="fas fa-search-plus"></i>
-                    </button>
-                    <button id="zoomOut" class="btn btn-outline-primary" title="تصغير">
-                        <i class="fas fa-search-minus"></i>
-                    </button>
-                    <button id="resetZoom" class="btn btn-outline-secondary" title="إعادة الضبط">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                </div>
-                <button id="centerTree" class="btn btn-outline-info" title="توسيط الشجرة">
-                    <i class="fas fa-crosshairs"></i>
-                </button>
-                <div class="zoom-info me-2">
-                    <span id="zoomLevel">100%</span>
-                </div>
-            </div>
-
-            <div id="tree-container" style="width: 100%; height: 900px; border: 1px solid #ccc; border-radius: 10px; background: linear-gradient(#eaffef, #ffffff); overflow: auto; position: relative;">
-                <div id="canvas-wrapper" style="position: relative; width: 5000px; height: 3000px; transform-origin: 0 0; transform: scale(0.8);">
-                    <canvas id="tree-canvas" width="5000" height="3000" style="position: absolute; top: 0; left: 0;"></canvas>
-                    <div id="clickable-areas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></div>
-                </div>
-            </div>
-
-            <!-- الكارت الجانبي -->
-            <div id="node-info" class="card mt-3 shadow-lg" style="display: none; position: fixed; top: 80px; right: 20px; width: 320px; z-index: 999;">
-                <div class="card-body"></div>
-            </div>
-        </div>
-
-        <!-- عرض الهيكل الهرمي (مخفي افتراضيًا) -->
-        <div id="hierarchicalViewContainer" class="view-mode-content" style="display: none;">
-            <!-- إصلاح: استخدام البيانات مباشرة من الموديل -->
-            <div class="hierarchical-controls text-center mb-3">
-                <button id="expandAll" class="btn btn-success me-2">
-                    <i class="fas fa-expand me-2"></i> توسيع الكل
-                </button>
-                <button id="collapseAll" class="btn btn-warning">
-                    <i class="fas fa-compress me-2"></i> طي الكل
-                </button>
-            </div>
-
-            <div class="family-tree-container">
-                <div class="family-tree" id="familyTree">
-                    @if (Model?.RootPersons != null && Model.RootPersons.Any())
-                    {
-                        <!-- عرض كل فرع عائلي بشكل منفصل -->
-                        @foreach (var rootPerson in Model.RootPersons)
-                        {
-                            <div class="family-branch">
-                                @{
-                                    // دالة مساعدة محسنة لعرض الشخص وجميع أحفاده بشكل متكرر
-                                    void RenderPersonWithDescendants(FamilyTreePro.Models.Person person, int level)
-                                    {
-                                        var children = Model.AllPersons?.Where(p => p.FatherId == person.Id).ToList() ?? new List<FamilyTreePro.Models.Person>();
-
-                                        <div class="person-generation level-@level">
-                                            <div class="person-wrapper">
-                                                <div class="person-card @(person.Gender?.ToLower() ?? "")">
-                                                    <div class="person-avatar">
-                                                        @if (person.Gender == "Male")
-                                                        {
-                                                            <i class="fas fa-male"></i>
-                                                        }
-                                                        else
-                                                        {
-                                                            <i class="fas fa-female"></i>
-                                                        }
-                                                    </div>
-                                                    <div class="person-name">
-                                                        @person.FirstName
-                                                        @person.FatherName
-                                                        @person.GrandFatherName
-                                                        @person.LastName
-                                                    </div>
-                                                    <div class="person-details">
-                                                        @if (person.BirthDate.HasValue)
-                                                        {
-                                                            <div class="detail-item">
-                                                                <i class="fas fa-birthday-cake"></i>
-                                                                @person.BirthDate.Value.ToShortDateString()
-                                                            </div>
-                                                        }
-                                                        @if (!string.IsNullOrEmpty(person.City))
-                                                        {
-                                                            <div class="detail-item">
-                                                                <i class="fas fa-city"></i>
-                                                                @person.City
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                    <div class="person-actions">
-                                                        <a href="@Url.Action("Details", "Person", new { id = person.Id })" class="btn btn-info btn-sm" title="عرض التفاصيل">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                        <a href="@Url.Action("Edit", "Person", new { id = person.Id })" class="btn btn-warning btn-sm" title="تعديل">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        <a href="@Url.Action("Create", "Person", new { familyTreeId = person.FamilyTreeId, fatherId = person.Id })" class="btn btn-success btn-sm" title="إضافة ابن">
-                                                            <i class="fas fa-plus"></i>
-                                                        </a>
-                                                    </div>
-                                                </div>
-
-                                                <!-- سهم يوضح العلاقة مع الأبناء -->
-                                                @if (children.Any())
-                                                {
-                                                    <div class="connection-arrow">
-                                                        <i class="fas fa-arrow-down"></i>
-                                                        <span class="generation-label">الجيل @(level + 2)</span>
-                                                    </div>
-                                                }
-                                            </div>
-
-                                            <!-- عرض الأطفال بشكل أفقي -->
-                                            @if (children.Any())
-                                            {
-                                                <div class="children-generation">
-                                                    @foreach (var child in children)
-                                                    {
-                                                        <div class="child-branch">
-                                                            @{
-                                                                RenderPersonWithDescendants(child, level + 1);
-                                                            }
-                                                        </div>
-                                                    }
-                                                </div>
-                                            }
-                                        </div>
-                                    }
-
-                                    // بدء عرض الفرع من الشخص الجذر
-                                    RenderPersonWithDescendants(rootPerson, 0);
-                                }
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="alert alert-warning text-center">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            لا توجد بيانات للعرض في الشكل الهرمي
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- رسالة التحميل -->
-    <div id="loadingMessage" class="alert alert-info text-center" style="display: none;">
-        <i class="fas fa-spinner fa-spin me-2"></i>
-        جاري تجهيز الملف للتحميل...
+        <div class="card-body"></div>
     </div>
 </div>
 
-<!-- الأنماط المحسنة -->
+<!-- نافذة التحميل -->
+<div id="loading" class="loading-overlay" style="display: none;">
+    <div class="loading-content text-center">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+        <div class="mt-3 fs-5">جاري التصدير...</div>
+    </div>
+</div>
+
 <style>
-    /* تحسينات التصميم العامة */
-    .view-mode-selector .card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        z-index: 9999;
         color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
-    .view-mode-content {
-        transition: all 0.3s ease;
-    }
-
-    /* تصميم أزرار التبديل بين الأنماط */
-    .btn-check:checked + .btn {
-        transform: scale(1.05);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    }
-
-    /* تحسينات الشجرة الورقية */
     #tree-container {
         cursor: grab;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        border: 2px solid #dee2e6;
+        transition: all 0.3s ease;
     }
 
         #tree-container:active {
             cursor: grabbing;
         }
 
+    /* أنماط الشجرة الورقية */
     .leaf-node {
         position: absolute;
         width: 240px;
@@ -351,30 +215,75 @@
         z-index: 10;
         border-radius: 50%;
         transition: all 0.3s ease;
-        border: 2px solid transparent;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
     }
 
         .leaf-node:hover {
             transform: scale(1.15);
-            border-color: #ff6b6b;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.3));
         }
 
-    .loading-spinner {
+    /* أنماط البطاقات */
+    .tree-node {
         position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        min-width: 200px;
+        max-width: 280px;
+        padding: 15px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         text-align: center;
-        z-index: 100;
+        cursor: pointer;
+        word-wrap: break-word;
+        z-index: 20;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        transform-origin: center;
     }
 
+        .tree-node.male {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-color: #1976d2;
+        }
+
+        .tree-node.female {
+            background: linear-gradient(135deg, #fce4ec, #f8bbd9);
+            border-color: #c2185b;
+        }
+
+        .tree-node:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+    .node-name {
+        font-weight: bold;
+        font-size: 16px;
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+
+    .node-details {
+        font-size: 12px;
+        opacity: 0.9;
+        line-height: 1.4;
+    }
+
+    /* الخطوط في نمط البطاقات */
+    .card-connection-line {
+        position: absolute;
+        height: 3px;
+        background: linear-gradient(90deg, #666, #999);
+        transform-origin: 0 0;
+        z-index: 10;
+        pointer-events: none;
+    }
+
+    /* تأثيرات للكارت الجانبي */
     #node-info {
-        animation: slideIn 0.4s ease;
-        border: 2px solid #28a745;
+        animation: slideInRight 0.4s ease;
     }
 
-    @@keyframes slideIn {
+    @@keyframes slideInRight {
         from {
             opacity: 0;
             transform: translateX(50px);
@@ -386,444 +295,169 @@
         }
     }
 
-    .zoom-controls {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 100;
-        background: rgba(255,255,255,0.9);
-        padding: 10px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    /* تخصيص شريط التمرير */
+    #tree-container::-webkit-scrollbar {
+        width: 12px;
+        height: 12px;
     }
 
-    .zoom-info {
-        display: inline-block;
-        background: #f8f9fa;
-        padding: 8px 12px;
-        border-radius: 6px;
+    #tree-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    #tree-container::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+
+        #tree-container::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+    /* تطبيق الخطوط على جميع العناصر */
+    .arabic-font {
+        font-family: 'Tajawal', sans-serif;
+    }
+
+    /* تخصيص form-switch */
+    .form-switch .form-check-input {
+        width: 3em;
+        height: 1.5em;
+    }
+
+    /* أنماط للصور والعلامات */
+    .profile-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .badge-founder {
+        background: linear-gradient(135deg, #ffd700, #ffa500);
+        color: #000;
         font-weight: bold;
-        color: #495057;
-        border: 1px solid #dee2e6;
     }
 
-    /* تحسينات الشجرة الهرمية */
-    .hierarchical-controls {
-        margin-bottom: 20px;
-    }
-
-    .family-tree-container {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 15px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-
-    .family-tree {
-        padding: 20px;
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 10px;
-        min-height: 500px;
-        position: relative;
-        overflow-x: auto;
-    }
-
-    /* تصميم الفروع العائلية */
-    .family-branch {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-bottom: 40px;
-    }
-
-    .person-generation {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin: 10px 0;
-        position: relative;
-        transition: all 0.3s ease;
-    }
-
-    .children-generation {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 30px;
-        margin-top: 20px;
-        position: relative;
-        padding: 20px;
-        background: rgba(248, 249, 250, 0.8);
-        border-radius: 10px;
-        border: 1px solid #e9ecef;
-    }
-
-    .child-branch {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        position: relative;
-    }
-
-    /* تصميم بطاقات الأشخاص - ألوان محسنة */
-    .person-card {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-        min-width: 280px;
-        text-align: center;
-        border: 3px solid transparent;
-        position: relative;
-        z-index: 2;
-    }
-
-        .person-card.male {
-            border-color: #4facfe;
-            background: linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%);
-        }
-
-        .person-card.female {
-            border-color: #ff6b9d; /* تغيير اللون الوردي */
-            background: linear-gradient(135deg, #ffffff 0%, #ffeef3 100%); /* لون أفتح */
-        }
-
-        .person-card:hover {
-            transform: translateY(-5px) scale(1.02);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-        }
-
-    /* تدرج الألوان حسب المستوى */
-    .level-0 .person-card {
-        border-color: #28a745;
-        background: linear-gradient(135deg, #ffffff 0%, #d4edda 100%);
-        transform: scale(1.1);
-    }
-
-    .level-1 .person-card {
-        border-color: #17a2b8;
-    }
-
-    .level-2 .person-card {
-        border-color: #ffc107;
-    }
-
-    .level-3 .person-card {
-        border-color: #fd7e14;
-    }
-
-    .level-4 .person-card {
-        border-color: #e83e8c;
-    }
-
-    .person-avatar {
-        font-size: 2.5rem;
-        margin-bottom: 10px;
-        color: #666;
-    }
-
-    .person-card.male .person-avatar {
-        color: #4facfe;
-    }
-
-    .person-card.female .person-avatar {
-        color: #ff6b9d; /* تغيير اللون الوردي */
-    }
-
-    .person-name {
-        font-weight: bold;
-        font-size: 16px;
-        margin-bottom: 10px;
-        color: #2c3e50;
-        line-height: 1.4;
-    }
-
-    .person-details {
-        font-size: 12px;
-        color: #7f8c8d;
-        margin-bottom: 15px;
-    }
-
-    .detail-item {
-        margin: 5px 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-    }
-
-    .person-actions {
-        margin-top: 15px;
-        display: flex;
-        justify-content: center;
-        gap: 5px;
-    }
-
-    /* الأسهم والوصلات */
-    .connection-arrow {
-        margin: 15px 0;
-        color: #4facfe;
-        font-size: 1.5rem;
-        animation: bounce 2s infinite;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 5px;
-        position: relative;
-        z-index: 1;
-    }
-
-    .generation-label {
-        font-size: 0.8rem;
-        color: #666;
-        background: rgba(255, 255, 255, 0.9);
-        padding: 2px 8px;
-        border-radius: 10px;
-        border: 1px solid #4facfe;
-    }
-
-    @@keyframes bounce {
-        0%, 20%, 50%, 80%, 100% {
-            transform: translateY(0);
-        }
-
-        40% {
-            transform: translateY(-5px);
-        }
-
-        60% {
-            transform: translateY(-3px);
-        }
-    }
-
-    /* الخطوط الواصلة بين الفروع */
-    .children-generation::before {
-        content: '';
-        position: absolute;
-        top: -20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 80%;
-        height: 2px;
-        background: linear-gradient(to right, transparent, #4facfe, transparent);
-        z-index: 1;
-    }
-
-    .child-branch {
-        position: relative;
-    }
-
-        .child-branch::before {
-            content: '';
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            width: 2px;
-            height: 20px;
-            background: #4facfe;
-            transform: translateX(-50%);
-        }
-
-    /* أزرار التحكم */
-    .print-controls {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .btn-print {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        border: none;
-    }
-
-    .btn-pdf {
-        background: linear-gradient(135deg, #f093fb, #f5576c);
-        color: white;
-        border: none;
-    }
-
-    .btn-image {
+    .badge-connection {
         background: linear-gradient(135deg, #4facfe, #00f2fe);
         color: white;
-        border: none;
     }
 
-    .btn-fullscreen {
-        background: linear-gradient(135deg, #43e97b, #38f9d7);
-        color: white;
-        border: none;
+    /* تحسينات للكارت الجانبي */
+    #node-info .card-body {
+        max-height: 70vh;
+        overflow-y: auto;
     }
 
-    .btn-view-normal {
-        background: linear-gradient(135deg, #a8edea, #fed6e3);
-        color: #2c3e50;
-        border: none;
-    }
-
-    /* إحصائيات */
-    .tree-stats .stat-card {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        transition: all 0.3s ease;
-        height: 100%;
-    }
-
-        .tree-stats .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    /* أنيميشن للخطوط */
+    @@keyframes drawLine {
+        from {
+            stroke-dashoffset: 1000;
         }
-
-    .stat-icon {
-        font-size: 2.5rem;
-        width: 70px;
-        height: 70px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-    }
-
-    .stat-total .stat-icon {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-    }
-
-    .stat-female .stat-icon {
-        background: linear-gradient(135deg, #ff6b9d, #ff8fab); /* ألوان محسنة */
-    }
-
-    .stat-male .stat-icon {
-        background: linear-gradient(135deg, #4facfe, #00f2fe);
-    }
-
-    .stat-roots .stat-icon {
-        background: linear-gradient(135deg, #43e97b, #38f9d7);
-    }
-
-    .stat-content h3 {
-        margin: 0;
-        font-size: 1.8rem;
-        font-weight: bold;
-        color: #2c3e50;
-    }
-
-    .stat-content span {
-        color: #7f8c8d;
-        font-size: 0.9rem;
-    }
-
-    /* النجوم المتحركة */
-    .star {
-        position: fixed;
-        background: white;
-        border-radius: 50%;
-        animation: twinkle 5s infinite;
-        z-index: -1;
-    }
-
-    .star-1 {
-        top: 10%;
-        left: 10%;
-        width: 3px;
-        height: 3px;
-        animation-delay: 0s;
-    }
-
-    .star-2 {
-        top: 20%;
-        left: 80%;
-        width: 2px;
-        height: 2px;
-        animation-delay: 1s;
-    }
-
-    .star-3 {
-        top: 60%;
-        left: 20%;
-        width: 3px;
-        height: 3px;
-        animation-delay: 2s;
-    }
-
-    .star-4 {
-        top: 80%;
-        left: 60%;
-        width: 2px;
-        height: 2px;
-        animation-delay: 3s;
-    }
-
-    @@keyframes twinkle {
-        0%, 100% {
-            opacity: 0.2;
-        }
-
-        50% {
-            opacity: 1;
+        to {
+            stroke-dashoffset: 0;
         }
     }
 
-    /* تحسينات للشاشات الصغيرة */
-    @@media (max-width: 768px) {
-        .children-generation {
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .person-card {
-            min-width: 200px;
-        }
-
-        .print-controls {
-            flex-direction: column;
-        }
-
-        .family-tree {
-            overflow-x: auto;
-        }
-
-        .tree-stats .stat-card {
-            flex-direction: column;
-            text-align: center;
-        }
+    .connection-line {
+        stroke-dasharray: 1000;
+        stroke-dashoffset: 1000;
+        animation: drawLine 1.5s ease-out forwards;
     }
 </style>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 @section Scripts {
     <script>
-        // تهيئة مكتبة jsPDF
-        const { jsPDF } = window.jspdf;
+        // البيانات والإعدادات
+        const personsJson = '@Html.Raw(personsJson)';
+        const familyTreeId = @familyTreeId;
+        const familyTreeName = '@familyTreeName';
+        const personsCount = @personsCount;
 
-        // المتغيرات العامة
         let treeData = [];
+        let currentView = 'leaf'; // 'leaf' or 'card'
         let colorfulMode = true;
-        let panning = false;
-        let startX, startY, scrollLeft, scrollTop;
-        let scale = 0.8; // بدء بمستوى تكبير أصغر
+        let showFullName = true;
+        let currentFontFamily = 'Tajawal';
+        let scale = 1.0;
         const minScale = 0.3;
         const maxScale = 3.0;
+        
+        // إعدادات متقدمة
+        let showConnections = true;
+        let showPhotos = true;
+        let animateTree = true;
 
+        // عناصر DOM
         const canvas = document.getElementById('tree-canvas');
         const ctx = canvas.getContext('2d');
-        const canvasWrapper = document.getElementById('canvas-wrapper');
+        const cardsWrapper = document.getElementById('cards-wrapper');
 
-        // تحديث مستوى التكبير المعروض
-        function updateZoomLevel() {
-            $('#zoomLevel').text(Math.round(scale * 100) + '%');
+        // الخطوط المتاحة مع تطبيق CSS الفعلي
+        const availableFonts = {
+            'Tajawal': 'Tajawal, sans-serif',
+            'Amiri': 'Amiri, serif',
+            'El Messiri': 'El Messiri, sans-serif',
+            'Lateef': 'Lateef, serif',
+            'Reem Kufi': 'Reem Kufi, sans-serif',
+            'Scheherazade New': 'Scheherazade New, serif',
+            'Noto Naskh Arabic': 'Noto Naskh Arabic, serif'
+        };
+
+        // 🔥 دالة تحديث واجهة عرض الاسم
+        function updateNameDisplayUI() {
+            const nameToggleText = showFullName ? 'الاسم الأول' : 'الاسم الكامل';
+            const nameDisplayText = showFullName ? 'الاسم الكامل' : 'الاسم الأول';
+            const nameDisplayDesc = showFullName ? 'يعرض: محمد أحمد علي' : 'يعرض: محمد';
+
+            $('#nameToggleText').text(nameToggleText);
+            $('#nameDisplayText').text(nameDisplayText);
+            $('#nameDisplayDesc').text(nameDisplayDesc);
         }
 
-        // تحميل البيانات الحقيقية للشجرة الورقية
+        // 🔥 تطبيق الخط على جميع العناصر
+        function applyFontToAllElements() {
+            const fontFamily = availableFonts[currentFontFamily];
+
+            // تطبيق الخط على البطاقات
+            $('.tree-node').css('font-family', fontFamily);
+
+            // تطبيق الخط على الشجرة الورقية (سيتم تطبيقه عند إعادة الرسم)
+            if (currentView === 'leaf') {
+                drawLeafTree();
+            }
+
+            // تطبيق الخط على الكارت الجانبي
+            $('#node-info').css('font-family', fontFamily);
+
+            // تطبيق الخط على عناصر التحكم
+            $('.form-label, .form-check-label, .btn').css('font-family', fontFamily);
+        }
+
+        // 🔥 دالة استخراج الاسم الأول
+        function getFirstName(fullName) {
+            if (!fullName) return 'غير معروف';
+            const nameParts = fullName.trim().split(' ');
+            return nameParts[0] || fullName;
+        }
+
+        // 🔥 دالة الحصول على الاسم للعرض
+        function getDisplayName(person) {
+            const fullName = person.fullName || 'غير معروف';
+            return showFullName ? fullName : getFirstName(fullName);
+        }
+
+        // تحميل البيانات
         function loadRealData() {
             try {
-                const personsJson = '@Html.Raw(personsJson)';
                 if (personsJson && personsJson !== '[]') {
                     treeData = JSON.parse(personsJson);
                     return true;
@@ -835,106 +469,79 @@
             }
         }
 
-        // رسم الورقة - ألوان محسنة
-        function drawLeaf(x, y, scale, name, gender) {
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.scale(scale, scale);
-
-            let fillStyle, strokeStyle = '#333';
-            if (colorfulMode) {
-                if (gender === 'Male') {
-                    const grad = ctx.createLinearGradient(-120, -90, 120, 90);
-                    grad.addColorStop(0, '#a8e6cf');
-                    grad.addColorStop(1, '#56ab2f');
-                    fillStyle = grad;
-                    strokeStyle = '#2e7d32';
-                } else {
-                    // تغيير الألوان الوردية إلى ألوان أكثر جاذبية
-                    const grad = ctx.createLinearGradient(-120, -90, 120, 90);
-                    grad.addColorStop(0, '#ffb6c1'); // وردي فاتح
-                    grad.addColorStop(1, '#ff69b4'); // وردي متوسط
-                    fillStyle = grad;
-                    strokeStyle = '#c2185b';
-                }
-            } else {
-                fillStyle = '#ffffff';
-                strokeStyle = '#000000';
+        // ========== دوال مساعدة ==========
+        function formatDate(dateString) {
+            try {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                return isNaN(date.getTime()) ? dateString : date.toLocaleDateString('ar-EG');
+            } catch (e) {
+                return dateString;
             }
-
-            ctx.beginPath();
-            ctx.moveTo(120, 0);
-            ctx.bezierCurveTo(70, -80, -70, -80, -120, 0);
-            ctx.bezierCurveTo(-70, 80, 70, 80, 120, 0);
-            ctx.closePath();
-
-            ctx.fillStyle = fillStyle;
-            ctx.fill();
-
-            ctx.strokeStyle = strokeStyle;
-            ctx.lineWidth = colorfulMode ? 2 : 2.5;
-            ctx.stroke();
-
-            // عرض الاسم الكامل
-            ctx.fillStyle = colorfulMode ? (gender === 'Male' ? '#1b5e20' : '#880e4f') : '#000';
-            ctx.font = 'bold 16px "Tajawal", Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            // تقسيم الاسم إذا كان طويلاً
-            const maxLength = 15;
-            if (name.length > maxLength) {
-                const middle = Math.floor(name.length / 2);
-                const firstPart = name.substring(0, middle);
-                const secondPart = name.substring(middle);
-                ctx.fillText(firstPart, 0, -10);
-                ctx.fillText(secondPart, 0, 10);
-            } else {
-                ctx.fillText(name, 0, 0);
-            }
-
-            ctx.restore();
         }
 
-        function drawBranch(x1, y1, x2, y2) {
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.bezierCurveTo(x1 + 30, y1 + 8, x2 - 30, y2 - 8, x2, y2);
-            ctx.strokeStyle = '#5a7b4f';
-            ctx.lineWidth = 3;
-            ctx.stroke();
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
+        // دالة محسنة لتنظيم الأجيال
         function organizeByGenerations(persons) {
             const generations = [];
-            const firstGen = persons.filter(person => !person.fatherId);
-            generations.push(firstGen);
+            const processed = new Set();
 
-            let currentGen = firstGen;
+            // البدء بالمؤسسين أولاً
+            const founders = persons.filter(person => person.isFounder);
+            if (founders.length > 0) {
+                generations.push(founders);
+                founders.forEach(founder => processed.add(founder.id));
+            }
+
+            // ثم الأجداد بدون آباء
+            const firstGen = persons.filter(person => !person.fatherId && !processed.has(person.id));
+            if (firstGen.length > 0) {
+                generations.push(firstGen);
+                firstGen.forEach(person => processed.add(person.id));
+            }
+
+            let currentGen = [...firstGen, ...founders];
+            
             while (currentGen.length > 0) {
                 const nextGen = [];
                 currentGen.forEach(person => {
-                    const children = persons.filter(p => p.fatherId === person.id);
-                    nextGen.push(...children);
+                    const children = persons.filter(p => 
+                        (p.fatherId === person.id || p.motherId === person.id) && 
+                        !processed.has(p.id)
+                    );
+                    children.forEach(child => {
+                        nextGen.push(child);
+                        processed.add(child.id);
+                    });
                 });
-                if (nextGen.length > 0) generations.push(nextGen);
+                
+                if (nextGen.length > 0) {
+                    generations.push(nextGen);
+                }
                 currentGen = nextGen;
             }
+
+            // إضافة أي أفراد لم تتم معالجتهم (للحالات الخاصة)
+            const unprocessed = persons.filter(p => !processed.has(p.id));
+            if (unprocessed.length > 0) {
+                generations.push(unprocessed);
+            }
+
             return generations;
         }
 
-        function drawConnections() {
-            treeData.forEach(person => {
-                if (person.fatherId) {
-                    const father = treeData.find(p => p.id === person.fatherId);
-                    if (father && father.canvasX && father.canvasY && person.canvasX && person.canvasY) {
-                        drawBranch(father.canvasX, father.canvasY + 50, person.canvasX, person.canvasY - 50);
-                    }
-                }
-            });
-        }
-
-        function drawTree() {
+        // ========== نمط الشجرة الورقية ==========
+        function drawLeafTree() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const container = $('#clickable-areas');
             container.empty();
@@ -942,19 +549,20 @@
             if (treeData.length === 0) return;
 
             const generations = organizeByGenerations(treeData);
-            const containerWidth = 5000;
-            const startY = 300; // زيادة البداية لتكون أكثر في المنتصف
-            const verticalSpacing = 280; // زيادة المسافة بين الأجيال
+            const containerWidth = 4000;
+            const startY = 200;
+            const verticalSpacing = 280;
 
             generations.forEach((generation, genIndex) => {
                 const generationY = startY + (genIndex * verticalSpacing);
                 const generationSize = generation.length;
-                const horizontalSpacing = Math.min(350, (containerWidth - 300) / Math.max(1, generationSize));
+                const horizontalSpacing = Math.min(320, (containerWidth - 200) / Math.max(1, generationSize));
                 const totalWidth = generationSize * horizontalSpacing;
                 const startX = (containerWidth - totalWidth) / 2;
 
+                // كتابة اسم الجيل
                 ctx.fillStyle = '#555';
-                ctx.font = 'bold 16px Arial';
+                ctx.font = `bold 16px ${availableFonts[currentFontFamily]}`;
                 ctx.textAlign = 'left';
                 ctx.fillText(`الجيل ${genIndex + 1}`, 50, generationY - 40);
 
@@ -964,9 +572,9 @@
                     person.canvasX = personX;
                     person.canvasY = personY;
 
-                    const fullName = person.fullName || `${person.firstName} ${person.fatherName} ${person.lastName}`;
-                    drawLeaf(personX, personY, 1.4, fullName, person.gender);
+                    drawLeaf(personX, personY, 1.3, person);
 
+                    // إضافة منطقة قابلة للنقر
                     const clickableDiv = $(`
                         <div class="leaf-node"
                              data-person-id="${person.id}"
@@ -981,41 +589,335 @@
                 });
             });
 
-            setTimeout(drawConnections, 100);
+            if (showConnections) {
+                setTimeout(drawLeafConnections, 100);
+            }
         }
 
-        function showPersonDetails(person) {
+        function drawLeaf(x, y, scale, person) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+
+            let fillStyle, strokeStyle = '#333';
+            if (colorfulMode) {
+                if (person.gender === 'Male') {
+                    const grad = ctx.createLinearGradient(-120, -90, 120, 90);
+                    grad.addColorStop(0, '#a8e6cf');
+                    grad.addColorStop(1, '#56ab2f');
+                    fillStyle = grad;
+                } else {
+                    const grad = ctx.createLinearGradient(-120, -90, 120, 90);
+                    grad.addColorStop(0, '#ffd1dc');
+                    grad.addColorStop(1, '#e91e63');
+                    fillStyle = grad;
+                }
+            } else {
+                fillStyle = '#ffffff';
+                strokeStyle = '#000000';
+            }
+
+            // رسم الورقة
+            ctx.beginPath();
+            ctx.moveTo(120, 0);
+            ctx.bezierCurveTo(70, -80, -70, -80, -120, 0);
+            ctx.bezierCurveTo(-70, 80, 70, 80, 120, 0);
+            ctx.closePath();
+
+            ctx.fillStyle = fillStyle;
+            ctx.fill();
+            ctx.strokeStyle = strokeStyle;
+            ctx.lineWidth = colorfulMode ? 1.5 : 2;
+            ctx.stroke();
+
+            // كتابة الاسم مع الخط المحدد
+            const displayName = getDisplayName(person);
+            ctx.fillStyle = colorfulMode ? '#fff' : '#000';
+            ctx.font = `bold 18px ${availableFonts[currentFontFamily]}`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            if (showFullName && displayName.length > 15) {
+                const words = displayName.split(' ');
+                const mid = Math.ceil(words.length / 2);
+                const firstLine = words.slice(0, mid).join(' ');
+                const secondLine = words.slice(mid).join(' ');
+                ctx.fillText(firstLine, 0, -10);
+                ctx.fillText(secondLine, 0, 15);
+            } else {
+                ctx.fillText(displayName, 0, 0);
+            }
+
+            ctx.restore();
+        }
+
+        function drawLeafConnections() {
+            treeData.forEach(person => {
+                if (person.fatherId) {
+                    const father = treeData.find(p => p.id === person.fatherId);
+                    if (father && father.canvasX && father.canvasY && person.canvasX && person.canvasY) {
+                        drawBranch(father.canvasX, father.canvasY + 50, person.canvasX, person.canvasY - 50);
+                    }
+                }
+            });
+        }
+
+        function drawBranch(x1, y1, x2, y2) {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.bezierCurveTo(x1 + 30, y1 + 8, x2 - 30, y2 - 8, x2, y2);
+            ctx.strokeStyle = '#5a7b4f';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        // ========== نمط البطاقات - الإصدار المحسّن ==========
+        function initializeSVG() {
+            const svg = $('#connections-svg');
+            svg.empty();
+
+            const defs = $(`
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+                    </marker>
+                    <marker id="arrowhead-male" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#1976d2"/>
+                    </marker>
+                    <marker id="arrowhead-female" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                        <polygon points="0 0, 10 3.5, 0 7" fill="#c2185b"/>
+                    </marker>
+                </defs>
+            `);
+            svg.append(defs);
+        }
+
+        function drawCardTree() {
+            const container = $('#cards-wrapper');
+            container.empty();
+
+            if (treeData.length === 0) return;
+
+            initializeSVG();
+            const generations = organizeByGenerations(treeData);
+            const containerWidth = 4000;
+            const startY = 100;
+            const verticalSpacing = 200;
+
+            // أولاً: رسم البطاقات
+            generations.forEach((generation, genIndex) => {
+                const generationY = startY + (genIndex * verticalSpacing);
+                const generationSize = generation.length;
+                const horizontalSpacing = Math.min(300, (containerWidth - 200) / Math.max(1, generationSize));
+                const totalWidth = generationSize * horizontalSpacing;
+                const startX = (containerWidth - totalWidth) / 2;
+
+                generation.forEach((person, personIndex) => {
+                    const personX = startX + (personIndex * horizontalSpacing);
+                    const personY = generationY;
+
+                    // حفظ المواقع الأصلية
+                    person.originalX = personX;
+                    person.originalY = personY;
+                    person.scaledX = personX * scale;
+                    person.scaledY = personY * scale;
+
+                    createCardNode(person, personX, personY, container);
+                });
+            });
+
+            // ثانياً: رسم الخطوط بعد البطاقات
+            if (showConnections) {
+                setTimeout(drawCardConnections, 50);
+            }
+        }
+
+        function createCardNode(person, x, y, container) {
             const birthDate = person.birthDate ? new Date(person.birthDate).toLocaleDateString('ar-EG') : '';
             const city = person.city || '';
             const occupationName = person.occupationName || '';
+            const gender = person.gender || 'Male';
+            const displayName = getDisplayName(person);
+
+            const nodeContent = `
+                <div class="tree-node ${gender === 'Male' ? 'male' : 'female'}"
+                     data-person-id="${person.id}"
+                     data-original-x="${x}"
+                     data-original-y="${y}"
+                     style="left: ${x}px; top: ${y}px; font-family: ${availableFonts[currentFontFamily]} !important;">
+                    <div class="node-name">${displayName}</div>
+                    <div class="node-details">
+                        ${birthDate ? '📅 ' + birthDate + '<br>' : ''}
+                        ${city ? '🏙️ ' + city + '<br>' : ''}
+                        ${occupationName ? '💼 ' + occupationName : ''}
+                    </div>
+                </div>
+            `;
+
+            const $node = $(nodeContent);
+            $node.on('click', function(e) {
+                e.stopPropagation();
+                showPersonDetails(person);
+            });
+            container.append($node);
+        }
+
+        function drawCardConnections() {
+            // إزالة الخطوط القديمة أولاً
+            $('.card-connection-line, .connection-path').remove();
+
+            treeData.forEach(person => {
+                if (person.fatherId) {
+                    const father = treeData.find(p => p.id === person.fatherId);
+                    if (father && father.originalX && father.originalY && person.originalX && person.originalY) {
+
+                        // حساب نقاط البداية والنهاية للخط
+                        const fromX = father.originalX + 100; // منتصف الأب
+                        const fromY = father.originalY + 60;  // أسفل الأب
+                        const toX = person.originalX + 100;   // منتصف الابن
+                        const toY = person.originalY - 10;    // أعلى الابن
+
+                        // حساب طول وزاوية الخط
+                        const dx = toX - fromX;
+                        const dy = toY - fromY;
+                        const length = Math.sqrt(dx * dx + dy * dy);
+                        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+                        // لون الخط حسب الجنس
+                        const lineColor = person.gender === 'Male' ? '#1976d2' : '#c2185b';
+
+                        // إنشاء الخط المستقيم
+                        const lineHTML = `
+                            <div class="card-connection-line"
+                                 data-connection="true"
+                                 style="left: ${fromX}px;
+                                        top: ${fromY}px;
+                                        width: ${length}px;
+                                        background: ${lineColor};
+                                        transform: rotate(${angle}deg);
+                                        z-index: 10;">
+                            </div>
+                        `;
+
+                        $('#cards-wrapper').append(lineHTML);
+                    }
+                }
+            });
+        }
+
+        // ========== دالة عرض التفاصيل المحسنة ==========
+        function showPersonDetails(person) {
+            const birthDate = formatDate(person.birthDate);
+            const deathDate = formatDate(person.deathDate);
+            const marriageDate = formatDate(person.marriageDate);
+            const city = person.city || '';
+            const occupationName = person.occupationName || '';
+            const countryName = person.countryName || '';
+            const educationLevel = person.educationLevel || '';
+            const spouseName = person.spouseName || '';
+            const socialStatus = person.socialStatus || '';
+            const birthPlace = person.birthPlace || '';
+            const deathPlace = person.deathPlace || '';
+            const biography = person.biography || '';
 
             let details = '';
             if (birthDate) details += `📅 الميلاد: ${birthDate}<br>`;
+            if (birthPlace) details += `📍 مكان الميلاد: ${birthPlace}<br>`;
+            if (deathDate) details += `⚰️ الوفاة: ${deathDate}<br>`;
+            if (deathPlace) details += `📍 مكان الوفاة: ${deathPlace}<br>`;
             if (city) details += `🏙️ المدينة: ${city}<br>`;
-            if (occupationName) details += `💼 المهنة: ${occupationName}`;
+            if (countryName) details += `🌍 الدولة: ${countryName}<br>`;
+            if (occupationName) details += `💼 المهنة: ${occupationName}<br>`;
+            if (educationLevel) details += `🎓 المستوى التعليمي: ${educationLevel}<br>`;
+            if (spouseName) details += `💑 اسم الزوج/الزوجة: ${spouseName}<br>`;
+            if (marriageDate) details += `💒 تاريخ الزواج: ${marriageDate}<br>`;
+            if (socialStatus) details += `👨‍👩‍👧‍👦 الحالة الاجتماعية: ${socialStatus}<br>`;
+            if (person.childrenCount > 0) details += `👶 عدد الأبناء: ${person.childrenCount}<br>`;
+            if (biography) details += `📖 السيرة: ${biography}<br>`;
+            
             if (!details) details = 'لا توجد معلومات إضافية';
 
             $('#node-info .card-body').html(`
-                <div class="text-center mb-2">
-                    <h5 class="fw-bold text-success">${person.fullName || 'غير معروف'}</h5>
+                <div class="text-center mb-3">
+                    ${person.profilePicture && showPhotos ? 
+                        `<img src="${person.profilePicture}" class="profile-image mb-2" alt="صورة الشخص">` 
+                        : ''}
+                    <h5 class="fw-bold text-primary">${person.fullName || 'غير معروف'}</h5>
+                    <small class="text-muted">${getFirstName(person.fullName)}</small>
+                    ${person.isFounder ? '<br><span class="badge badge-founder mt-1">👑 مؤسس الشجرة</span>' : ''}
+                    ${person.isConnectionPoint ? '<br><span class="badge badge-connection mt-1">🔗 نقطة اتصال</span>' : ''}
                 </div>
                 <p>${details}</p>
-                <div class="mt-3 d-flex justify-content-between">
+                <div class="mt-4 d-grid gap-2">
                     <a href="/Person/Details/${person.id}" class="btn btn-info btn-sm">
-                        <i class="fas fa-eye"></i> تفاصيل
+                        <i class="fas fa-eye me-1"></i> تفاصيل كاملة
                     </a>
                     <a href="/Person/Edit/${person.id}" class="btn btn-warning btn-sm">
-                        <i class="fas fa-edit"></i> تعديل
+                        <i class="fas fa-edit me-1"></i> تعديل البيانات
                     </a>
                     <a href="/Person/Create?familyTreeId=${familyTreeId}&fatherId=${person.id}" class="btn btn-success btn-sm">
-                        <i class="fas fa-plus"></i> إضافة ابن
+                        <i class="fas fa-plus me-1"></i> إضافة ابن
                     </a>
+                    ${person.motherId ? 
+                        `<a href="/Person/Create?familyTreeId=${familyTreeId}&motherId=${person.id}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-plus me-1"></i> إضافة من الأم
+                        </a>` 
+                        : ''}
                 </div>
             `);
             $('#node-info').fadeIn(200);
         }
 
-        // وظائف التكبير والتصغير للشجرة الورقية
+        // ========== التحكم بالعرض ==========
+        function switchView(viewType) {
+            currentView = viewType;
+
+            if (viewType === 'leaf') {
+                $('#leaf-view').show();
+                $('#card-view').hide();
+                drawLeafTree();
+            } else {
+                $('#leaf-view').hide();
+                $('#card-view').show();
+                drawCardTree();
+                // 🔥 تطبيق الخط فوراً عند التبديل للنمط
+                applyFontToAllElements();
+            }
+        }
+
+        function updateSettings() {
+            showFullName = $('#showFullName').is(':checked');
+            colorfulMode = $('#colorfulMode').is(':checked');
+            currentFontFamily = $('#fontSelector').val();
+
+            // 🔥 تحديث واجهة عرض الاسم
+            updateNameDisplayUI();
+
+            // 🔥 تطبيق الخط أولاً
+            applyFontToAllElements();
+
+            // ثم إعادة الرسم حسب النمط الحالي
+            if (currentView === 'leaf') {
+                drawLeafTree();
+            } else {
+                drawCardTree();
+            }
+        }
+
+        // تحديث الإعدادات المتقدمة
+        function updateAdvancedSettings() {
+            showConnections = $('#showConnections').is(':checked');
+            showPhotos = $('#showPhotos').is(':checked');
+            animateTree = $('#animateTree').is(':checked');
+            
+            if (currentView === 'leaf') {
+                drawLeafTree();
+            } else {
+                drawCardTree();
+            }
+        }
+
+        // ========== التكبير والتصغير ==========
         function zoomIn() {
             if (scale < maxScale) {
                 scale += 0.1;
@@ -1031,47 +933,191 @@
         }
 
         function resetZoom() {
-            scale = 0.8;
+            scale = 1.0;
             applyZoom();
         }
 
         function applyZoom() {
-            canvasWrapper.style.transform = `scale(${scale})`;
-            updateZoomLevel();
-            updateClickableAreas();
-        }
+            // تطبيق التكبير على wrapper بالكامل
+            $('#canvas-wrapper, #cards-wrapper').css('transform', `scale(${scale})`);
 
-        function updateClickableAreas() {
-            $('.leaf-node').each(function() {
-                const personId = $(this).data('person-id');
-                const person = treeData.find(p => p.id === personId);
-                if (person && person.canvasX && person.canvasY) {
-                    $(this).css({
-                        left: (person.canvasX - 120) * scale,
-                        top: (person.canvasY - 85) * scale
-                    });
+            // في نمط البطاقات، نعيد رسم الخطوط لتتكيف مع التكبير
+            if (currentView === 'card') {
+                // إعادة حساب المواقع مع التكبير
+                treeData.forEach(person => {
+                    if (person.originalX && person.originalY) {
+                        person.scaledX = person.originalX * scale;
+                        person.scaledY = person.originalY * scale;
+                    }
+                });
+
+                // إعادة رسم الخطوط
+                if (showConnections) {
+                    setTimeout(drawCardConnections, 10);
                 }
-            });
+            }
         }
 
-        // وظيفة توسيط الشجرة - محسنة
         function centerTree() {
             const container = $('#tree-container');
-            const wrapper = $('#canvas-wrapper');
+            const wrapper = currentView === 'leaf' ? $('#canvas-wrapper') : $('#cards-wrapper');
 
-            // حساب المركز مع الأخذ بعين الاعتبار التكبير
-            const centerX = (wrapper[0].scrollWidth * scale - container.width()) / 2;
-            const centerY = (wrapper[0].scrollHeight * scale - container.height()) / 2;
+            const centerX = (wrapper.width() * scale - container.width()) / 2;
+            const centerY = (wrapper.height() * scale - container.height()) / 2;
 
             container.scrollLeft(centerX);
             container.scrollTop(centerY);
         }
 
-        // إعداد السحب للشجرة الورقية
-        function setupPan() {
+        // ========== التصدير ==========
+        function showLoading(show) {
+            $('#loading').css('display', show ? 'flex' : 'none');
+        }
+
+        function exportToPdf() {
+            showLoading(true);
+
+            const element = currentView === 'leaf' ? document.getElementById("canvas-wrapper") : document.getElementById("cards-wrapper");
+
+            // إعادة التعيين المؤقت للتكبير أثناء التصدير
+            const originalScale = scale;
+            scale = 1.0;
+            $('#canvas-wrapper, #cards-wrapper').css('transform', 'scale(1)');
+
+            setTimeout(() => {
+                html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: "#ffffff"
+                }).then(canvas => {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('l', 'mm', 'a4');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+                    const imgWidth = canvas.width;
+                    const imgHeight = canvas.height;
+                    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight) * 0.95;
+
+                    pdf.addImage(canvas, 'JPEG',
+                        (pdfWidth - imgWidth * ratio) / 2,
+                        (pdfHeight - imgHeight * ratio) / 2,
+                        imgWidth * ratio,
+                        imgHeight * ratio
+                    );
+
+                    pdf.setProperties({
+                        title: familyTreeName,
+                        subject: 'شجرة عائلية'
+                    });
+
+                    // 🔥 استخدام اسم الشجرة مع التاريخ
+                    const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                    // تنظيف اسم الشجرة من الرموز غير المرغوبة
+                    const cleanTreeName = familyTreeName.replace(/[^\w\u0600-\u06FF\s]/g, '_').replace(/\s+/g, '_');
+                    const safeFileName = `${cleanTreeName}_${timestamp}.pdf`;
+
+                    pdf.save(safeFileName);
+
+                    // إعادة التكبير الأصلي
+                    scale = originalScale;
+                    $('#canvas-wrapper, #cards-wrapper').css('transform', `scale(${scale})`);
+                    showLoading(false);
+                }).catch(error => {
+                    console.error('خطأ في التصدير:', error);
+                    scale = originalScale;
+                    $('#canvas-wrapper, #cards-wrapper').css('transform', `scale(${scale})`);
+                    showLoading(false);
+                    alert('حدث خطأ أثناء التصدير إلى PDF');
+                });
+            }, 500);
+        }
+
+        function exportToImage() {
+            showLoading(true);
+
+            const element = currentView === 'leaf' ? document.getElementById("canvas-wrapper") : document.getElementById("cards-wrapper");
+
+            // إعادة التعيين المؤقت للتكبير أثناء التصدير
+            const originalScale = scale;
+            scale = 1.0;
+            $('#canvas-wrapper, #cards-wrapper').css('transform', 'scale(1)');
+
+            setTimeout(() => {
+                html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: "#ffffff"
+                }).then(canvas => {
+                    // 🔥 استخدام اسم الشجرة مع التاريخ
+                    const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                    // تنظيف اسم الشجرة من الرموز غير المرغوبة
+                    const cleanTreeName = familyTreeName.replace(/[^\w\u0600-\u06FF\s]/g, '_').replace(/\s+/g, '_');
+                    const safeFileName = `${cleanTreeName}_${timestamp}.png`;
+
+                    const link = document.createElement('a');
+                    link.download = safeFileName;
+                    link.href = canvas.toDataURL();
+                    link.click();
+
+                    // إعادة التكبير الأصلي
+                    scale = originalScale;
+                    $('#canvas-wrapper, #cards-wrapper').css('transform', `scale(${scale})`);
+                    showLoading(false);
+                }).catch(error => {
+                    console.error('خطأ في التصدير:', error);
+                    scale = originalScale;
+                    $('#canvas-wrapper, #cards-wrapper').css('transform', `scale(${scale})`);
+                    showLoading(false);
+                    alert('حدث خطأ أثناء التصدير إلى صورة');
+                });
+            }, 500);
+        }
+
+        // ========== التهيئة والأحداث ==========
+        function setupEventListeners() {
+            // تبديل نمط العرض
+            $('#viewStyle').on('change', function() {
+                switchView($(this).val());
+            });
+
+            // تحديث الإعدادات
+            $('#fontSelector, #showFullName, #colorfulMode').on('change', updateSettings);
+
+            // تحديث الإعدادات المتقدمة
+            $('#showConnections, #showPhotos, #animateTree').on('change', updateAdvancedSettings);
+
+            // التصدير
+            $('#exportPdf').on('click', exportToPdf);
+            $('#exportImage').on('click', exportToImage);
+
+            // التحكم بالتكبير
+            $('#zoomIn').on('click', zoomIn);
+            $('#zoomOut').on('click', zoomOut);
+            $('#resetZoom').on('click', resetZoom);
+            $('#centerTree').on('click', centerTree);
+
+            // تبديل سريع للنمط
+            $('#quickToggle').on('click', function() {
+                colorfulMode = !colorfulMode;
+                $('#colorfulMode').prop('checked', colorfulMode);
+                updateSettings();
+            });
+
+            // 🔥 تبديل سريع لعرض الاسم
+            $('#toggleNameQuick').on('click', function() {
+                showFullName = !showFullName;
+                $('#showFullName').prop('checked', showFullName);
+                updateSettings();
+            });
+
+            // التحكم بالسحب
             const container = $('#tree-container');
+            let panning = false;
+            let startX, startY, scrollLeft, scrollTop;
+
             container.on('mousedown', function(e) {
-                if ($(e.target).closest('.leaf-node').length === 0) {
+                if ($(e.target).closest('.leaf-node, .tree-node').length === 0) {
                     panning = true;
                     startX = e.pageX - container.offset().left;
                     startY = e.pageY - container.offset().top;
@@ -1095,6 +1141,7 @@
                 container.scrollTop(scrollTop - (y - startY) * 2);
             });
 
+            // التكبير بعجلة الماوس
             container.on('wheel', function(e) {
                 e.preventDefault();
                 const delta = e.originalEvent.deltaY;
@@ -1104,380 +1151,57 @@
                     zoomIn();
                 }
             });
-        }
 
-        // تهيئة الشجرة الورقية
-        function initializeLeafTree() {
-            $('#clickable-areas').html(`
-                <div class="loading-spinner">
-                    <div class="spinner-border text-primary" role="status"></div>
-                    <p class="mt-2">جاري تحميل الشجرة العائلية...</p>
-                </div>
-            `);
-
-            setTimeout(() => {
-                if (treeData.length > 0) {
-                    drawTree();
-                    $('.loading-spinner').remove();
-                    centerTree();
-                    updateZoomLevel();
+            // إغلاق الكارت الجانبي
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#node-info, .leaf-node, .tree-node').length) {
+                    $('#node-info').fadeOut(200);
                 }
-            }, 200);
-        }
-
-        // دوال الشجرة الهرمية
-        function initializeHierarchicalTree() {
-            // إذا كانت الشجرة الهرمية فارغة، نحاول بناءها من البيانات
-            if ($('#familyTree').is(':empty') || $('#familyTree .family-branch').length === 0) {
-                buildHierarchicalTreeFromData();
-            }
-        }
-
-        function buildHierarchicalTreeFromData() {
-            const familyTree = $('#familyTree');
-            familyTree.empty();
-
-            if (treeData.length === 0) {
-                familyTree.html(`
-                    <div class="alert alert-warning text-center">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        لا توجد بيانات للعرض في الشكل الهرمي
-                    </div>
-                `);
-                return;
-            }
-
-            // بناء الشجرة من البيانات
-            const rootPersons = treeData.filter(person => !person.fatherId);
-
-            if (rootPersons.length === 0) {
-                familyTree.html(`
-                    <div class="alert alert-warning text-center">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        لا توجد أشخاص جذر في البيانات
-                    </div>
-                `);
-                return;
-            }
-
-            rootPersons.forEach(rootPerson => {
-                const branch = createPersonNode(rootPerson, 0);
-                familyTree.append(`
-                    <div class="family-branch">
-                        ${branch}
-                    </div>
-                `);
             });
         }
 
-        function createPersonNode(person, level) {
-            const children = treeData.filter(p => p.fatherId === person.id);
-            const hasChildren = children.length > 0;
-
-            const avatar = person.gender === 'Male' ?
-                '<i class="fas fa-male"></i>' :
-                '<i class="fas fa-female"></i>';
-
-            const name = `${person.firstName} ${person.fatherName} ${person.grandFatherName} ${person.lastName}`;
-
-            let details = '';
-            if (person.birthDate) {
-                details += `<div class="detail-item"><i class="fas fa-birthday-cake"></i>${new Date(person.birthDate).toLocaleDateString('ar-EG')}</div>`;
-            }
-            if (person.city) {
-                details += `<div class="detail-item"><i class="fas fa-city"></i>${person.city}</div>`;
-            }
-
-            const childrenArrow = hasChildren ?
-                `<div class="connection-arrow">
-                    <i class="fas fa-arrow-down"></i>
-                    <span class="generation-label">الجيل ${level + 2}</span>
-                </div>` : '';
-
-            let childrenHtml = '';
-            if (hasChildren) {
-                childrenHtml = `<div class="children-generation">`;
-                children.forEach(child => {
-                    childrenHtml += `<div class="child-branch">${createPersonNode(child, level + 1)}</div>`;
-                });
-                childrenHtml += `</div>`;
-            }
-
-            return `
-                <div class="person-generation level-${level}">
-                    <div class="person-wrapper">
-                        <div class="person-card ${person.gender?.toLowerCase()}">
-                            <div class="person-avatar">
-                                ${avatar}
-                            </div>
-                            <div class="person-name">
-                                ${name}
-                            </div>
-                            <div class="person-details">
-                                ${details}
-                            </div>
-                            <div class="person-actions">
-                                <a href="/Person/Details/${person.id}" class="btn btn-info btn-sm" title="عرض التفاصيل">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="/Person/Edit/${person.id}" class="btn btn-warning btn-sm" title="تعديل">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <a href="/Person/Create?familyTreeId=${person.familyTreeId}&fatherId=${person.id}" class="btn btn-success btn-sm" title="إضافة ابن">
-                                    <i class="fas fa-plus"></i>
-                                </a>
-                            </div>
-                        </div>
-                        ${childrenArrow}
-                    </div>
-                    ${childrenHtml}
-                </div>
-            `;
-        }
-
-        // دوال التوسيع والطي للشجرة الهرمية
-        function expandAll() {
-            $('.children-generation').slideDown(300);
-            $('.connection-arrow').fadeIn(300);
-        }
-
-        function collapseAll() {
-            $('.children-generation').slideUp(300);
-            $('.connection-arrow').fadeOut(300);
-        }
-
-        // دوال التصدير والطباعة
-        function printToPdf() {
-            const currentView = $('input[name="viewMode"]:checked').attr('id');
-
-            if (currentView === 'leafView') {
-                $('#clickable-areas').hide();
-                html2canvas(canvas, { scale: 2, useCORS: true, backgroundColor: '#eaffef' }).then(canvas => {
-                    $('#clickable-areas').show();
-
-                    const imgData = canvas.toDataURL('image/png');
-                    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = pdf.internal.pageSize.getHeight();
-                    const ratio = Math.min(pdfWidth / canvas.width, pdfHeight / canvas.height) * 0.9;
-                    const finalWidth = canvas.width * ratio;
-                    const finalHeight = canvas.height * ratio;
-
-                    pdf.addImage(imgData, 'PNG',
-                        (pdfWidth - finalWidth) / 2,
-                        (pdfHeight - finalHeight) / 2,
-                        finalWidth, finalHeight
-                    );
-
-                    pdf.setFontSize(16);
-                    pdf.text('الشجرة العائلية - ' + '@familyTreeName', pdfWidth / 2, 20, { align: 'center' });
-                    pdf.save('شجرة_عائلية.pdf');
-                });
-            } else {
-                exportToPDF();
-            }
-        }
-
-        async function exportToPDF() {
-            showLoading();
-
-            try {
-                const canvas = await html2canvas(document.getElementById('familyTree'), {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#ffffff'
-                });
-
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const pageWidth = pdf.internal.pageSize.getWidth();
-                const pageHeight = pdf.internal.pageSize.getHeight();
-
-                const imgWidth = canvas.width;
-                const imgHeight = canvas.height;
-                const ratio = imgWidth / imgHeight;
-
-                let width = pageWidth - 20;
-                let height = width / ratio;
-
-                if (height > pageHeight - 20) {
-                    height = pageHeight - 20;
-                    width = height * ratio;
-                }
-
-                const x = (pageWidth - width) / 2;
-                const y = (pageHeight - height) / 2;
-
-                pdf.addImage(imgData, 'PNG', x, y, width, height);
-
-                pdf.setFontSize(20);
-                pdf.setTextColor(40, 40, 40);
-                pdf.text('شجرة العائلة - ' + '@familyTreeName', pageWidth / 2, 15, { align: 'center' });
-
-                pdf.setFontSize(10);
-                pdf.setTextColor(100, 100, 100);
-                pdf.text('تم الإنشاء في: ' + new Date().toLocaleDateString('ar-EG'), pageWidth / 2, pageHeight - 10, { align: 'center' });
-
-                pdf.save('شجرة_العائلة_' + '@familyTreeName' + '.pdf');
-
-            } catch (error) {
-                console.error('Error exporting PDF:', error);
-                alert('حدث خطأ أثناء تصدير PDF');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        async function exportToImage() {
-            showLoading();
-
-            try {
-                const currentView = $('input[name="viewMode"]:checked').attr('id');
-                let targetElement;
-
-                if (currentView === 'leafView') {
-                    targetElement = canvas;
-                } else {
-                    targetElement = document.getElementById('familyTree');
-                }
-
-                const canvasElement = await html2canvas(targetElement, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: currentView === 'leafView' ? '#eaffef' : '#ffffff'
-                });
-
-                canvasElement.toBlob(function(blob) {
-                    saveAs(blob, 'شجرة_العائلة_' + '@familyTreeName' + '.png');
-                });
-
-            } catch (error) {
-                console.error('Error exporting image:', error);
-                alert('حدث خطأ أثناء تصدير الصورة');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // دالة ملء الشاشة
-        function toggleFullscreen() {
-            const container = document.getElementById('viewContainer');
-            if (!document.fullscreenElement) {
-                container.requestFullscreen().catch(err => {
-                    console.error(`Error attempting to enable fullscreen: ${err.message}`);
-                });
-                container.classList.add('fullscreen-mode');
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                    container.classList.remove('fullscreen-mode');
-                }
-            }
-        }
-
-        // دوال مساعدة
-        function showLoading() {
-            $('#loadingMessage').show();
-        }
-
-        function hideLoading() {
-            $('#loadingMessage').hide();
-        }
-
-        // تبديل أنماط العرض
-        function switchViewMode(mode) {
-            $('.view-mode-content').hide();
-
-            if (mode === 'leaf') {
-                $('#leafViewContainer').show();
-                if (treeData.length > 0 && $('#clickable-areas').is(':empty')) {
-                    drawTree();
-                }
-            } else {
-                $('#hierarchicalViewContainer').show();
-                initializeHierarchicalTree();
-            }
-
-            if (mode === 'leaf') {
-                resetZoom();
-            }
-        }
-
-        // تهيئة الصفحة
-        $(document).ready(function() {
-            // تحميل بيانات الشجرة الورقية
+        function initializePage() {
             if (loadRealData()) {
-                initializeLeafTree();
-                setupPan();
+                // تحميل التفضيلات المحفوظة
+                const savedFont = localStorage.getItem('selectedFont');
+                if (savedFont && availableFonts[savedFont]) {
+                    currentFontFamily = savedFont;
+                    $('#fontSelector').val(savedFont);
+                }
+
+                const savedView = localStorage.getItem('preferredView');
+                if (savedView) {
+                    currentView = savedView;
+                    $('#viewStyle').val(savedView);
+                }
+
+                // 🔥 تحديث واجهة عرض الاسم أولاً
+                updateNameDisplayUI();
+
+                // 🔥 تطبيق الخط فوراً عند التحميل
+                applyFontToAllElements();
+
+                // تطبيق الإعدادات الأولية
+                switchView(currentView);
+                setupEventListeners();
+                centerTree();
             } else {
-                $('#clickable-areas').html(`
+                $('#tree-container').html(`
                     <div class="alert alert-danger text-center" style="margin: 50px;">
                         <h4>❌ خطأ في تحميل البيانات</h4>
                         <p>حدث خطأ أثناء تحميل بيانات الشجرة العائلية.</p>
                     </div>
                 `);
             }
+        }
 
-            // إخفاء الكارت الجانبي عند النقر خارجها
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('#node-info, .leaf-node').length) {
-                    $('#node-info').fadeOut(200);
-                }
-            });
-
-            // ربط أحداث التبديل بين أنماط العرض
-            $('input[name="viewMode"]').change(function() {
-                const selectedMode = $(this).attr('id');
-                if (selectedMode === 'leafView') {
-                    switchViewMode('leaf');
-                } else {
-                    switchViewMode('hierarchical');
-                }
-            });
-
-            // ربط أحداث الشجرة الورقية
-            $('#toggleStyle').on('click', function() {
-                colorfulMode = !colorfulMode;
-                $(this).html(colorfulMode
-                    ? '<i class="fas fa-palette me-2"></i> النمط الملوّن'
-                    : '<i class="fas fa-square me-2"></i> النمط الأبيض');
-                drawTree();
-            });
-
-            // ربط أزرار التحكم بالتكبير والتصغير
-            $('#zoomIn').on('click', zoomIn);
-            $('#zoomOut').on('click', zoomOut);
-            $('#resetZoom').on('click', resetZoom);
-            $('#centerTree').on('click', centerTree);
-
-            // ربط أحداث الشجرة الهرمية
-            $('#expandAll').on('click', expandAll);
-            $('#collapseAll').on('click', collapseAll);
-
-            // ربط أحداث التصدير والطباعة
-            $('#btnPrint').on('click', function() {
-                window.print();
-            });
-            $('#btnExportPDF').on('click', printToPdf);
-            $('#btnExportImage').on('click', exportToImage);
-            $('#btnFullscreen').on('click', toggleFullscreen);
-
-            // إدارة أحداث ملء الشاشة
-            document.addEventListener('fullscreenchange', function() {
-                const container = document.getElementById('viewContainer');
-                if (!document.fullscreenElement) {
-                    container.classList.remove('fullscreen-mode');
-                }
-            });
-
-            // إضافة تأثيرات تفاعلية للبطاقات
-            $(document).on('mouseenter', '.person-card', function() {
-                $(this).css('zIndex', '1000');
-            }).on('mouseleave', '.person-card', function() {
-                $(this).css('zIndex', '');
-            });
+        // حفظ التفضيلات عند التغيير
+        $('#viewStyle, #fontSelector').on('change', function() {
+            localStorage.setItem('preferredView', currentView);
+            localStorage.setItem('selectedFont', currentFontFamily);
         });
+
+        // بدء التحميل
+        $(document).ready(initializePage);
     </script>
 }
